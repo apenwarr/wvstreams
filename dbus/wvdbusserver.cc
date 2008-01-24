@@ -14,6 +14,7 @@
 #include "wvstrutils.h"
 #undef interface // windows
 #include <dbus/dbus.h>
+#include <pwd.h>
 
 class WvDBusServerAuth : public IWvDBusAuth
 {
@@ -214,7 +215,8 @@ bool WvDBusServer::do_server_msg(WvDBusConn &conn, WvDBusMsg &msg)
 	msg.reply().send(conn);
 	return true;
     }
-    else if (method == "GetConnectionUnixUser")
+    else if (method == "GetConnectionUnixUser" || 
+            method == "GetConnectionUnixUserName")
     {
 	WvDBusMsg::Iter args(msg);
 	WvString _name = args.getnext();
@@ -226,13 +228,29 @@ bool WvDBusServer::do_server_msg(WvDBusConn &conn, WvDBusMsg &msg)
         if (client_uid != -1)
         {
             log("Found unix user for '%s', uid is %s.\n", _name, client_uid);
-            msg.reply().append((uint32_t)client_uid).send(conn);
+            if (method == "GetConnectionUnixUser")
+                msg.reply().append((uint32_t)client_uid).send(conn);
+            else if (method == "GetConnectionUnixUserName")
+            {
+                struct passwd *userinfo = getpwuid(client_uid);
+                if (userinfo != NULL)
+                    msg.reply().append(userinfo->pw_name).send(conn);
+                else
+                {
+                    log("User name lookup failed for uid %s.\n", client_uid);
+                    WvDBusError(msg, "org.freedesktop.DBus.Error.Failed",
+                        "Could not find the user name.").send(conn);
+                }
+            }
+            else
+                // Shouldn't happen
+                return false;
         }
         else 
         {
             log("Could not find unix user for '%s'.\n", _name);
             WvDBusError(msg, "org.freedesktop.DBus.Error.Failed", 
-                "Could not find the requested connection").send(conn);
+                "Could not find the requested connection.").send(conn);
         }
             
         return true;

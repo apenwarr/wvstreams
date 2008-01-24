@@ -5,6 +5,7 @@
 #include "wvfork.h"
 #include "wvtest.h"
 #include "wvloopback.h"
+#include <pwd.h>
 
 
 class TestDBusServer
@@ -199,4 +200,65 @@ WVTEST_MAIN("dbusserver overlapping registrations")
     
     delete cli;
     delete l2;
+}
+
+static bool got_uid = false;
+static bool check_uid(WvDBusMsg &msg)
+{
+    fprintf(stderr, "Got a message! (%s)\n", ((WvString)msg).cstr());
+
+    WvDBusMsg::Iter i(msg);
+    unsigned int uid = i.getnext();
+
+    WVPASSEQ(getuid(), uid);
+    got_uid = true;
+    return true; // we handle *any* message
+}
+
+static bool got_uname = false;
+static bool check_uname(WvDBusMsg &msg)
+{
+    fprintf(stderr, "Got a message! (%s)\n", ((WvString)msg).cstr());
+
+    WvDBusMsg::Iter i(msg);
+    WvString uname = i.getnext();
+
+    struct passwd *userinfo = getpwuid(getuid());
+    WVPASSEQ(userinfo->pw_name, uname);
+    got_uname = true;
+    return true; // we handle *any* message
+}
+
+WVTEST_MAIN("GetConnectionUnixUser")
+{
+    TestDBusServer serv;
+    WvDBusConn conn1(serv.moniker);
+    WvIStreamList::globallist.append(&conn1, false);
+
+    while (!conn1.uniquename())
+        WvIStreamList::globallist.runonce();
+    
+    WvLog log("GetConnection", WvLog::Notice);
+    log("Connection's uniquename: %s\n", conn1.uniquename());
+
+    conn1.add_callback(WvDBusConn::PriNormal, check_uid, &conn1);
+    
+    WvDBusMsg("org.freedesktop.DBus", "/org/freedesktop/DBus", 
+        "org.freedesktop.DBus", "GetConnectionUnixUser")
+	.append(conn1.uniquename().cstr()).send(conn1);
+
+    while (!got_uid)
+        WvIStreamList::globallist.runonce();
+    WVPASS(got_uid);
+
+    conn1.del_callback(&conn1);
+    conn1.add_callback(WvDBusConn::PriNormal, check_uname, &conn1);
+
+    WvDBusMsg("org.freedesktop.DBus", "/org/freedesktop/DBus", 
+        "org.freedesktop.DBus", "GetConnectionUnixUserName")
+	.append(conn1.uniquename().cstr()).send(conn1);
+
+    while (!got_uname)
+        WvIStreamList::globallist.runonce();
+    WVPASS(got_uname);
 }
