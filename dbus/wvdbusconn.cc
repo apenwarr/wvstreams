@@ -350,14 +350,9 @@ WvDBusClientAuth::WvDBusClientAuth()
 }
 
 
-long WvDBusClientAuth::get_unix_uid()
+wvuid_t WvDBusClientAuth::get_uid()
 {
-#ifndef _WIN32
-    long uid = getuid();
-#else
-    long uid = 0;
-#endif
-    return uid;
+    return wvgetuid();
 }
 
 
@@ -366,7 +361,7 @@ bool WvDBusClientAuth::authorize(WvDBusConn &c)
     if (!sent_request)
     {
 	c.write("\0", 1);
-        long uid = get_unix_uid();
+        WvString uid = get_uid();
 	c.out("AUTH EXTERNAL %s\r\n\0", WvHexEncoder().strflushstr(uid));
 	sent_request = true;
     }

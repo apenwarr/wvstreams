@@ -642,9 +642,13 @@ WvDBusSignal::WvDBusSignal(WvStringParm objectname, WvStringParm interface,
 }
 
 
-WvDBusError::WvDBusError(WvDBusMsg &in_reply_to,
+DBusMessage *WvDBusError::setup1(WvDBusMsg &in_reply_to,
 			 WvStringParm errname, WvStringParm message)
-    : WvDBusMsg(dbus_message_new_error(in_reply_to, errname, message))
+{
+    return dbus_message_new_error(in_reply_to, errname, message);
+}
+
+void WvDBusError::setup2()
 {
     dbus_message_unref(msg);
 }

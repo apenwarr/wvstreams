@@ -18,6 +18,7 @@
 #include "wvlog.h"
 #include "wvdbusmsg.h"
 #include "wvhashtable.h"
+#include "wvuid.h"
 
 #define WVDBUS_DEFAULT_TIMEOUT (300*1000)
 
@@ -47,7 +48,7 @@ public:
 
     // Returns the unix UID negotiated during authentication.  Boring on the
     // client side (generally just getuid()), more useful for the server.
-    virtual long get_unix_uid() = 0;
+    virtual wvuid_t get_uid() = 0;
 };
 
 
@@ -57,7 +58,7 @@ class WvDBusClientAuth : public IWvDBusAuth
 public:
     WvDBusClientAuth();
     virtual bool authorize(WvDBusConn &c);
-    virtual long get_unix_uid();
+    virtual wvuid_t get_uid();
 };
 
 
@@ -102,7 +103,7 @@ public:
     void set_uniquename(WvStringParm s);
     void try_auth();
     void send_hello();
-    long get_unix_uid() { return auth ? auth->get_unix_uid() : -1; }
+    wvuid_t get_uid() { return auth ? auth->get_uid() : WVUID_INVALID; }
     
     void out(WvStringParm s);
     void out(WVSTRING_FORMAT_DECL)

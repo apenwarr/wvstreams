@@ -5,7 +5,7 @@
 #include "wvfork.h"
 #include "wvtest.h"
 #include "wvloopback.h"
-#include <pwd.h>
+#include "wvuid.h"
 
 
 class TestDBusServer
@@ -207,10 +207,16 @@ static bool check_uid(WvDBusMsg &msg)
 {
     fprintf(stderr, "Got a uid message! (%s)\n", ((WvString)msg).cstr());
 
-    WvDBusMsg::Iter i(msg);
-    unsigned int uid = i.getnext();
-
-    WVPASSEQ(getuid(), uid);
+    if (msg.iserror())
+	WVPASS(wvgetuid() == WVUID_INVALID);
+    else
+    {
+	WvDBusMsg::Iter i(msg);
+	wvuid_t uid = i.getnext();
+	
+	WVPASSEQ(wvgetuid(), uid);
+    }
+    
     got_uid = true;
     return true; // we handle *any* message
 }
@@ -220,11 +226,16 @@ static bool check_uname(WvDBusMsg &msg)
 {
     fprintf(stderr, "Got a uname message! (%s)\n", ((WvString)msg).cstr());
 
-    WvDBusMsg::Iter i(msg);
-    WvString uname = i.getnext();
-
-    struct passwd *userinfo = getpwuid(getuid());
-    WVPASSEQ(userinfo->pw_name, uname);
+    if (msg.iserror())
+	WVPASS(wvgetuid() == WVUID_INVALID);
+    else
+    {
+	WvDBusMsg::Iter i(msg);
+	WvString uname = i.getnext();
+	
+	WVPASSEQ(wv_username_from_uid(wvgetuid()), uname);
+    }
+    
     got_uname = true;
     return true; // we handle *any* message
 }

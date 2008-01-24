@@ -304,9 +304,24 @@ public:
 
 class WvDBusError : public WvDBusMsg
 {
+    DBusMessage *setup1(WvDBusMsg &in_reply_to,
+		       WvStringParm errname, WvStringParm message);
+    void setup2();
 public:
     WvDBusError(WvDBusMsg &in_reply_to,
-		WvStringParm errname, WvStringParm message);
+		WvStringParm errname, WvStringParm message)
+	: WvDBusMsg(setup1(in_reply_to, errname, message))
+    {
+	setup2();
+    }
+    
+    WvDBusError(WvDBusMsg &in_reply_to,
+		WvStringParm errname, WVSTRING_FORMAT_DECL)
+	: WvDBusMsg(setup1(in_reply_to, errname,
+			   WvString(WVSTRING_FORMAT_CALL)))
+    {
+	setup2();
+    }
 };
 
 #endif // __WVDBUSMSG_H
