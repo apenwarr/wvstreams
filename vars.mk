@@ -23,6 +23,9 @@ TARGETS += wvtestmain.o libwvtest.a
 TARGETS += uniconf/daemon/uniconfd uniconf/tests/uni
 TARGETS += crypto/tests/ssltest ipstreams/tests/unixtest
 TARGETS += crypto/tests/printcert
+ifneq ("$(with_dbus)", "no")
+TARGETS += dbus/tests/wvdbus dbus/tests/wvdbusd
+endif
 ifneq ("$(with_readline)", "no")
 TARGETS += ipstreams/tests/wsd
 endif
