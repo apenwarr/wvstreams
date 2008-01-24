@@ -4,7 +4,8 @@
  * 
  * Wrapper code for marshalling/demarshalling WvDBusMsg objects.  This is
  * in a separate file from WvDBusMsg in case you want to use a WvDBusMsg
- * but not our special marshalling code.
+ * but not our special/gross marshalling code from wvdbusmarshal_c.c.
+ * 
  */ 
 #include "wvdbusmsg.h"
 #undef interface // windows
