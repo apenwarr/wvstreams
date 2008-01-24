@@ -39,10 +39,10 @@ WvString wv_username_from_uid(wvuid_t uid)
     char buf[1024];
     struct passwd pwbuf, *userinfo;
     
-    if (getpwuid_r(uid, &pwbuf, buf, sizeof(buf), &userinfo) != 0)
+    if (getpwuid_r(uid, &pwbuf, buf, sizeof(buf), &userinfo) == 0)
 	return userinfo->pw_name;
     else
-	return WVUID_INVALID;
+	return WvString::null;
 }
 
 
@@ -52,7 +52,7 @@ wvuid_t wv_uid_from_username(WvString username)
     struct passwd pwbuf, *userinfo;
     
     if (getpwnam_r(username, &pwbuf, buf, sizeof(buf), &userinfo) != 0)
-	return userinfo->pw_name;
+	return userinfo->pw_uid;
     else
 	return WVUID_INVALID;
 }
