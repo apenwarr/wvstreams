@@ -276,8 +276,12 @@ bool WvDBusServer::do_server_msg(WvDBusConn &conn, WvDBusMsg &msg)
             
         return true;
     }
-    
-    return false; // didn't recognize the method
+    else
+    {
+	WvDBusError(msg, "org.freedesktop.DBus.Error.UnknownMethod", 
+		    "Unknown dbus method '%s'", method).send(conn);
+	return true; // but we've handled it, since it belongs to us
+    }
 }
 
 
@@ -326,6 +330,7 @@ bool WvDBusServer::do_bridge_msg(WvDBusConn &conn, WvDBusMsg &msg)
 		"Proxy: no connection for '%s'\n", msg.get_dest());
         return true;
     }
+    
     return false;
 }
 
