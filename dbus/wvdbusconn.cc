@@ -133,7 +133,7 @@ void WvDBusConn::init(IWvDBusAuth *_auth, bool _client)
     client = _client;
     auth = _auth ? _auth : new WvDBusClientAuth;
     authorized = in_post_select = false;
-    if (!client) set_uniquename(WvString(":%s", conncount));
+    if (!client) set_uniquename(WvString(":%s.0", conncount));
 
     if (!isok()) return;
 
