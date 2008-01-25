@@ -209,6 +209,18 @@ bool WvDBusServer::do_server_msg(WvDBusConn &conn, WvDBusMsg &msg)
 	    .send(conn);
 	return true;
     }
+    else if (method == "GetNameOwner")
+    {
+	WvDBusMsg::Iter args(msg);
+	WvString known_name = args.getnext();
+	WvDBusConn *serv = name_to_conn[known_name];
+	if (serv)
+	    msg.reply().append(serv->uniquename()).send(conn);
+	else
+	    WvDBusError(msg, "org.freedesktop.DBus.Error.NameHasNoOwner", 
+			"No match for name '%s'", known_name).send(conn);
+	return true;
+    }
     else if (method == "AddMatch")
     {
 	// we just proxy everything to everyone for now
