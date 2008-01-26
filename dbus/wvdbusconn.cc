@@ -161,7 +161,8 @@ WvDBusConn::~WvDBusConn()
 
 void WvDBusConn::close()
 {
-    log("Closing.\n");
+    if (!closed)
+	log("Closing.\n");
     WvStreamClone::close();
 }
 

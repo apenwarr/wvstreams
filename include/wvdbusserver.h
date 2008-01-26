@@ -91,6 +91,7 @@ private:
     bool do_server_msg(WvDBusConn &conn, WvDBusMsg &msg);
     bool do_bridge_msg(WvDBusConn &conn, WvDBusMsg &msg);
     bool do_broadcast_msg(WvDBusConn &conn, WvDBusMsg &msg);
+    bool do_gaveup_msg(WvDBusConn &conn, WvDBusMsg &msg);
 };
 
 #endif // __WVDBUSSERVER_H

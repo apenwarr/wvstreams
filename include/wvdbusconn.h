@@ -168,6 +168,7 @@ public:
 	PriNormal    = 6000,  // a reasonably selective callback
 	PriBridge    = 7000,  // proxy selectively to other listeners
 	PriBroadcast = 8000,  // last-resort proxy to all listeners
+	PriGaveUp    = 9900,  // run this if nothing else works
     };
     
     /**

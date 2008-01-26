@@ -223,7 +223,7 @@ bool WvDBusServer::do_server_msg(WvDBusConn &conn, WvDBusMsg &msg)
     }
     else if (method == "AddMatch")
     {
-	// we just proxy everything to everyone for now
+	// we just proxy every signal to everyone for now
 	msg.reply().send(conn);
 	return true;
     }
@@ -257,6 +257,7 @@ bool WvDBusServer::do_server_msg(WvDBusConn &conn, WvDBusMsg &msg)
 	{
 	    WvString s(client_uid);
 	    msg.reply().append((uint32_t)atoll(s)).send(conn);
+	    return true;
 	}
 	else if (method == "GetConnectionUnixUserName")
 	{
@@ -270,11 +271,12 @@ bool WvDBusServer::do_server_msg(WvDBusConn &conn, WvDBusMsg &msg)
 	    }
 	    
 	    msg.reply().append(username).send(conn);
+	    return true;
 	}
 	else
 	    assert(false); // should never happen
             
-        return true;
+        assert(false);
     }
     else
     {
@@ -326,8 +328,11 @@ bool WvDBusServer::do_bridge_msg(WvDBusConn &conn, WvDBusMsg &msg)
 		serial, conn.uniquename());
 	}
 	else
+	{
 	    log(WvLog::Warning,
 		"Proxy: no connection for '%s'\n", msg.get_dest());
+	    return false;
+	}
         return true;
     }
     
@@ -354,6 +359,14 @@ bool WvDBusServer::do_broadcast_msg(WvDBusConn &conn, WvDBusMsg &msg)
 }
 
 
+bool WvDBusServer::do_gaveup_msg(WvDBusConn &conn, WvDBusMsg &msg)
+{
+    WvDBusError(msg, "org.freedesktop.DBus.Error.NameHasNoOwner", 
+		"No running service named '%s'", msg.get_dest()).send(conn);
+    return true;
+}
+
+
 void WvDBusServer::conn_closed(WvStream &s)
 {
     WvDBusConn *c = (WvDBusConn *)&s;
@@ -377,6 +390,9 @@ void WvDBusServer::new_connection_cb(IWvStream *s)
 			     wv::ref(*c), _1));
     c->add_callback(WvDBusConn::PriBroadcast,
 		    wv::bind(&WvDBusServer::do_broadcast_msg, this,
+			     wv::ref(*c), _1));
+    c->add_callback(WvDBusConn::PriGaveUp,
+		    wv::bind(&WvDBusServer::do_gaveup_msg, this,
 			     wv::ref(*c), _1));
     
     append(c, true, "wvdbus servconn");

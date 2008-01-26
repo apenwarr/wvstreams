@@ -422,7 +422,12 @@ WvString WvDBusMsg::get_argstr() const
 WvDBusMsg::operator WvString() const
 {
     if (is_reply())
-	return WvString("REPLY#%s(%s)", get_replyserial(), get_argstr());
+    {
+	if (iserror())
+	    return WvString("ERR#%s(%s)", get_replyserial(), get_argstr());
+	else
+	    return WvString("REPLY#%s(%s)", get_replyserial(), get_argstr());
+    }
     else
     {
 	WvString dest(get_dest());
