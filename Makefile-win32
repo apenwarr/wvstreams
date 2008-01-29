@@ -93,7 +93,8 @@ OBJSKIP=$(OBJREPLACED) $(OBJFIXME) \
 	ipstreams/wvipraw.o \
 	ipstreams/wvunixdgsocket.o \
 	\
-	uniconf/unigenhack.o
+	uniconf/unigenhack.o \
+	uniconf/daemon/uniconfd.o
 
 TOBJFIXME=\
 	utils/t/wvsubprocqueue.t.o \
