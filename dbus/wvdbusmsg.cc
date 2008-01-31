@@ -386,12 +386,10 @@ WvString WvDBusMsg::get_member() const
 
 bool WvDBusMsg::is_reply() const
 {
-    // HACK: there's no way to tell if the reply to the very first message
-    // is a reply or not, because it has a replyserial of 0 (since it's
-    // replying to message #0!).  However, because the first message is always
-    // a "Hello" request to the server, the reply to it should always be #1.
-    return get_replyserial() != 0
-	|| get_serial() == 1;
+    // This used to have a hack to deal with replies to message #0.
+    // But it turns out the first message is #1, so that's not an actual
+    // problem.
+    return get_replyserial() != 0;
 }
 
 
