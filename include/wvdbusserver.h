@@ -28,15 +28,13 @@ DeclareWvList(WvDBusConn);
 
 class WvDBusServer : public WvIStreamList
 {
-    IWvListener *listener;
+    WvIStreamList listeners;
 public:
     /* 
-     * Constructs a new DBus server at the specified WvListener moniker.
-     *
-     * For example:
-     *    WvDBusServer s("unix:/tmp/foo");
+     * Constructs a new DBus server.  You must then call listen() to
+     * actually listen for new connections.
      */
-    WvDBusServer(WvStringParm addr);
+    WvDBusServer();
     
     /**
      * Not actually defined.  Just prevents accidental copying.
@@ -47,15 +45,21 @@ public:
      * Shut down this server.
      */
     virtual ~WvDBusServer();
-
+    
     /**
-     * We are isok() as long as no errors have been set.
+     * Listen using a given WvListener moniker.  Until you do this at least
+     * once, this stream is !isok().  It is okay to call listen() more
+     * than once if you want to listen on more than one port.
+     * 
+     * For example:
+     *    WvDBusServer s;
+     *    s.listen("unix:/tmp/foo");
      */
-    virtual bool isok() const
-    {
-        return !geterr(); 
-    }
+    void listen(WvStringParm moniker);
 
+    virtual bool isok() const;
+    virtual int geterr() const;
+    
     /**
      * Register a given dbus service name as belonging to a particular
      * connection.
@@ -76,6 +80,7 @@ public:
     
     /**
      * get the full, final address (identification guid and all) of the server
+     * if there's more than one listener, returns one of them.
      */
     WvString get_addr();
 

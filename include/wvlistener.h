@@ -17,11 +17,15 @@ class WvListener : public IWvListener
 public:
     IWvStream *cloned;
     IWvListenerCallback acceptor;
+    IWvListenerWrapper wrapper;
     
     WvListener(IWvStream *_cloned);
     virtual ~WvListener();
     
+    virtual void addwrap(IWvListenerWrapper _wrapper);
+    
     virtual IWvListenerCallback onaccept(IWvListenerCallback _cb);
+    IWvStream *wrap(IWvStream *s);
     void runonce(time_t msec_delay);
     
     //
@@ -30,16 +34,9 @@ public:
     virtual void close()
         { if (cloned) cloned->close(); }
     virtual bool isok() const
-        { return cloned && cloned->isok(); }
+        { return WvErrorBase::isok() && cloned && cloned->isok(); }
     
-    virtual void callback()
-    {  
-	if (acceptor)
-	{
-	    IWvStream *s = accept();
-	    if (s) acceptor(s);
-	}
-    }
+    virtual void callback();
     
     int getfd() const
         { return getrfd(); }
@@ -98,6 +95,27 @@ public:
         { return 0; }
     virtual void outbuf_limit(size_t size)
         { }
+};
+
+/**
+ * This is a listener that doesn't work.  You can use it for returning
+ * weird errors.
+ */
+class WvNullListener : public WvListener
+{
+public:
+    WvNullListener() : WvListener(NULL)
+    {
+	// nothing to do
+    }
+    
+    virtual IWvStream *accept()
+        { return NULL; }
+    
+    virtual bool isok() const
+        { return false; }
+    
+    virtual const WvAddr *src() const;
 };
 
 #endif // __WVLISTENER_H

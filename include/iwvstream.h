@@ -24,6 +24,8 @@ typedef unsigned int WSID;
 class IWvStream : public WvErrorBase, public IObject
 {
 public:
+    static IWvStream *create(WvStringParm moniker, IObject *obj = NULL);
+    
     /**
      * A SelectRequest is a convenient way to remember what we want to do
      * to a particular stream: read from it, write to it, or check for

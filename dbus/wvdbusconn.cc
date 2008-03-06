@@ -71,7 +71,7 @@ static IWvStream *stream_creator(WvStringParm _s, IObject *)
     {
 	WvString startbus(getenv("DBUS_STARTER_ADDRESS"));
 	if (!!startbus)
-	    return wvcreate<IWvStream>(translate(startbus));
+	    return IWvStream::create(translate(startbus));
 	else
 	{
 	    WvString starttype(getenv("DBUS_STARTER_BUS_TYPE"));
@@ -86,17 +86,17 @@ static IWvStream *stream_creator(WvStringParm _s, IObject *)
     {
 	WvString bus(getenv("DBUS_SYSTEM_BUS_ADDRESS"));
 	if (!!bus)
-	    return wvcreate<IWvStream>(translate(bus));
+	    return IWvStream::create(translate(bus));
     }
 
     if (!strcasecmp(s, "session"))
     {
 	WvString bus(getenv("DBUS_SESSION_BUS_ADDRESS"));
 	if (!!bus)
-	    return wvcreate<IWvStream>(translate(bus));
+	    return IWvStream::create(translate(bus));
     }
 
-    return wvcreate<IWvStream>(translate(s));
+    return IWvStream::create(translate(s));
 }
 
 static WvMoniker<IWvStream> reg("dbus", stream_creator);
@@ -116,7 +116,7 @@ WvDBusConn::WvDBusConn(IWvStream *_cloned, IWvDBusAuth *_auth, bool _client)
 
 
 WvDBusConn::WvDBusConn(WvStringParm moniker, IWvDBusAuth *_auth, bool _client)
-    : WvStreamClone(wvcreate<IWvStream>(moniker)),
+    : WvStreamClone(IWvStream::create(moniker)),
 	log(WvString("DBus %s%s",
 		     _client ? "" : "s",
 		     ++conncount), WvLog::Debug5),
@@ -144,7 +144,6 @@ void WvDBusConn::init(IWvDBusAuth *_auth, bool _client)
 	send_hello();
 
     try_auth();
-
 }
 
 WvDBusConn::~WvDBusConn()

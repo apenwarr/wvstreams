@@ -40,7 +40,7 @@ class WvStreamsDebuggerServer : public WvStream
     WvLog log;
         
     WvUnixListener *unix_listener;
-    void unix_listener_cb();
+    void unix_listener_cb(IWvStream *s);
     void unix_listener_close_cb();
     
     WvTCPListener *tcp_listener;

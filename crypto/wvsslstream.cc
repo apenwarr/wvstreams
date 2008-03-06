@@ -6,6 +6,8 @@
 #include "wvsslstream.h"
 #include "wvx509mgr.h"
 #include "wvcrypto.h"
+#include "wvlistener.h"
+#include "wvstrutils.h"
 #include "wvmoniker.h"
 #include "wvlinkerhack.h"
 #include <openssl/ssl.h>
@@ -32,16 +34,28 @@ WV_LINK(WvSSLStream);
 
 static IWvStream *creator(WvStringParm s, IObject *_obj)
 {
-    return new WvSSLStream(wvcreate<IWvStream>(s, _obj), NULL, 0, false);
+    return new WvSSLStream(IWvStream::create(s, _obj), NULL, 0, false);
 }
 
 static IWvStream *screator(WvStringParm s, IObject *_obj)
 {
-    return new WvSSLStream(wvcreate<IWvStream>(s, _obj), NULL, 0, true);
+    return new WvSSLStream(IWvStream::create(s, _obj), 
+	   new WvX509Mgr(encode_hostname_as_DN(fqdomainname()), 1024),
+	   0, true);
 }
 
 static WvMoniker<IWvStream> reg("ssl", creator);
 static WvMoniker<IWvStream> sreg("sslserv", screator);
+
+static IWvListener *listener(WvStringParm s, IObject *obj)
+{
+    IWvListener *l = IWvListener::create(s, obj);
+    if (l)
+	l->addwrap(wv::bind(&IWvStream::create, "sslserv", _1));
+    return l;
+}
+
+static WvMoniker<IWvListener> lreg("ssl", listener);
 
 
 #define MAX_BOUNCE_AMOUNT (16384) // 1 SSLv3/TLSv1 record

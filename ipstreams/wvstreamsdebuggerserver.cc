@@ -5,7 +5,8 @@
  */
 #include "wvstreamsdebuggerserver.h"
 #include "wvunixsocket.h"
-#include "wvtcp.h"
+#include "wvtcplistener.h"
+#include "wvunixlistener.h"
 
 void WvStreamsDebuggerServer::Connection::choose_salt()
 {
@@ -65,8 +66,8 @@ WvStreamsDebuggerServer::WvStreamsDebuggerServer(const WvUnixAddr &unix_addr,
     {
         unix_listener = new WvUnixListener(unix_addr, 0700);
         unix_listener->set_wsname("wsd listener on %s", unix_addr);
-        unix_listener->setcallback(
-	    wv::bind(&WvStreamsDebuggerServer::unix_listener_cb, this));
+        unix_listener->onaccept(
+	    wv::bind(&WvStreamsDebuggerServer::unix_listener_cb, this, _1));
         unix_listener->setclosecallback(
 	    wv::bind(&WvStreamsDebuggerServer::unix_listener_close_cb, this));
         streams.append(unix_listener, true);
@@ -78,8 +79,8 @@ WvStreamsDebuggerServer::WvStreamsDebuggerServer(const WvUnixAddr &unix_addr,
     {
         tcp_listener = new WvTCPListener(tcp_addr);
         tcp_listener->set_wsname("wsd listener on %s", tcp_addr);
-        tcp_listener->onaccept(wv::bind(&WvStreamsDebuggerServer::tcp_listener_cb, this,
-					_1));
+        tcp_listener->onaccept(
+	    wv::bind(&WvStreamsDebuggerServer::tcp_listener_cb, this, _1));
         tcp_listener->setclosecallback(
 	    wv::bind(&WvStreamsDebuggerServer::tcp_listener_close_cb, this));
         streams.append(tcp_listener, true);
@@ -95,11 +96,8 @@ WvStreamsDebuggerServer::~WvStreamsDebuggerServer()
 
 
 #ifndef _WIN32
-void WvStreamsDebuggerServer::unix_listener_cb()
+void WvStreamsDebuggerServer::unix_listener_cb(IWvStream *unix_conn)
 {
-    WvUnixConn *unix_conn = unix_listener->accept();
-    if (!unix_conn)
-        return;
     log("Accepted connection from %s\n", *unix_conn->src());
     Connection *conn = new Connection(unix_conn);
     conn->setcallback(wv::bind(&WvStreamsDebuggerServer::ready_cb, this,

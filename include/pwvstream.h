@@ -32,10 +32,6 @@
  *    to change (or introduce a new IWvBufStream) to make this work.
  * 
  *  - Definitely don't rely on C++ RTTI here.
- * 
- *  - Add a way to get errors back when moniker construction fails.  This
- *    is relatively easy; just make the returned stream a null: stream and
- *    do seterr() on it.
  */
 class PWvStream : public wv::shared_ptr<WvStream>
 {
@@ -50,7 +46,7 @@ class PWvStream : public wv::shared_ptr<WvStream>
     
     static WvStream *make_stream(WvStringParm moniker, IObject *obj)
     {
-	IWvStream *s = wvcreate<IWvStream>(moniker, obj);
+	IWvStream *s = IWvStream::create(moniker, obj);
 	if (!s)
 	    s = wvcreate<IWvStream>("null:");
 	assert(s != NULL);

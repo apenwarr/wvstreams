@@ -71,7 +71,7 @@ void WvStreamsDaemon::add_restart_stream(IWvStream *istream, bool autofree,
     add_stream(istream, autofree, id);
     
     istream->setclosecallback(wv::bind(&WvStreamsDaemon::restart_close_cb,
-				       this, id));
+				       this, istream, id));
 }
 
 void WvStreamsDaemon::add_die_stream(IWvStream *istream,
@@ -80,25 +80,27 @@ void WvStreamsDaemon::add_die_stream(IWvStream *istream,
     add_stream(istream, autofree, id);
     
     istream->setclosecallback(wv::bind(&WvStreamsDaemon::die_close_cb, this,
-				       id));
+				       istream, id));
 }
 
-void WvStreamsDaemon::restart_close_cb(const char *id)
+void WvStreamsDaemon::restart_close_cb(IWvStream *s, const char *id)
 {
     if (should_run())
     {
-        log(WvLog::Error, "%s is stale; restarting\n",
-                id ? id : "Stream");
+	WvString err = s->geterr() ? s->errstr() : "no error";
+        log(WvLog::Error, "%s is closed (%s); restarting\n",
+                id ? id : "Stream", err);
         restart();
     }
 }
 
-void WvStreamsDaemon::die_close_cb(const char *id)
+void WvStreamsDaemon::die_close_cb(IWvStream *s, const char *id)
 {
     if (should_run())
     {
-        log(WvLog::Error, "%s is stale; dying\n",
-                id ? id : "Stream");
+	WvString err = s->geterr() ? s->errstr() : "no error";
+        log(WvLog::Error, "%s is closed (%s); dying\n",
+	    id ? id : "Stream", err);
         die();
     }
 }

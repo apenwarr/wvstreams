@@ -7,7 +7,7 @@
  */
 #include "wvmonikerregistry.h"
 #include "strutils.h"
-#include <assert.h>
+#include <wvassert.h>
 #include <stdio.h>
 
 #if 0
@@ -56,7 +56,7 @@ WvMonikerRegistry::~WvMonikerRegistry()
 void WvMonikerRegistry::add(WvStringParm id, WvMonikerCreateFunc *func)
 {
     DEBUGLOG("WvMonikerRegistry register(%s).\n", id.cstr());
-    assert(!dict[id]);
+    wvassert(!dict[id], id);
     dict.add(new Registration(id, func), true);
 }
 

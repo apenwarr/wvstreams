@@ -27,10 +27,8 @@
 #include "wvfdstream.h"
 #include "wvaddr.h"
 #include "wvresolver.h"
-#include "wvlistener.h"
 
 
-class WvIStreamList;
 class WvTCPListener;
 
 /**
@@ -129,61 +127,6 @@ protected:
 
 public:
     const char *wstype() const { return "WvTCPConn"; }
-};
-
-/** Class to easily create the Server side of a WvTCPConn. */
-class WvTCPListener : public WvListener
-{
-public:
-    /**
-     * Create a WvStream that listens on _listenport of the current machine
-     * This is how you set up a TCP Server.
-     */
-    WvTCPListener(const WvIPPortAddr &_listenport);
-
-    virtual ~WvTCPListener();
-    
-    /**
-     * return a new WvTCPConn socket corresponding to a newly-accepted
-     * connection.  If no connection is ready immediately, we wait for
-     * one indefinitely.  You can use select(read=true) to check for a
-     * waiting connection.
-     */
-    virtual WvTCPConn *accept();
-    
-    /**
-     * set a callback() function that automatically accepts new WvTCPConn
-     * connections, assigning them their own callback function 'callfunc'
-     * with parameter 'userdata.'  Pass list==NULL or define your own
-     * own callback function to disable auto-accepting.
-     *
-     * Be careful not to accept() connections yourself if you do this,
-     * or we may end up accept()ing twice, causing a hang the second time.
-     */
-    void auto_accept(WvIStreamList *list, wv::function<void(IWvStream*)> cb);
-
-    /**
-     * set a callback() function that automatically accepts new WvTCPConn
-     * connections, assigning them their own callback function 'callfunc'
-     * with parameter 'userdata.' and add them to the global list.
-     * Note the absence of the initial WvStreamList * parameter.
-     *
-     * Be careful not to accept() connections yourself if you do this,
-     * or we may end up accept()ing twice, causing a hang the second time.
-     */
-    void auto_accept(wv::function<void(IWvStream*)> cb);
-
-    /** src() is a bit of a misnomer, but it returns the listener port. */
-    virtual const WvIPPortAddr *src() const;
-    
-protected:
-    WvIPPortAddr listenport;
-    void accept_callback(WvIStreamList *list,
-			 wv::function<void(IWvStream*)> cb,
-			 IWvStream *_connection);
-
-public:
-    const char *wstype() const { return "WvTCPListener"; }
 };
 
 

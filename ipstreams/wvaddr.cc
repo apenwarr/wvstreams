@@ -368,8 +368,9 @@ size_t WvARCnetAddr::sockaddr_len() const
 
 #endif //_WIN32
 
-/* create an IP address from a dotted-quad string.  Maybe someday we'll
- * support hostnames too with gethostbyname, but not yet.
+/* create an IP address from a dotted-quad string.  We don't support
+ * gethostname()-style lookups here, because they happen only synchronously.
+ * Streams that need hostname lookups will have to do it themselves.
  */
 void WvIPAddr::string_init(const char string[])
 {
@@ -664,11 +665,27 @@ WvIPPortAddr::WvIPPortAddr(const WvIPAddr &_ipaddr, uint16_t _port)
 }
 
 
+static bool all_digits(const char *s)
+{
+    for (; *s; s++)
+	if (!isdigit((unsigned char)*s))
+	    return false;
+    return true;
+}
+
+
 // If no port is specified (after a ':' or a space or a tab) it defaults to 0.
 void WvIPPortAddr::string_init(const char string[]) 
 {
-    struct servent* serv;
-
+    // special case for an all-numeric string: it must be just a port,
+    // with default address 0.0.0.0.
+    if (all_digits(string))
+    {
+	*this = WvIPAddr();
+	port = atoi(string);
+	return;
+    }
+    
     const char *cptr = strchr(string, ':');
     if (!cptr)
 	cptr = strchr(string, ' ');
@@ -682,7 +699,7 @@ void WvIPPortAddr::string_init(const char string[])
 	port = atoi(cptr+1);
 	if (!port)
 	{
-	    serv = getservbyname(cptr+1, NULL);
+	    struct servent *serv = getservbyname(cptr+1, NULL);
 	    if (serv)
 		port = ntohs(serv->s_port);
 	}
@@ -751,14 +768,16 @@ bool WvIPPortAddr::comparator(const WvAddr *a2, bool first_pass) const
 WvUnixAddr::WvUnixAddr(const char *_sockname)
     : sockname(_sockname)
 {
-    assert(!!sockname);
+    if (!sockname)
+	sockname = "/";
 }
 
 
 WvUnixAddr::WvUnixAddr(WvStringParm _sockname)
     : sockname(_sockname)
 {
-    assert(!!sockname);
+    if (!sockname)
+	sockname = "/";
 }
 
 

@@ -76,6 +76,20 @@ static IWvStream *create_null(WvStringParm, IObject *)
 
 static WvMoniker<IWvStream> reg("null",  create_null);
 
+
+IWvStream *IWvStream::create(WvStringParm moniker, IObject *obj)
+{
+    IWvStream *s = wvcreate<IWvStream>(moniker, obj);
+    if (!s)
+    {
+	s = new WvStream();
+	s->seterr_both(EINVAL, "Unknown moniker '%s'", moniker);
+	WVRELEASE(obj); // we're not going to use it after all
+    }
+    return s;
+}
+
+
 static bool is_prefix_insensitive(const char *str, const char *prefix)
 {
     size_t len = strlen(prefix);

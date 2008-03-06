@@ -41,6 +41,31 @@ static void bounce_to_list(IWvStream *in, WvIStreamList *list)
 }
 
 
+static void died(WvLog &log, WvStringParm name, IWvStream *s)
+{
+    if (s->geterr())
+	log("%s: %s\n", name, s->errstr());
+}
+
+
+static void add(WvLog &log, WvIStreamList &list, const char *_mon)
+{
+    WvString mon(_mon);
+    if (mon == "-")
+	mon = "stdio";
+    log("Creating stream: '%s'\n", mon);
+    PWvStream s(mon);
+    if (!s->isok())
+	died(log, _mon, s.addRef());
+    else
+    {
+	s->setcallback(wv::bind(bounce_to_list, s.get(), &list));
+	s->setclosecallback(wv::bind(died, log, _mon, s.addRef()));
+    }
+    list.append(s.addRef(), true, _mon);
+}
+
+
 int main(int argc, char **argv)
 {
     WvIStreamList list;
@@ -56,27 +81,11 @@ int main(int argc, char **argv)
 	return 1;
     }
     
+    if (argc == 2) // talking to just one stream means send it to stdio
+	add(log, list, "-");
+    
     for (int count = 1; count < argc; count++)
-    {
-	log("Creating stream: '%s'\n", argv[count]);
-	PWvStream s(argv[count]);
-	if (!s)
-	{
-	    fprintf(stderr, "Can't create stream %s: no moniker!\n",
-		    argv[count]);
-	    return 2;
-	}
-	
-	if (!s->isok())
-	{
-	    fprintf(stderr, "Stream %s: %s\n",
-		    argv[count], s->errstr().cstr());
-	    return 3;
-	}
-	
-	s->setcallback(wv::bind(bounce_to_list, s.get(), &list));
-	list.append(s.addRef(), true, argv[count]);
-    }
+	add(log, list, argv[count]);
     
     while (!want_to_die && list.count() >= 2)
 	list.runonce();

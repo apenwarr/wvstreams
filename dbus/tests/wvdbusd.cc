@@ -9,18 +9,20 @@ public:
 			wv::bind(&WvDBusDaemon::cb, this)),
         log("WvDBusDaemon", WvLog::Debug)
     {
-	args.add_required_arg("MONIKER");
+	args.add_required_arg("MONIKER", true);
     }
     
     virtual ~WvDBusDaemon() {}
     
     void cb()
     { 
-        log("WvDBusDaemon starting..\n");
+        log("WvDBusDaemon starting.\n");
 
-        WvString moniker = _extra_args.popstr();
-        
-        add_die_stream(new WvDBusServer(moniker), true, "DBus Server");
+	WvDBusServer *s = new WvDBusServer;
+	WvStringList::Iter i(extra_args());
+	for (i.rewind(); i.next(); )
+	    s->listen(*i);
+	add_die_stream(s, true, "DBus Server");
     }
 
 private:

@@ -13,3 +13,4 @@ config.status
 *.so.*
 reconfigure
 */tests/*test
+wvtestmain

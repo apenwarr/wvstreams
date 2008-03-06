@@ -30,7 +30,7 @@ class WvUnixConn;
  * with the remote end of the socket.  See the unix(7) man page.  This would
  * be very cool for authentication purposes.
  */
-class WvUnixConn : public WvFDStream
+class WvUnixConn : public WvFdStream
 {
     friend class WvUnixListener;
 protected:
@@ -62,54 +62,6 @@ public:
     
 public:
     const char *wstype() const { return "WvUnixConn"; }
-};
-
-/** Server end of a Unix Sockets stream */
-class WvUnixListener : public WvFDStream
-{
-public:
-    WvUnixListener(const WvUnixAddr &_addr, int create_mode);
-    virtual ~WvUnixListener();
-    
-    virtual void close();
-    
-    /**
-     * return a new WvUnixConn socket corresponding to a newly-accepted
-     * connection.  If no connection is ready immediately, we wait for
-     * one indefinitely.  You can use select(read=true) to check for a
-     * waiting connection.
-     */
-    WvUnixConn *accept();
-    
-    /**
-     * set a callback() function that automatically accepts new WvUnixConn
-     * connections, assigning them their own callback function 'callfunc'
-     * with parameter 'userdata.'  Pass list==NULL or define your own
-     * own callback function to disable auto-accepting.
-     *
-     * Be careful not to accept() connections yourself if you do this,
-     * or we may end up accept()ing twice, causing a hang the second time.
-     */
-    void auto_accept(WvIStreamList *list, IWvStreamCallback callfunc = NULL);
-
-    /**
-     * these don't do anything, but they confuse the socket, so we'll
-     * ignore them on purpose.
-     */
-    virtual size_t uread(void *buf, size_t len);
-    virtual size_t uwrite(const void *buf, size_t len);
-    
-    /** src() is a bit of a misnomer, but it returns the socket address. */
-    virtual const WvUnixAddr *src() const;
-    
-protected:
-    WvUnixAddr addr;
-    bool bound_okay;
-
-    void accept_callback(WvIStreamList *list, IWvStreamCallback callfunc);
-
-public:
-    const char *wstype() const { return "WvUnixListener"; }
 };
 
 #endif // _WIN32

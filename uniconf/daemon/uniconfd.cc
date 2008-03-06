@@ -21,7 +21,6 @@
 #include "uniclientconn.h"
 #include "unisecuregen.h"
 #include "unipermgen.h"
-#include "wvx509mgr.h"
 #include "uniconfroot.h"
 #include "wvstrutils.h"
 #include "wvfileutils.h"
@@ -69,9 +68,8 @@ WvMoniker<IUniConfGen> UniNamedMoniker("named", creator);
 class UniConfd : public WvStreamsDaemon
 {
     bool needauth;
-    int port;
-    int sslport;
-    WvString unixport, permmon, unix_mode;
+    WvString permmon;
+    WvStringList lmonikers;
     time_t commit_interval;
 
     UniConfRoot cfg;
@@ -144,67 +142,18 @@ class UniConfd : public WvStreamsDaemon
         
         UniConfDaemon *daemon = new UniConfDaemon(cfg, needauth, permgen);
         add_die_stream(daemon, true, "uniconfd");
-
-#ifndef _WIN32
-        if (!!unixport)
-        {
-	    // FIXME: THIS IS NOT SAFE!
-	    mkdirp(getdirname(unixport));
-	    ::unlink(unixport);
-	    if (!daemon->setupunixsocket(unixport))
-	        exit(3);
-	    if (!!unix_mode && unix_mode.num())
-	    {
-	        log("Setting mode on %s to: %s\n", unixport, unix_mode);
-	        mode_t mode;
-	        sscanf(unix_mode.edit(), "%o", &mode);
-	        chmod(unixport, mode);
-	    }
-        }
-#endif
-
-        if (port && !daemon->setuptcpsocket(WvIPPortAddr("0.0.0.0", port)))
-        {
-	    die();
+	
+	if (lmonikers.isempty())
+	{
+	    log(WvLog::Critical, "Can't start: no listeners given!\n");
+	    die(7);
 	    return;
 	}
 
-        if (sslport)
-        {
-            WvString dName = encode_hostname_as_DN(fqdomainname());
-            WvX509Mgr *x509cert = new WvX509Mgr(dName, 1024);
-            if (!x509cert->isok())
-            {
-                log(WvLog::Critical,
-		    "Couldn't generate X509 certificate: SSL not available.\n");
-	        die();
-	        return;
-            }
-            else if (!daemon->setupsslsocket(
-		        WvIPPortAddr("0.0.0.0", sslport), x509cert))
-	    {
-	        die();
-	        return;
-	    }
-        }
-    
-#ifdef WITH_SLP
-        WvSlp slp;
+	WvStringList::Iter i(lmonikers);
+	for (i.rewind(); i.next(); )
+	    daemon->listen(*i);
 
-        if (first_time)
-        {
-            // Now that we're this far...
-            
-            // Register UniConf service with SLP 
-            if (port)
-	        slp.add_service("uniconf.niti", fqdomainname(), port);
-        
-            // Register UniConf SSL service with SLP 
-            if (sslport)
-	        slp.add_service("uniconfs.niti", fqdomainname(), sslport);
-	}
-#endif
-    
         WvStream *commit_stream = new WvStream;
         commit_stream->setcallback(wv::bind(&UniConfd::commit_stream_cb, this,
 					    commit_stream));
@@ -221,8 +170,6 @@ public:
 	WvStreamsDaemon("uniconfd", VERBOSE_PACKAGE_VERSION,
 			wv::bind(&UniConfd::startup, this)),
 	needauth(false),
-	port(DEFAULT_UNICONF_DAEMON_TCP_PORT),
-	sslport(DEFAULT_UNICONF_DAEMON_SSL_PORT),
 	commit_interval(5*60),
 	first_time(true),
 	permgen(NULL)
@@ -235,24 +182,13 @@ public:
         args.add_option('A', "check-access",
                 "Check all accesses against perms moniker", "moniker",
                 permmon);
-        args.add_option('p', "tcp",
-                "Listen on given TCP port (default=4111; 0 to disable)", "port",
-                port);
-        args.add_option('s', "ssl",
-                "Listen on given TCP/SSL port (default=4112; 0 to disable)", "port",
-                sslport);
-#ifndef _WIN32
-        args.add_option('u', "unix",
-                "Listen on given Unix socket filename (default=disabled)", "filename",
-                unixport);
-        args.add_option('m', "unix-mode",
-                "Set the Unix socket to 'mode' (default to uniconfd users umask)", "mode",
-                unix_mode);
+	args.add_option('l', "listen",
+		"Listen on the given socket (eg. tcp:4111, ssl:tcp:4112)",
+		"lmoniker", lmonikers);
 	args.add_option('n', "named-gen",
 			"creates a \"named\" moniker 'name' from 'moniker'",
 			"name=moniker",
 			wv::bind(&UniConfd::namedgen_cb, this, _1, _2), NULL);
-#endif
 	args.add_optional_arg("MONIKERS", true);
 	args.set_email("<" PACKAGE_BUGREPORT ">");
     }

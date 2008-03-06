@@ -73,8 +73,8 @@ protected:
 
 private:
 
-    void restart_close_cb(const char *);
-    void die_close_cb(const char *);
+    void restart_close_cb(IWvStream *s, const char *id);
+    void die_close_cb(IWvStream *s, const char *id);
 
 public:
 

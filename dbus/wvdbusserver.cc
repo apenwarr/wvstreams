@@ -10,11 +10,12 @@
  */ 
 #include "wvdbusserver.h"
 #include "wvdbusconn.h"
-#include "wvtcp.h"
 #include "wvstrutils.h"
 #include "wvuid.h"
+#include "wvtcplistener.h"
 #undef interface // windows
 #include <dbus/dbus.h>
+
 
 class WvDBusServerAuth : public IWvDBusAuth
 {
@@ -58,47 +59,58 @@ bool WvDBusServerAuth::authorize(WvDBusConn &c)
     if (!line)
 	return false; // not done yet
     
+    WvStringList words;
+    words.split(line);
+    WvString cmd(words.popstr());
+    
     if (state == AuthWait)
     {
-	if (!strncasecmp(line, "AUTH ", 5))
+	if (!strcasecmp(cmd, "AUTH"))
 	{
 	    // FIXME actually check authentication information!
-            if (!strncasecmp(line + 5, "EXTERNAL ", 9))
+	    WvString typ(words.popstr());
+            if (!strcasecmp(typ, "EXTERNAL"))
             {
                 WvString uid = 
-                    WvHexDecoder().strflushstr(line + 5 + 9);
+                    WvHexDecoder().strflushstr(words.popstr());
                 if (!!uid)
                 {
                     // FIXME: Check that client is on the same machine!
                     client_uid = uid.num();
                 }
+		
+		state = BeginWait;
+		c.out("OK f00f\r\n");
             }
-	    state = BeginWait;
-	    c.out("OK f00f\r\n");
+	    else
+	    {
+		// Some clients insist that we reject something because
+		// their state machine can't handle us accepting just the
+		// "AUTH " command.
+		c.out("REJECTED EXTERNAL\r\n");
+		// no change in state
+	    }
 	}
 	else
-	    c.seterr("AUTH command expected: %s", line);
+	    c.seterr("AUTH command expected: '%s'", line);
     }
     else if (state == BeginWait)
     {
-	if (!strcasecmp(line, "BEGIN"))
+	if (!strcasecmp(cmd, "BEGIN"))
 	    return true; // done
 	else
-	    c.seterr("BEGIN command expected: %s", line);
+	    c.seterr("BEGIN command expected: '%s'", line);
     }
 
     return false;
 }
 
 
-WvDBusServer::WvDBusServer(WvStringParm addr)
+WvDBusServer::WvDBusServer()
     : log("DBus Server", WvLog::Debug)
 {
-    listener = new WvTCPListener(addr);
-    append(listener, false);
-    log(WvLog::Info, "Listening on '%s'\n", *listener->src());
-    listener->onaccept(wv::bind(&WvDBusServer::new_connection_cb, this,
-				_1));
+    // user must now call listen() at least once.
+    add(&listeners, false, "listeners");
 }
 
 
@@ -106,13 +118,48 @@ WvDBusServer::~WvDBusServer()
 {
     close();
     zap();
-    WVRELEASE(listener);
+}
+
+
+void WvDBusServer::listen(WvStringParm moniker)
+{
+    IWvListener *listener = IWvListener::create(moniker);
+    log(WvLog::Info, "Listening on '%s'\n", *listener->src());
+    if (!listener->isok())
+	log(WvLog::Info, "Can't listen: %s\n",
+	    listener->errstr());
+    listener->onaccept(wv::bind(&WvDBusServer::new_connection_cb,
+				this, _1));
+    listeners.add(listener, true, "listener");
+}
+
+
+bool WvDBusServer::isok() const
+{
+    if (geterr())
+	return false;
+    
+    WvIStreamList::Iter i(listeners);
+    for (i.rewind(); i.next(); )
+	if (!i->isok())
+	    return false;
+    return WvIStreamList::isok();
+}
+
+
+int WvDBusServer::geterr() const
+{
+    return WvIStreamList::geterr();
 }
 
 
 WvString WvDBusServer::get_addr()
 {
-    return WvString("tcp:%s", *listener->src());
+    // FIXME assumes tcp
+    WvIStreamList::Iter i(listeners);
+    for (i.rewind(); i.next(); )
+	if (i->isok())
+	    return WvString("tcp:%s", *i->src());
 }
 
 
@@ -174,7 +221,9 @@ bool WvDBusServer::do_server_msg(WvDBusConn &conn, WvDBusMsg &msg)
     }
     
     if (msg.get_dest() != "org.freedesktop.DBus") return false;
-    if (msg.get_path() != "/org/freedesktop/DBus") return false;
+
+    // dbus-daemon seems to ignore the path as long as the service is right
+    //if (msg.get_path() != "/org/freedesktop/DBus") return false;
     
     // I guess it's for us!
     

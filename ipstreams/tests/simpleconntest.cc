@@ -8,7 +8,7 @@
  */
 #include "wvfile.h"
 #include "wvistreamlist.h"
-#include "wvtcp.h"
+#include "wvtcplistener.h"
 #include "wvlog.h"
 #include <signal.h>
 

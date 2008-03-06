@@ -4,6 +4,7 @@
  * 
  * WvStream-based TCP connection class.
  */
+#include "wvtcplistener.h"
 #include "wvtcp.h"
 #include "wvistreamlist.h"
 #include "wvmoniker.h"
@@ -53,6 +54,7 @@
 #endif
 
 WV_LINK(WvTCPConn);
+WV_LINK(WvTCPListener);
 
 
 static IWvStream *creator(WvStringParm s, IObject*)
@@ -61,6 +63,20 @@ static IWvStream *creator(WvStringParm s, IObject*)
 }
 
 static WvMoniker<IWvStream> reg("tcp", creator);
+
+
+static IWvListener *listener(WvStringParm s, IObject *)
+{
+    WvConstStringBuffer b(s);
+    WvString hostport = wvtcl_getword(b);
+    WvString wrapper = b.getstr();
+    IWvListener *l = new WvTCPListener(hostport);
+    if (l && !!wrapper)
+	l->addwrap(wv::bind(&IWvStream::create, wrapper, _1));
+    return l;
+}
+
+static WvMoniker<IWvListener> lreg("tcp", listener);
 
 
 WvTCPConn::WvTCPConn(const WvIPPortAddr &_remaddr)
@@ -379,6 +395,7 @@ WvTCPListener::WvTCPListener(const WvIPPortAddr &_listenport)
 	|| listen(getfd(), 5))
     {
 	seterr(errno);
+	return;
     }
     
     if (listenport.port == 0) // auto-select a port number
@@ -401,16 +418,23 @@ WvTCPListener::~WvTCPListener()
 }
 
 
-WvTCPConn *WvTCPListener::accept()
+IWvStream *WvTCPListener::accept()
 {
     struct sockaddr_in sin;
     socklen_t len = sizeof(sin);
-    int newfd;
-    WvTCPConn *ret;
+    
+    if (!isok()) return NULL;
 
-    newfd = ::accept(getfd(), (struct sockaddr *)&sin, &len);
-    ret = new WvTCPConn(newfd, WvIPPortAddr(&sin));
-    return ret;
+    int newfd = ::accept(getfd(), (struct sockaddr *)&sin, &len);
+    if (newfd >= 0)
+	return wrap(new WvTCPConn(newfd, WvIPPortAddr(&sin)));
+    else if (errno == EAGAIN || errno == EINTR)
+	return NULL; // this listener is doing weird stuff
+    else
+    {
+	seterr(errno);
+	return NULL;
+    }
 }
 
 
