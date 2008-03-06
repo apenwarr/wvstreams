@@ -2,6 +2,14 @@
 aclocal.m4
 configure
 include/wvautoconf.h.in
-*.o
+*.[oa]
+*.so
+*.libs
 *~
 .*.d
+config.log
+config.mk
+config.status
+*.so.*
+reconfigure
+*/tests/*test
