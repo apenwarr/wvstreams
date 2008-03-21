@@ -1,4 +1,5 @@
 #include "wvtcp.h"
+#include "wvtcplistener.h"
 #include "wvtest.h"
 #include <errno.h>
 
@@ -25,23 +26,23 @@ WVTEST_MAIN("tcp connection")
     WVPASS(6);
     listen.runonce(100);
     WVPASS(7);
-    WvTCPConn *in = listen.accept();
+    IWvStream *_in = listen.accept();
     WVPASS(8);
-    WVPASS(in);
-    if (!in) return; // forget it...
+    WVPASS(_in);
+    if (!_in) return; // forget it...
     
-    WVPASS(in->isok());
+    WVPASS(_in->isok());
+    WvStreamClone in(_in);
+    WVPASS(in.isok());
     
     tcp.runonce(100);
     tcp.runonce(100);
     tcp.runonce(100);
     
-    WVPASS(in->isreadable());
+    WVPASS(in.isreadable());
     
-    WvString line = in->blocking_getline(100);
+    WvString line = in.blocking_getline(100);
     WVPASSEQ(line, "foo");
-    
-    in->release();
 }
 
 

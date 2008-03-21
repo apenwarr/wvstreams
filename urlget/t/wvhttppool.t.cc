@@ -1,5 +1,6 @@
 #include "wvtest.h"
 #include "wvhttppool.h"
+#include "wvtcplistener.h"
 #include <stdio.h>
 
 #ifndef _WIN32

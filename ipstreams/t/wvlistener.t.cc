@@ -1,6 +1,7 @@
 #include "wvlistener.h"
 #include "wvtest.h"
 #include "wvtcp.h"
+#include "wvtcplistener.h"
 #include "wvistreamlist.h"
 
 class XListener : public WvListener

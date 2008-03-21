@@ -4,6 +4,7 @@
 #include "wvx509mgr.h"
 #include "wvrsa.h"
 #include "wvtcp.h"
+#include "wvtcplistener.h"
 #include "wvistreamlist.h"
 #include "wvstrutils.h"
 #include <signal.h>

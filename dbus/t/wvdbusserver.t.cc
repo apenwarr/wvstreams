@@ -19,7 +19,8 @@ public:
 	fprintf(stderr, "Creating a test DBus server.\n");
 	WvString smoniker("unix:tmpdir=%s.dir",
 			 wvtmpfilename("wvdbus-sock-"));
-	s = new WvDBusServer(smoniker);
+	s = new WvDBusServer();
+	s->listen(smoniker);
 	moniker = s->get_addr();
 	fprintf(stderr, "Server address is '%s'\n", moniker.cstr());
 	WvIStreamList::globallist.append(s, false);
