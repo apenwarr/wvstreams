@@ -1,0 +1,11 @@
+.*.d
+*.[oa]
+*.d
+*.libs
+*~
+/src/include
+*.so
+*test
+simpleconn
+*.out
+/src/wvrules.mk
