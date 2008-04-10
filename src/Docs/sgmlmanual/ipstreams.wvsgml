@@ -1,0 +1,17 @@
+WVPART(ipstreams, The IPStreams (TCP/IP sockets interface) Library,
+ WVCHAPTER(basicip, Support Classes,
+  WVSECT1(wvaddr, WvAddr - storing an arbitrary network address, x)
+  WVSECT1(wvresolver, WvResolver - Background DNS name resolution, x)
+ )
+ WVCHAPTER(kernelip, Interfacing to Linux Kernel Features,
+  WVSECT1(wvinterface, WvInterface - manipulating network interfaces, x)
+  WVSECT1(wviproute, WvIPRoute - manipulating the routing table, x)
+  WVSECT1(wvipfirewall, WvIPFirewall - basic ipchains firewall interface, x)
+  WVSECT1(wvipaliaser, WvIPAliaser - using Linux IP aliasing, x)
+ )
+ WVCHAPTER(wvudp, WvUDP - using udp datagrams, x)
+ WVCHAPTER(wvudp2, WvUDP2 - logically separate udp datagram connections, x)
+ WVCHAPTER(wvtcp, WvTCP - using tcp streams, x)
+ WVCHAPTER(wvhttp, WvHTTP - HTTP URL downloader, x)
+)
+

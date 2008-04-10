@@ -1,0 +1,407 @@
+WVPART(streams, The Streams Library,
+
+ WVCHAPTER(wvstream, WvStream - communications fundamentals,
+   
+   WvStream is the base class from which (not surprisingly) most of the
+   WvStreams library is derived.  It defines the basic properties of a stream:
+   a sequence of bytes that may or may not be ready for reading or writing
+   at any given time.
+   
+   WvStream is a perfectly useful class all by itself; it can read, write,
+   and wait on a Unix fd (file descriptor), which is sufficient for nearly
+   all communications in Unix-like systems.  The other WvStream classes do
+   basically the same thing, but create and manipulate their fds
+   automatically instead of requiring you to do it.
+   
+   WVSECT1(wvstreamsimple, Basic WvStream Examples,
+   
+     The following example program reads from stdin and echos the results
+     back to stdout with a bit of added commentary.  Remember that in Unix,
+     fd 0 is stdin, and fd 1 is stdout.
+     
+     WVEXAMPLE(wvstreamex.cc)
+     
+     isok() ("is okay") returns true as long as the stream is still alive.
+     If you press CTRL-D as the input to a program, this sends an
+     end-of-file message and the stream becomes "not okay." (isok() == false).
+
+     The getline() function reads a character string of arbitrary length using
+     <link linkend="wvbuffer">WvBuffer</link>, up
+     to but not including the first newline.  The (-1) tells getline() to
+     wait forever for the newline if necessary.  Try changing it to 5000 (5
+     seconds) and see how that affects the operation of the program.
+
+     Whenever possible, WvStreams tries to shelter you from weird
+     Unix-specific information like fd 0 and fd 1.  There is a special
+     WvStream pointer called wvcon which points to both stdin and stdout.
+     (Actually, since it points at both fd 0 and fd 1, wvcon needs to be a
+     <link linkend="wvsplitstream">WvSplitStream</link> object, but don't
+     worry about that just yet.)
+
+     You can reassign wvcon to any other stream if you like -- this will let
+     you essentially redirect stdin and stdout for the WvStreams classes that
+     use it.
+
+     Here's an example of how you can use wvcon to simplify the above sample
+     program.
+     
+     WVEXAMPLE(wvstreamex2.cc)
+   )
+   
+   WVSECT1(wvstreamrw, Reading and Writing,
+     
+     Here's a sample program that uses the read() and write() member
+     functions.  Usually, these functions are used more often than getline()
+     because WvStreams are commonly used to manipulate binary data rather
+     than line-by-line data.
+     
+     WVEXAMPLE(wvstreamex3.cc)
+     
+     Unlike getline(), read() isn't very smart.  You must supply it with a
+     buffer and tell it how large the buffer is.  However, there's no
+     guarantee that read() will fill the entire buffer or any of it -- you
+     should _always_ check the return value (numread, in this case) to find
+     out how many bytes were read.  You'll find out later (when we talk about
+     <link linkend="wvstreamselect">select()</link>) that this
+     is actually the right thing to do -- the last thing you want in most
+     WvStreams programs is for read() to sit doing nothing until a buffer
+     fills up.
+
+     On the other hand, the write() function has a built-in buffer, so as
+     long as the stream is alive, the return value of write() should always
+     be the same as the length you provide as the second parameter.
+
+     The print() function works sort of like printf().  It uses the
+     <link linkend="wvstringexamples">complex constructor for WvString</link>
+     to type-safely format strings, and then the write() function to send
+     them out to the stream.
+   )
+   
+   WVSECT1(wvstreamselect, Waiting on a stream with select(),
+     
+     The previous example was actually not completely correct -- it works,
+     but depending on the wvcon implementation, it could accidentally use
+     100% CPU time.  (The default wvcon implementation doesn't actually have
+     this "problem," but that's a coincidence and might change in the future.)
+     
+     Remember that read() is not guaranteed to fill the input buffer.  In
+     fact, it's not even guaranteed to read any bytes at all.  So in theory,
+     the previous example might find itself endlessly looping, calling
+     isok() and read() over and over until some input is received.  That
+     will work, of course, but it wastes a lot of CPU time.  What we should
+     really do is tell WvStream to wait until some data is available, and
+     only then call read().  Here's how.
+     
+     WVEXAMPLE(wvstreamex4.cc)
+     
+     Note again that the (-1) parameter to select() means "wait forever."  In
+     this case, it doesn't really matter if you set it to 5000 (5 seconds), 
+     for example, because we'll simply wait five seconds and restart the loop.
+     
+     If we do select(0), select() doesn't wait at all.  This isn't as
+     pointless as it seems:  select() returns true or false depending
+     whether the stream was ready or not, so select(0) is a good way to test
+     if a stream is ready without actually stopping your program.
+     
+     You can also select() to see if a stream is writable, but this is used
+     much less often since WvStream now has write buffers anyway (so you can
+     always write to a stream without delaying).  Sometimes it can be
+     useful, though:  for example, a TCP connection is not "writable" until
+     it's connected to the remote host.  That makes sense, if you think
+     about it.  It's not readable either, of course, but it doesn't
+     necessarily become readable as soon as it connects.  A connected TCP
+     stream is always writable.
+
+     You can check for (or wait for) readability and writability at the same
+     time.  There is also a test for a stream "exception", but no one has
+     ever used that, so I don't know what it does.  The prototype for
+     select() actually looks like this:
+     
+     WVCMD(bool select(time_t msec_timeout,
+     	bool readable=true, bool writable=false, bool isexception=false);)
+
+     That means normally, we want to check whether a stream is readable, and
+     we don't care if it's writable or has an exception.  To check whether
+     a stream is writable, for example, use a line like this:
+     
+     WVCMD(wvcon->select(0, false, true, false);)
+     
+     To wait up to 5 seconds until the stream is either readable or
+     writable, try this:
+     
+     WVCMD(wvcon->select(5000, true, true, false);)
+
+     Now, you're probably wondering why read() can't just wait for data and
+     write() can't just send it out, saving us all a lot of trouble.  Well,
+     that's all fine and good for single-tasking one-stream programs, but
+     WvStreams was designed to handle lots of simultaneous connections --
+     that's when select() really gets useful.  We'll talk about that later,
+     in the section about <link linkend="wvstreamlist">WvStreamList</link>.
+
+   )
+   
+   WVSECT1(wvstreamcallbacks, Callback Functions,
+   
+     Unless you've skipped ahead to the <link
+     linkend="wvstreamlist">WvStreamList</link> section, this section will
+     seem even more useless than the one on <link
+     linkend="wvstreamselect">select()</link>.  But trust us, when you have lots
+     of different streams talking to each other later on, you'll be really
+     glad to have callback functions around.
+     
+     Here's a quick example, using one of the predefined stream callbacks
+     called autoforward().
+     
+     WVEXAMPLE(wvstreamex5.cc)
+     
+     The above program does almost exactly what the previous ones did,
+     except that instead of manually reading and writing strings, we tell
+     the stream that its "default operation" is to auto-forward its data to
+     wvcon... which is, in this case, itself.  The result is that we forward
+     stdin to stdout as before, only without the extra text surrounding it.
+     
+     Almost all WvStreams programs end up using callbacks for most of their
+     work.  That's because with callbacks, each stream knows what to do with
+     its own data, and you don't have to say it in the main program.  That's
+     what object-oriented programming is all about, after all.
+
+     In fact, the main loop in most WvStreams programs ends up looking a lot
+     like the main loop in the program above: wait until the stream is
+     ready, then run its callback function.
+
+     What does autoforward() do, exactly?  Let's write a callback function
+     ourselves and demonstrate one possibility.
+     
+     WVEXAMPLE(wvstreamex6.cc)
+
+     Note that mycallback() calls getline() with a (0) delay parameter; you
+     almost never want a callback function to wait for something (although
+     it certainly can, if you really want).  Instead, if getline can't find
+     a whole line of text to read, we simply return from the callback and
+     wait until next time.
+
+     This brings up an interesting point about select() and getline():
+     select() might say yes, the stream is ready for reading, but getline()
+     might still return NULL.  Why?  Because getline() looks for a
+     terminating newline.  If the only input is the letters "abcdefg"
+     (without a trailing newline character) then the stream really is ready
+     for reading, but getline hasn't retrieved a whole line of input.  Don't
+     worry, though, running getline() once clears the input-ready condition,
+     so the callback will only get called again when more data is received.
+
+     But whatever you do, don't be fooled into thinking that just because
+     you're in the callback function, that data will always be returned on a
+     read() or getline().  Always, _always_ check the return values first.
+
+   )
+   
+   WVSECT1(wvstreamdelay, Delays and Timeouts,
+   
+     We should mention that you can use the select() function for
+     millisecond-resolution delays, or to timeout when no data is received
+     for a certain amount of time.  The following example babbles something
+     at you after every second of no input, and exits if you don't say
+     anything for ten seconds.
+     
+     WVEXAMPLE(wvstreamex7.cc)
+   
+   )
+   
+ )
+ 
+ WVCHAPTER(somesimplestreams, Some Simple Streams,
+ 
+  Let's look at a few streams that are only slightly more complicated than
+  WvStream itself:  WvFile, WvFileWatcher, and WvPipe.
+ 
+  WVSECT1(wvfile, WvFile - accessing Unix files,
+  
+    WvFile is the simplest WvStream-derivative around.  All it does is open
+    a Unix file for you given a filename, so you don't have to supply the fd
+    yourself.
+    
+    WVEXAMPLE(wvfileex.cc)
+    
+    Need we say more?
+    
+    Oh, since Unix devices are just files, you can use them with WvFile just
+    as easily.  For example, if your modem is /dev/ttyS2, you can connect to
+    it by creating a WvFile that refers to /dev/ttyS2.  Of course, the <link
+    linkend="wvmodem">WvModem</link> class is probably more useful for that
+    particular job.
+  
+  )
+ 
+  WVSECT1(wvwatcher, WvFileWatcher - waiting for a file to change,
+
+    WvFileWatcher is a bit more interesting than WvFile: it reads to the end
+    of a file, and then if the file grows, select() returns true and you can
+    read more data; if the file shrinks (which presumably means it was
+    rewritten from scratch), it starts again at the top of the file.
+    
+    To think of it another way:  WvFileWatcher makes select() make sense on
+    regular files.  Normally, select() is always true for a file, since all
+    the data is always immediately available.  (Note that this isn't true if
+    your WvFile is connected to a Unix device; then select() makes sense
+    already, and WvFileWatcher will just mess you up.)
+
+    WvFileWatcher is very seldom used except as a WvStreams test, so we
+    won't bother to give an example here.
+  )
+  
+  WVSECT1(wvpipe, WvPipe - talking to subtasks,
+    WvPipe will certainly be very interesting to anyone who writes programs
+    that need to spawn off sub-programs, and read and possibly write to that
+    programs input and output. WvPipe makes this rediculously easy, by
+    making the application call look exactly like any other stream. No more
+    messy exec() calls, and best yet, no more blocking - if you just need to
+    send a program off to do something, then you don't need to fork at all, you
+    can just create a WvPipe stream which ignores any input, output, or error
+    messages, and add it to your WvStreamList. If you do need to access input or
+    output, you can easily just select() on this pipe, which will return true 
+    when the program has something interesting for you.
+
+    Insert Example Here...
+  )
+  
+  WVSECT1(wvmodem, WvModem - baud rates and terminal modes,
+    Not written yet.
+  )
+  
+ )
+ 
+ WVCHAPTER(logs, Dealing with Log Messages,
+  WVSECT1(wvlog, WvLog - printing log messages, x)
+  WVSECT1(wvlogrcv, WvLogRcv - receiving and disposing of log messages, x)
+  WVSECT1(wvlogbuffer, WvLogBuffer - saving log messages to a buffer, x)
+  WVSECT1(wvsyslog, WvSyslog - sending log messages to syslog, x)
+ )
+ 
+ WVCHAPTER(wvstreamlist, WvStreamList - dealing with multiple streams,
+  
+  WvStreamList is one of the most important parts of the WvStreams library.
+  Almost every real WvStreams program (in contrast with all the preceding
+  examples) involves at least one WvStreamList.  We would have mentioned it
+  much sooner, but we thought it would be nice to have a few different kinds
+  of streams to play with before we started creating lots of them at a time.
+
+  Fundamentally, what WvStreamList does is allow you to select() on more
+  than one stream at a time.  That way you can, for example, wait for
+  multiple TCP connections to send you data, and wake up immediately as soon
+  as any one of them is available.  Without the magic of WvStreamList, there
+  is no good way to wait for multiple streams simultaneously.  There are,
+  however, a couple of bad ways, which we will mention shortly just so you
+  don't try them.
+  
+  WVSECT1(wvstreamlistbadidea, Don't do this,
+  
+  Don't try this:
+  
+  WVEXAMPLE(wvstreamlistex.cc)
+  
+  It will fail in three different ways depending on the value of X.
+  
+  If X==-1, each select() statement waits forever for data.  That means in
+  order to print a snorkle (which should appear once per second), you must
+  first print a foo (which only happens once every three seconds).  That's
+  bad enough, but some streams might be almost completely idle, so you
+  certainly can't get away with doing that.
+  
+  If X==0, we never wait at all.  This will appear to work properly -- if
+  you run the program, the snorkles and foos will show up at the right time.
+  But unfortunately, your program will spin in the main loop, and take 100%
+  of the CPU unnecessarily.
+  
+  We can compromise by making X==1000 instead.  That way, each select()
+  statement will give up after 1 second.  Since the snorkles only happen
+  once per second, that should be okay.  However, it's not perfect -- the
+  snorkles should appear _exactly_ one second apart, but you can't guarantee
+  that using this technique.  It'll be somewhere between zero and one
+  seconds, depending on random luck.  Besides, the whole point of this
+  chapter is there's a better way, so don't write programs like the one above.
+  
+  )
+  
+  WVSECT1(wvstreamlistgood, Do this instead,
+  
+    Here's a better way to choose between two lists, using WvStreamList.  As
+    you might have guessed, WvStreamList is a type of WvLinkList that
+    contains WvStreams.  It's also a stream itself, so (among other things)
+    you can select() on a WvStreamList and include one WvStreamList inside
+    another.
+    
+    But let's keep it simple for now:
+    
+    WVEXAMPLE(wvstreamlistex2.cc)
+    
+    A streamlist is always okay (isok() == true) because you can always add
+    and remove streams from it.  That's why our main loop is checking
+    for "okayness" of the two main streams, rather of the list.
+  
+    But also notice the contents of the main loop.  We select() on the list,
+    and if it returns true, we then callback() the list.  What's happening
+    there?
+    
+    What happens is this.  WvStreamList::select() will return true if the
+    select() of any of its member streams would return true.  (It doesn't
+    actually _call_ the select() function of each of its member streams, but
+    the idea is the same.  That's why WvStreamList is magic.)  When you run
+    WvStreamList::callback(), it calls back all the member streams that
+    would have returned true to a select() call.
+    
+    If you give select() a delay (in this case, infinity), it will wait
+    until any one of the member streams is ready.
+
+    This mechanism increases fairness between streams, in case you have a
+    lot of high-bandwidth streams and you're having trouble keeping up.  If
+    more than one stream is ready, callback() will call each one
+    sequentially before it returns.  That way, no one stream will get
+    priority over the others.
+    
+  )
+  
+  WVSECT1(wvstreamlistfun, An Interesting Example,
+
+    Now that we've introduced all the pieces, we can have our first
+    interesting WvStream example by throwing several pieces together. Here's
+    a program that prints messages every once in a while through a WvPipe
+    and using timeouts, while you talk to your modem device via the console.
+
+    WVEXAMPLE(wvstreamfunex.cc)
+    
+  )
+
+ )
+ 
+ WVCHAPTER(magicstreams, Some Magical Streams,
+  WVSECT1(wvstreamclone, WvStreamClone - a stream within a stream,
+    WvStreamclone is probably one of the coolest, and most confusing parts
+    within the WvStream library. Almost everyone who has ever encountered this
+    stream the first time has had to stop and go over it a few times before they
+    can wrap their head around what is going on. Ok.. now that I've scared
+    you... I'm going to tell you that it is really quite easy. Most of the time,
+    when you are using a WvStreamClone, you will be doing something like the
+    following:
+
+    1. Start a Stream on a TCP Connection
+    2. Change this Stream into something else (like an SSL Stream)
+    3. And then talk some sort of high level protocol (like HTTP)
+
+    So you have one stream (a TCP Connection), that morphs into another
+    stream TYPE (an SSL Stream), that then becomes another stream (talking
+    HTTP). All the while, not changing the stream that was started and added
+    to the original WvStreamList.
+
+    Insert Example here...
+)
+  WVSECT1(wvsplitstream, WvSplitStream - separating read and write streams, x)
+  WVSECT1(wvloopback, WvLoopback - talking to yourself across fork(), x)
+ )
+ 
+ WVCHAPTER(unusualstreams, Some Unusual Streams,
+   WVSECT1(wvtimestream, WvTimeStream - timed events, x)
+   WVSECT1(wvprotostream, WvProtoStream - a protocol state machine, x)
+ )
+ 
+)
+

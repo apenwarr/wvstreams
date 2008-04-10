@@ -1,0 +1,317 @@
+
+WVPART(utils, The Utilities Library,
+
+ WVPREFACE(Introduction,
+  
+  The "utils" library contains fundamental support utilities used throughout
+  WvStreams, or at least ones that we couldn't classify anywhere else.
+ 
+  Functions and classes in the utils library don't depend on functions and
+  classes from any other WvStreams libraries.
+  
+ )
+
+ WVCHAPTER(basicutils, Basic String Handling,
+  
+  Here are some particularly simple C functions for manipulating character
+  strings.  In general, the only reason they sit in C++ files is to make it
+  easier to link with our C++ functions -- they don't use many C++ features.
+ 
+  WVSECT1(strutils, String Utilities (strutils.cc),
+   WVSECT2(terminatestring, terminate_string(),
+    
+    WVCMD(char *terminate_string(char *string, char c))
+
+    Add character c to the end of a string after removing terminating
+    carriage returns/linefeeds if any.
+
+    You need a buffer that's at least one character bigger than the
+    current length of the string, including the terminating NUL.
+   )
+   
+   WVSECT2(trimstring, trim_string(),
+    WVCMD(char *trim_string(char *string))
+    
+    Trims whitespace from the beginning and end of the character string,
+    including carriage return / linefeed characters.  Modifies the string
+    in place.  Returns the new first character of the string, which points
+    either at 'string' itself or some character contained therein.
+    
+    string is allowed to be NULL; returns NULL in that case.
+   )
+    
+   WVSECT2(replacechar, replace_char(),
+    WVCMD(void replace_char(void *string, char c1, char c2, int length))
+    
+    Replace all instances of c1 with c2 for the first 'length' characters in
+    'string'.  Ignores terminating NUL, so make sure you set 'length'
+    correctly.
+   )
+    
+   WVSECT2(strlwr, strlwr(),
+    WVCMD(char *strlwr(char *string))
+    
+    In-place modify a character string so that all contained letters are
+    in lower case.  Returns 'string'.
+   )
+    
+   WVSECT2(isword, is_word(),
+    WVCMD(bool is_word(char *string))
+    
+    Returns true if all characters in 'string' are isalnum() (alphanumeric).
+   )
+    
+   WVSECT2(hexdumpbuffer, hexdump_buffer(),
+    WVCMD(WvString hexdump_buffer(unsigned char *buf, size_t len))
+    
+    Produce a hexadecimal dump of the data buffer in 'buf' of length 'len'.
+    it is formatted with 16 bytes per line; each line has an address offset,
+    hex representation, and printable representation.
+    
+    This is used mostly for debugging purposes.  You can send the returned
+    <link linkend="wvstring">WvString</link> object directly to a 
+    <link linkend="wvlog">WvLog</link> or any other <link linkend="wvstream">
+    WvStream</link> for output.
+
+   )
+    
+   WVSECT2(isnewline, isnewline(),
+    WVCMD(bool isnewline(char c))
+    
+    Returns true if 'c' is a newline or carriage return character.  Increases
+    code readability a bit.
+   )
+    
+   WVSECT2(hexify, hexify(),
+    WVCMD(void hexify(char *obuf, unsigned char *ibuf, size_t len))
+    
+    Write the contents of the binary string of length 'len' pointed to by
+    'ibuf' into the output buffer 'obuf' in hexadecimal format.
+    
+    For example, if len==4, ibuf=="ABCDEF", then obuf will contain "41424344"
+    with a terminating NUL character.
+    
+    This is useful to turn arbitrary binary into a simple printable format,
+    so that it can (for example) be written to a <link
+    linkend="wvconf">WvConf</link> configuration file.
+    
+    obuf must be a buffer with at least (len * 2) + 1 bytes available.
+    (two digits for each byte of ibuf, plus a terminating NUL).
+    
+   )
+    
+   WVSECT2(unhexify, unhexify(),
+    WVCMD(void unhexify(unsigned char *obuf, char *ibuf))
+    
+    Reverse the operation performed by <link
+    linkend="hexify">hexify()</link>.  obuf must be a buffer large enough to
+    contain the entire binary output string; you can calculate this size with
+    (strlen(ibuf) / 2).  obuf will NOT be automatically NUL-terminated.
+    
+   )
+  )
+  
+
+  WVSECT1(verstring, Version String Manipulation (verstring.cc),
+  
+   These are version number and string manipulations, mostly specific to
+   Worldvisions software.
+
+   Version numbers are 32-bit hexadecimal numbers such as 0x00012a00.  The
+   first 16 bits are the major version, and the second 16 bits are the
+   (fractional) minor version. For example, the above example corresponds to
+   version "1.2a" (which is the version string).
+   
+   You can numerically compare version numbers using the standard C &lt; and
+   &gt; operators, which is what makes them useful.
+   
+   Verstring cannot deal with version numbers that contain more than four
+   digits to the left or right of the decimal, letters greater than f, or
+   more than one decimal.
+
+
+   WVSECT2(vertostring, ver_to_string(),
+    WVCMD(const char *ver_to_string(unsigned int ver))
+    
+    Converts an integer, like 0x00012a00, to a string, like 1.2a.
+   )
+   
+   WVSECT2(stringtover, string_to_ver(),
+    WVCMD(unsigned int string_to_ver(const char *str))
+    
+    Converts a string, like 1.2a, to an integer, like 0x00012a00.
+   )
+   
+  )
+
+
+  WVSECT1(base64, Base64 Encoding Tools (base64.cc),
+
+   Functions for encoding and ecoding strings in MIME Base64 notation.
+   
+   WVSECT2(base64encode, base64_encode(),
+    WVCMD(char *base64_encode(char *str))
+    
+    Convert 'str' to base64 encoding, and return a dynamically-allocated
+    char* string with the result.
+    
+    You must 'delete' the returned string when you've finished with it.
+   )
+   
+   WVSECT2(base64decode, base64_decode(),
+    WVCMD(char *base64_decode(char *str))
+    
+    Convert 'str' from base64 format into a normal string, and return a
+    dynamically-allocated char* string with the result.
+    
+    You must 'delete' the returned string when you've finished with it.
+   )
+  )
+ )
+ 
+ WVCHAPTER(wvstring, WvString - dynamic character strings,
+ 
+  WVSECT1(wvstringintro, Introduction,
+
+   WvString is an implementation of a simple and efficient printable-string
+   class.  It leaves out many of the notational conveniences provided by
+   other string classes, because they waste too much CPU time and space.
+
+   It does the one thing really missing from char* strings, that is, dynamic
+   buffer management.
+   
+   When you copy one WvString to another, it does _not_ duplicate the
+   buffer; it just creates another pointer to it.  To really duplicate the
+   buffer, call the unique() member function.
+
+   To change the contents of a WvString, you need to run its edit() member
+   function, which executes unique() and then returns a char* pointer to the
+   WvString contents.
+
+   The most annoying side-effect of this implementation is that if you
+   construct a WvString from a char* buffer or static string, WvString won't
+   duplicate it.  Usually this is okay and much faster (for example, if you
+   just want to print a static string).  However, if you construct a
+   WvString from a dynamic variable, changing the dynamic variable will
+   change the WvString unless you run unique() or edit().  Worse still,
+   deleting the dynamic variable will make WvString act unpredictably.
+
+   But it does cut out extra dynamic memory allocation for the most common
+   cases, and it almost always avoids manual 'new' and 'delete' of string
+   objects.
+   
+  )
+
+  WVSECT1(wvstringexamples, WvString Examples,
+   
+     WVCMD(WvString x("fuzzy wazoo");
+x.unique();)
+
+     The first line creates a WvString object 'x' containing a pointer to
+     the static string "fuzzy wazoo".  This requires no dynamic memory
+     allocation.
+
+     The second line makes the WvString "unique", which separates it from
+     the static string.  This requires a dynamic memory allocation.  In this
+     particular case, calling unique() was a pretty silly thing to do.
+     
+     When 'x' is destroyed (automatically upon exiting the C++ code block)
+     the dynamic string will be deleted automatically.
+     
+     WVCMD(WvString output("fuzzy %-10.3s %5s\n", "abcdef", 12);
+WvString c(output);
+c.edit()[1] = 'a';)
+     
+     The first command above creates a WvString called 'output' which contains
+     the string "fuzzy abc[seven spaces] [three spaces]12\n".  This uses the
+     printf-like string formatting feature built into WvString.  Note that
+     unlike printf, WvString's formatter is type-safe: you can't pass the
+     wrong kind of object to the formatter.  In fact, everything you format
+     must use a '%s' format string - %d, %f, etc are not supported.
+     
+     The above function call works as follows:  C++ automatically promotes the
+     first two parameters ("fuzzy..." and "abcdef") into static WvStrings
+     using the simple WvString constructor.  Then it turns '12' into a
+     WvString using the WvString::WvString(int) constructor.  This one
+     requires a dynamic memory allocation since it generates a new string.
+     
+     C++ then passes the new WvStrings on to the WvString "complex"
+     constructor, which formats them according to the first string and
+     generates an output string, which is always dynamically allocated.
+     
+     The second line above creates a WvString 'c' which is the same as
+     'output'.  It does not cause any new dynamic memory allocations to occur,
+     and is very quick.
+     
+     The third line first makes 'c' unique (so that it has a separate copy
+     of the output string), then changes the second character to 'a', so that
+     now 'c' contains "fazzy abc 12" and output contains "fuzzy abc 12".
+   
+     WVCMD(WvString nul;)
+     
+     This command creates a null WvString.  This is NOT simply a WvString
+     containing a zero-length string, but a WvString that points to nothing.
+     You very seldom want to leave a WvString this way, but if you do, you
+     can test for this condition with something like:
+	  
+	  WVCMD(((char *)nul == NULL))
+     
+     Most often, you will want to immediately fill the null WvString with
+     an empty buffer with setsize(), as below.
+     
+     WVCMD(WvString newstr;
+newstr.setsize(128);
+sprintf(newstr.edit(), "blah blah %5.4f", floatval);)
+     
+     These commands first create a NULL WvString, then attach it to an
+     uninitialized 128-byte buffer.  We then use sprintf to fill the string
+     buffer.
+   
+   )
+
+ )
+ 
+ WVCHAPTER(wvlinklist, WvLinkList - type-safe linked lists and iterators, 
+
+   WvLinkList allows you to create type-safe lists of objects, along with
+   appropriate iterators.  Lists are used all over the Weaver and WvStreams,
+   and the best way to learn about them is by example -- so read the source
+   code and look at the sample program in testlist.cc.
+
+   You might also want to read the top of wvlinklist.h for some implementation
+   details.
+   
+   A typical use of WvLinkList would be something like this:
+   
+   WVEXAMPLE(wvlistex.cc)
+ )
+ 
+ WVCHAPTER(wvhashtable, WvHashTable - type-safe hash tables and iterators,
+ 
+   WvHashTable works a lot like <link linkend="wvlinklist">WvLinkList</link>,
+   except it allows for fast indexing of objects in the table (or
+   "dictionary") using the [] operator.
+
+   We implement a hash table as a fixed-size array of WvLinkLists.  Someday,
+   we might change the implementation to use a self-resizing array instead.
+   
+   Iterators work with WvHashTable in exactly the same way as with
+   WvLinkList.
+
+   WvHashTable usage is described more fully, along with examples, in
+   wvhashtable.h.
+ )
+ 
+ WVCHAPTER(wvbuffer, WvBuffer - dynamically-resizing binary buffers,
+   
+   Not written yet.
+   
+ )
+ 
+ WVCHAPTER(wvlockfile, WvLockFile - tty lock file creation,
+ 
+   Not written yet.
+ 
+ )
+)
+

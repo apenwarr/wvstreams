@@ -1,0 +1,4 @@
+*.d
+*.libs
+*test
+*.pem

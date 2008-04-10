@@ -1,0 +1,6 @@
+WVPART(configfile, The ConfigFile (.ini manager) Library,
+ WVCHAPTER(cfgentry, Configuration Entries, x)
+ WVCHAPTER(cfgsection, Configuration Sections, x)
+ WVCHAPTER(wvconf, Configuration Files, x)
+)
+

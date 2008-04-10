@@ -1,0 +1,4 @@
+*.d
+*test
+simpleconn
+ipstreams.libs

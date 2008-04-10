@@ -1,0 +1,18 @@
+#!/bin/sh
+
+set -e
+
+#DEBHELPER#
+
+# everything following is only useful while configuring the package.
+if [ "$1" != "configure" ]; then
+        exit 0
+fi
+
+set +e
+
+# REALLY Stupid debian package convention call to LDConfig...
+# why don't they just have Lib packages set some sort of flag, and then call
+# ldconfig once when all libraries have been installed???
+
+ldconfig
