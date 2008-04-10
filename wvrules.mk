@@ -254,7 +254,7 @@ endef
 		$($@-LIBS) $(LIBS) $(XX_LIBS)
 
 %: %.o
-	$(CC) $(LDFLAGS) $($@-LDFLAGS) -o $@ $(filter %.o %.a %.so, $^) $($@-LIBS) $(LIBS) $(XX_LIBS)
+	$(CXX) $(LDFLAGS) $($@-LDFLAGS) -o $@ $(filter %.o %.a %.so, $^) $($@-LIBS) $(LIBS) $(XX_LIBS)
 
 # Force objects to be built before final binaries	
 $(addsuffix .o,$(basename $(wildcard *.c) $(wildcard *.cc) $(wildcard *.cpp))):

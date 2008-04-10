@@ -7,7 +7,6 @@
 
 // the templated base class for WvCallback.  All the other callback classes
 // come from this somehow.
-template <class RET>
 class WvCallbackBase
 {
 protected:
@@ -24,8 +23,8 @@ public:
     // functions we _really_ call aren't part of the Fake class and probably
     // have different parameters, but some hideous typecasts should fix that
     // right up.
-    typedef RET (Fake::*FakeFunc)();
-    typedef RET (*FakeGlobalFunc)();
+    typedef int (Fake::*FakeFunc)();
+    typedef int (*FakeGlobalFunc)();
     
     Fake *obj;
     
@@ -34,11 +33,11 @@ public:
 	FakeGlobalFunc globalfunc;
     };
     
-    WvCallbackBase::WvCallbackBase(void *_obj, FakeFunc _func)
+    WvCallbackBase(void *_obj, FakeFunc _func)
 	: obj((Fake *)_obj), func(_func)
 	{ }
     
-    WvCallbackBase::WvCallbackBase(FakeGlobalFunc _func)
+    WvCallbackBase(FakeGlobalFunc _func)
 	: obj(0), globalfunc(_func)
 	{ }
     
@@ -59,16 +58,16 @@ public:
 // file, to avoid duplicated code.  It's supposed to be part of a template
 // declaration - be careful!
 #define __MakeWvCallback(n, decls, parms) \
-    class WvCallback##n : public WvCallbackBase<RET> \
+    class WvCallback##n : public WvCallbackBase \
     { \
     protected: \
     public: \
 	typedef RET (Fake::*Func) decls; \
 	typedef RET (*GlobalFunc) decls; \
 	WvCallback##n(Fake *_obj, Func _func) \
-	    : WvCallbackBase<RET>(_obj, (FakeFunc)_func) { } \
+	    : WvCallbackBase(_obj, (FakeFunc)_func) { } \
 	WvCallback##n(GlobalFunc _func) \
-	    : WvCallbackBase<RET>((FakeGlobalFunc)_func) { } \
+	    : WvCallbackBase((FakeGlobalFunc)_func) { } \
     public: \
 	RET operator() decls  \
 	    { \
@@ -92,7 +91,8 @@ public:
     public: \
 	typedef RET (T::*BoundFunc) decls; \
 	WvCallback##n##_bound(T &_obj, BoundFunc _func) \
-	    : basetype((Fake *)&_obj, reinterpret_cast<Func>(_func)) { } \
+	    : basetype((typename basetype::Fake *)&_obj, \
+			   reinterpret_cast<typename basetype::Func>(_func)) { } \
     }
 
 
@@ -167,7 +167,7 @@ template <class RET, class T, class P1, class P2, class P3, class P4, class P5,
 	class type##_bound : public WvCallback##n##_bound<ret,T , ## parms> \
 	{ \
 	public: \
-	    type##_bound(T &_obj, BoundFunc _func) \
+	    type##_bound(T &_obj, typename WvCallback##n##_bound<ret,T , ## parms>::BoundFunc _func) \
 		: WvCallback##n##_bound<ret,T , ## parms>(_obj, _func) {} \
 	}
 

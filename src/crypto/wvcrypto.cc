@@ -159,7 +159,7 @@ WvRSAKey::WvRSAKey(const char *_keystr, bool priv)
     
     if (priv)
     {
-	rsa = d2i_RSAPrivateKey(&rp, &bufp, hexbytes/2);
+	rsa = d2i_RSAPrivateKey(&rp, (const unsigned char **)&bufp, hexbytes/2);
 	prv = keystr;
 	
 	size_t size;
@@ -170,7 +170,7 @@ WvRSAKey::WvRSAKey(const char *_keystr, bool priv)
     }
     else
     {
-	rsa = d2i_RSAPublicKey(&rp, &bufp, hexbytes/2);
+	rsa = d2i_RSAPublicKey(&rp, (const unsigned char **)&bufp, hexbytes/2);
 	prv = NULL;
 	pub = keystr;
     }

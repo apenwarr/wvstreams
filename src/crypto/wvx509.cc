@@ -291,7 +291,7 @@ void WvX509Mgr::decodecert(WvString encodedcert)
 
     unhexify(certbuf,encodedcert);
     ct = cert = X509_new();
-    cert = d2i_X509(&ct, &cp, hexbytes/2);
+    cert = d2i_X509(&ct, (const unsigned char **)&cp, hexbytes/2);
 
     delete[] certbuf;
 }
@@ -444,7 +444,7 @@ void WvX509Mgr::dumpkeypair(WvString outfile, bool append)
     if (keyout != NULL)
     {
 	debug("Printing keypair...\n");
-	(const EVP_CIPHER *)enc = EVP_get_cipherbyname("rsa");
+	enc = (EVP_CIPHER *)EVP_get_cipherbyname("rsa");
 	PEM_write_RSAPrivateKey(keyout,keypair->rsa, enc, NULL, 0, NULL, NULL);
     }
     else

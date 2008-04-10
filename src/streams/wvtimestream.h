@@ -45,7 +45,7 @@ public:
     /**
      * notify timestream that we have "ticked" once
      */
-    void WvTimeStream::tick();
+    void tick();
     virtual void execute();
 };
 
