@@ -57,7 +57,7 @@ void WvStreamsDaemon::do_stop()
 }
 
 void WvStreamsDaemon::add_stream(IWvStream *istream,
-    	bool autofree, char *id)
+    	bool autofree, const char *id)
 {
     streams.append(istream, false, id);
     // FIXME: we should pass in "id" here, but things are not happy in
@@ -66,7 +66,7 @@ void WvStreamsDaemon::add_stream(IWvStream *istream,
 }
 
 void WvStreamsDaemon::add_restart_stream(IWvStream *istream, bool autofree,
-					 char *id)
+					 const char *id)
 {
     add_stream(istream, autofree, id);
     
@@ -75,7 +75,7 @@ void WvStreamsDaemon::add_restart_stream(IWvStream *istream, bool autofree,
 }
 
 void WvStreamsDaemon::add_die_stream(IWvStream *istream,
-    	bool autofree, char *id)
+    	bool autofree, const char *id)
 {
     add_stream(istream, autofree, id);
     

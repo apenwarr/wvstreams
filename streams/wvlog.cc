@@ -21,7 +21,7 @@ WvLogRcvBaseList *WvLog::receivers;
 int WvLog::num_receivers = 0, WvLog::num_logs = 0;
 WvLogRcvBase *WvLog::default_receiver = NULL;
 
-char *WvLogRcv::loglevels[WvLog::NUM_LOGLEVELS] = {
+const char *WvLogRcv::loglevels[WvLog::NUM_LOGLEVELS] = {
     "Crit",
     "Err",
     "Warn",

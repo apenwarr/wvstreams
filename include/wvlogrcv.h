@@ -75,7 +75,7 @@ public:
     virtual void log(WvStringParm source, int loglevel,
 		     const char *_buf, size_t len);
     
-    static char *loglevels[WvLog::NUM_LOGLEVELS];
+    static const char *loglevels[WvLog::NUM_LOGLEVELS];
     
     WvLogRcv(WvLog::LogLevel _max_level = WvLog::NUM_LOGLEVELS);
     virtual ~WvLogRcv();
