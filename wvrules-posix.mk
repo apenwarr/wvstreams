@@ -18,7 +18,7 @@ CXXFLAGS += $(CXXOPTS)
 LDFLAGS += $(LDOPTS) -L$(WVSTREAMS_LIB)
 
 # Default compiler we use for linking
-WVLINK_CC = g++
+WVLINK_CC = $(CXX)
 
 ifeq ("$(enable_debug)", "yes")
   DEBUG:=1
