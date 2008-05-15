@@ -154,7 +154,7 @@ static WvString set_name_entry(X509_NAME *name, WvStringParm dn)
 	if (value)
 	    *value++ = 0;
 	else
-	    value = "NULL";
+	    value = (char*)"NULL";
 	
 	sid = strlwr(trim_string(cptr));
 	

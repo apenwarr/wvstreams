@@ -151,7 +151,7 @@ WvString spacecat(WvStringParm a, WvStringParm b, char sep, bool onesep)
 
 
 // Replaces whitespace characters with nonbreaking spaces.
-char *non_breaking(char * string)
+char *non_breaking(const char * string)
 {
     if (string == NULL)
         return (NULL);

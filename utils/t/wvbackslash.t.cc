@@ -15,9 +15,9 @@ WVTEST_MAIN("backslashtest.cc")
         WvEncoder *enc = new WvBackslashEncoder();
         WvBufStream *ostream = new WvBufStream();
         WvDynBuf outbuf;
-        char *input[BSLASH_NUM_INPUT] = 
+        const char *input[BSLASH_NUM_INPUT] = 
             {"encode this!\n", "baroofey\n", "\\", "\nmagoo\b", " "};
-        char *desired[BSLASH_NUM_INPUT] =
+        const char *desired[BSLASH_NUM_INPUT] =
             {"encode this!\\n", "baroofey\\n", "\\\\", "\\nmagoo\\b", " "};
         WvString result;
 
@@ -44,9 +44,9 @@ WVTEST_MAIN("backslashtest.cc")
         WvEncoder *enc = new WvBackslashDecoder();
         WvBufStream *ostream = new WvBufStream();
         WvDynBuf outbuf;
-        char *input[BSLASH_NUM_INPUT] =
+        const char *input[BSLASH_NUM_INPUT] =
             {"encode this!\\n", "baroofey\\n", "\\\\", "\\nmagoo\\b", " "};
-        char *desired[BSLASH_NUM_INPUT] = 
+        const char *desired[BSLASH_NUM_INPUT] = 
             {"encode this!\n", "baroofey\n", "\\", "\nmagoo\b", " "};
         WvString result;
 

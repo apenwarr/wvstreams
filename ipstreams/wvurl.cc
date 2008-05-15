@@ -13,7 +13,7 @@
 // A static list of the default ports for each protocol.
 struct DefaultPort
 {
-    char *proto;
+    const char *proto;
     int port;
     bool uses_slashes;
 };

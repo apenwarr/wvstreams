@@ -448,7 +448,7 @@ WVTEST_MAIN("nothing to encode/decode")
 
 	{ // empty char*
 	    WvEncoder *enc = (i == 1) ? (WvEncoder *)new WvHexEncoder : new WvHexDecoder;
-	    char *empty = "";
+	    const char *empty = "";
 	    WvDynBuf dest;
 	    dest.put("stuff there",11);
 	    enc->flushmembuf(empty, 0, dest, true);

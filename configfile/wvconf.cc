@@ -176,7 +176,7 @@ void WvConf::maybesetint(WvStringParm section, WvStringParm entry,
  
 void WvConf::load_file(WvStringParm filename)
 {
-    char *p;
+    const char *p;
     char *from_file;
     WvConfigSection *sect = &globalsection;
     bool quick_mode = false;

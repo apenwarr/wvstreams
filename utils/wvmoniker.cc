@@ -78,7 +78,7 @@ void *WvMonikerRegistry::create(WvStringParm _s, IObject *obj)
     if (cptr)
 	*cptr++ = 0;
     else
-	cptr = "";
+	cptr = (char*)"";
     
     DEBUGLOG("WvMonikerRegistry create object ('%s' '%s').\n", s.cstr(), cptr);
     

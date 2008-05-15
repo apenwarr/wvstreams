@@ -12,9 +12,9 @@ WVTEST_MAIN("wordwraptest.cc")
     WvEncoder *enc = new WvWordWrapEncoder(maxwidth);
     WvBufStream *ostream = new WvBufStream();
     WvDynBuf outbuf;
-    char *input[WRAP_NUM_INPUT] = {"aaaaaa\n", "abra cadabra\n", "cabo-oose\n",
-        "ja ba ba doo ba\n", "rabarabaraba\n", "\nboo\nboo\n"};
-    char *desired[WRAP_NUM_INPUT] = {"aaaa\naa\n", "abra\ncada\nbra\n", 
+    const char *input[WRAP_NUM_INPUT] = {"aaaaaa\n", "abra cadabra\n", 
+        "cabo-oose\n", "ja ba ba doo ba\n", "rabarabaraba\n", "\nboo\nboo\n"};
+    const char *desired[WRAP_NUM_INPUT] = {"aaaa\naa\n", "abra\ncada\nbra\n", 
         "cabo\n-oos\ne\n", "ja\nba\nba\ndoo\nba\n", "raba\nraba\nraba\n", 
         "\nboo\nboo\n"};
     WvString result;
@@ -29,8 +29,7 @@ WVTEST_MAIN("wordwraptest.cc")
         stream->write(input[i], strlen(input[i]));
         ostream->read(outbuf, 1024);
         result = outbuf.getstr();
-        if (!WVPASS(result == desired[i]))
-            printf("   because [%s] != [%s]\n", result.cstr(), desired[i]);
+        WVPASSEQ(result, desired[i]);
     }
 
     stream->flush(0);

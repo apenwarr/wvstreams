@@ -315,7 +315,7 @@ WvString WvX509Mgr::signreq(WvStringParm pkcs10req) const
 	// to critical, we break RFC2459 compliance. Why they chose to enforce 
 	// that bit, and not the rest is beyond me... but oh well...
 	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,
-				 "CA:FALSE");
+				 (char*)"CA:FALSE");
 	
 	X509_add_ext(newcert.get_cert(), ex, -1);
 	X509_EXTENSION_free(ex);
@@ -511,7 +511,7 @@ bool WvX509Mgr::write_p12(WvStringParm _fname, WvStringParm _pkcs12pass) const
 	    else
 	    {
                 WvString pkcs12pass(_pkcs12pass);
-		PKCS12 *pkg = PKCS12_create(pkcs12pass.edit(), "foo", pk, 
+		PKCS12 *pkg = PKCS12_create(pkcs12pass.edit(), (char*)"foo", pk, 
 					    cert, NULL, 0, 0, 0, 
                                             0, 0);
 		if (pkg)

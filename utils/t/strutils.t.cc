@@ -90,7 +90,7 @@ WVTEST_MAIN("trimtest2.cc")
  */
 WVTEST_MAIN("nbsp")
 {
-    char *input[] = {"a b c", "  a", "a\nb\tc ", "ab c\r"};
+    const char *input[] = {"a b c", "  a", "a\nb\tc ", "ab c\r"};
     const char *desired[] = {"a&nbsp;b&nbsp;c", "&nbsp;&nbsp;a", "a&nbsp;b&nbsp;c&nbsp;", "ab&nbsp;c&nbsp;"};
 
     for (unsigned int i = 0; i < sizeof(input) / sizeof(char *); ++i)
@@ -130,12 +130,12 @@ WVTEST_MAIN("replace_char")
  */
 WVTEST_MAIN("snip")
 {
-    char *input[] = {"foomatic", "automatic", "mafootic", "   foobar"};
+    const char *input[] = {"foomatic", "automatic", "mafootic", "   foobar"};
     const char *desired[] = {"matic", "automatic", "mafootic", "   foobar"};
 
     for (unsigned int i = 0; i < sizeof(input) / sizeof(char *); ++i)
     {
-        char *result = snip_string(input[i], "foo");
+        char *result = snip_string((char*)input[i], (char*)"foo");
         if (!WVFAIL(strcmp(result, desired[i])))
             printf("   because [%s] != [%s]\n", result, desired[i]);
     }
@@ -188,7 +188,7 @@ WVTEST_MAIN("strupr")
  */
 WVTEST_MAIN("is_word")
 {
-    char *input[] = {"q1w2e3", "q!w@e#", "Q 86", "\t\n\r52", "hy-phen"};
+    const char *input[] = {"q1w2e3", "q!w@e#", "Q 86", "\t\n\r52", "hy-phen"};
     const bool desired[] = {true, false, false, false, false};
 
     for (unsigned int i = 0; i < sizeof(input) / sizeof(char *); ++i)
@@ -201,7 +201,7 @@ WVTEST_MAIN("is_word")
  */
 WVTEST_MAIN("web_unescape")
 {
-    char *input = "%49+%6c%69%6b%65+%70%69%7a%7a%61%21";
+    const char *input = "%49+%6c%69%6b%65+%70%69%7a%7a%61%21";
     const char* desired = "I like pizza!";
 
     WVPASS(web_unescape(input) == desired);
@@ -213,7 +213,7 @@ WVTEST_MAIN("web_unescape")
  */
 WVTEST_MAIN("url_encode")
 {
-    char *input = "http://www.free_email-account.com/~ponyman/mail.pl?name=\'to|\\|Y |)4|\\|Z4\'&pass=$!J83*p&folder=1N8()><";
+    const char *input = "http://www.free_email-account.com/~ponyman/mail.pl?name=\'to|\\|Y |)4|\\|Z4\'&pass=$!J83*p&folder=1N8()><";
     const char *desired = "http%3a//www.free_email-account.com/~ponyman/mail.pl%3fname%3d%27to%7c%5c%7cY%20%7c%294%7c%5c%7cZ4%27%26pass%3d%24%21J83%2ap%26folder%3d1N8%28%29%3e%3c";
     WVPASS(url_encode(input) == desired);
 
@@ -225,7 +225,7 @@ WVTEST_MAIN("url_encode")
  */
 WVTEST_MAIN("backslash_escape")
 {
-    char *input[] = {"hoopla!", "q!w2e3r$", "_+:\"<>?\\/", "J~0|<3R"};
+    const char *input[] = {"hoopla!", "q!w2e3r$", "_+:\"<>?\\/", "J~0|<3R"};
     const char *desired[] = {"hoopla\\!", "q\\!w2e3r\\$", "\\_\\+\\:\\\"\\<\\>\\?\\\\\\/", "J\\~0\\|\\<3R"};
 
     for (unsigned int i = 0; i < sizeof(input) / sizeof(char *); ++i)
@@ -242,7 +242,7 @@ WVTEST_MAIN("backslash_escape")
  */
 WVTEST_MAIN("strcount")
 {
-    char *input[] = {"abj;lewi", "lk327ga", "a87gai783a", "aaaaaaa", "ao8&ATO@a"};
+    const char *input[] = {"abj;lewi", "lk327ga", "a87gai783a", "aaaaaaa", "ao8&ATO@a"};
     int desired[] = {1, 1, 3, 7, 2};
 
     for (unsigned int i = 0; i < sizeof(input) / sizeof(char *); ++i)
@@ -256,7 +256,8 @@ WVTEST_MAIN("strcount")
  */
 WVTEST_MAIN("encode_hostname")
 {
-    char *input[] = {"www.service.net", "www.you-can-too.com", "happybirthday.org", "www.canada.bigco.co.uk"};
+    const char *input[] = {"www.service.net", "www.you-can-too.com", 
+                           "happybirthday.org", "www.canada.bigco.co.uk"};
     WvString desired[] = {"dc=www,dc=service,dc=net,cn=www.service.net", "dc=www,dc=you-can-too,dc=com,cn=www.you-can-too.com", "dc=happybirthday,dc=org,cn=happybirthday.org", "dc=www,dc=canada,dc=bigco,dc=co,dc=uk,cn=www.canada.bigco.co.uk"};
 
     for (unsigned int i = 0; i < sizeof(input) / sizeof(char *); ++i)
@@ -271,7 +272,7 @@ WVTEST_MAIN("encode_hostname")
  */
 WVTEST_MAIN("nice_hostname")
 {
-    char *input[] = {"n-i_c-e", "@2COOL", "E\\/1|_.1", "ha--ha__ha"};
+    const char *input[] = {"n-i_c-e", "@2COOL", "E\\/1|_.1", "ha--ha__ha"};
     WvString desired[] = {"n-i-c-e", "x2COOL", "E1-.1", "ha-ha-ha"};
 
     for (unsigned int i = 0; i < sizeof(input) / sizeof(char *); ++i)
@@ -284,7 +285,8 @@ WVTEST_MAIN("nice_hostname")
  */
 WVTEST_MAIN("getfilename")
 {
-    char *input[] = {"/tmp/file", "file.ext", "../../.file.wot", "/snick/dir/", "/snick/dira/../dirb/file"};
+    const char *input[] = {"/tmp/file", "file.ext", "../../.file.wot", 
+                           "/snick/dir/", "/snick/dira/../dirb/file"};
     WvString desired[] = {"file", "file.ext", ".file.wot", "dir", "file"};
 
     for (unsigned int i = 0; i < sizeof(input) / sizeof(char *); ++i)
@@ -297,7 +299,8 @@ WVTEST_MAIN("getfilename")
  */
 WVTEST_MAIN("getdirname")
 {
-    char *input[] = {"/tmp/file", "file.ext", "../../.file.wot", "/snick/dir/", "/snick/dira/../dirb/file"};
+    const char *input[] = {"/tmp/file", "file.ext", "../../.file.wot", 
+        "/snick/dir/", "/snick/dira/../dirb/file"};
     WvString desired[] = {"/tmp", ".", "../..", "/snick", "/snick/dira/../dirb"};
 
     for (unsigned int i = 0; i < sizeof(input) / sizeof(char *); ++i)
@@ -314,10 +317,10 @@ WVTEST_MAIN("sizetoa simple")
     {
 	long blocks = 987654321;
 	long blocksize = 1000000;
-	char *desired[15] = {"987.7 TB", "98.8 TB", "9.9 TB", "987.7 GB",
-			     "98.8 GB", "9.9 GB", "987.7 MB", "98.8 MB",
-			     "9.9 MB", "987.7 kB", "98.8 kB", "9.9 kB",
-			     "987 bytes", "98 bytes", "9 bytes"};
+	const char *desired[15] = {"987.7 TB", "98.8 TB", "9.9 TB", "987.7 GB",
+                                   "98.8 GB", "9.9 GB", "987.7 MB", "98.8 MB",
+                                   "9.9 MB", "987.7 kB", "98.8 kB", "9.9 kB",
+                                   "987 bytes", "98 bytes", "9 bytes"};
 	int i = 0;
 
 	while(blocksize != 1)
@@ -557,7 +560,7 @@ WVTEST_MAIN("sizekitoa")
  */
 WVTEST_MAIN("lookup")
 {
-    char *input[] = {"", "AbC", "a3k3 ", "abc", "ABC", NULL};
+    const char *input[] = {"", "AbC", "a3k3 ", "abc", "ABC", NULL};
     
     WVPASS(lookup("abc", input, true) == 3);
     WVPASS(lookup("abc", input, false) == 1);
@@ -594,7 +597,8 @@ static bool listcmp(const WvList<T>& lhs, const WvList<T>& rhs)
  */
 WVTEST_MAIN("strcoll_split")
 {
-    char *input[] = {"i:am colon\t:separated::", "i::too:am colon\tseparated"};
+    const char *input[] = {"i:am colon\t:separated::", 
+                           "i::too:am colon\tseparated"};
     WvList<WvString> desired[sizeof(input) / sizeof(char *)];
     WvList<WvString> desired_lim[sizeof(input) / sizeof(char *)];
 
@@ -639,7 +643,8 @@ WVTEST_MAIN("strcoll_split")
  */
 WVTEST_MAIN("strcoll_splitstrict")
 {
-    char *input[] = {"i:am colon\t:separated::", "i::too:am colon\tseparated"};
+    const char *input[] = {"i:am colon\t:separated::", 
+                           "i::too:am colon\tseparated"};
     WvList<WvString> desired[sizeof(input) / sizeof(char *)];
     WvList<WvString> desired_lim[sizeof(input) / sizeof(char *)];
 
@@ -711,14 +716,13 @@ WVTEST_MAIN("strcoll_join")
 WVTEST_MAIN("replace")
 {
     {
-        char *input[2] = {"abbababababbba", "abbababababbbablab"};
-        char *desired[2] = {"abxaxxaxxaxxaxbbxax", "abxaxxaxxaxxaxbbxaxblab"};
+        const char *input[2] = {"abbababababbba", "abbababababbbablab"};
+        const char *desired[2] = {"abxaxxaxxaxxaxbbxax", "abxaxxaxxaxxaxbbxaxblab"};
 
         for (int i = 0; i < 2; i++)
         {
             WvString result = strreplace(input[i], "ba", "xax");
-            if (!WVPASS(result == desired[i]))
-                printf("   because [%s] != [%s]\n", result.cstr(), desired[i]);
+            WVPASSEQ(result, desired[i]);
         }
     }
 }
@@ -729,7 +733,8 @@ WVTEST_MAIN("replace")
  */
 WVTEST_MAIN("undupe")
 {
-    char *input[] = {";alwg8", "aaog8", "absb  rd \raaaa", "aa8eai\na8\tawaa"};
+    const char *input[] = {";alwg8", "aaog8", "absb  rd \raaaa", 
+        "aa8eai\na8\tawaa"};
     const char *desired[] = {";alwg8", "aog8", "absb  rd \ra", "a8eai\na8\tawa"};
     
     for (unsigned int i = 0; i < sizeof(input) / sizeof(char *); ++i)
