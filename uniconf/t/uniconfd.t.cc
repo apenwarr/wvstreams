@@ -209,7 +209,7 @@ WVTEST_MAIN("daemon multimount")
     expected_responses.add(&expected_quit_response, false);
 
     WvString pipename = wvtmpfilename("uniconfd.t-pipe");
-    WVPASS(daemon.setupunixsocket(pipename));
+    daemon.listen(WvString("unix:%s", pipename));
     WvUnixAddr addr(pipename);
     WvUnixConn *sock = new WvUnixConn(addr);
     UniConfDaemonTestConn conn(sock, &commands, &expected_responses);
@@ -260,7 +260,7 @@ WVTEST_MAIN("daemon quit")
     expected_responses.add(&expected_quit_response, false);
 
     WvString pipename = wvtmpfilename("uniconfd.t-pipe");
-    WVPASS(daemon.setupunixsocket(pipename));
+    daemon.listen(WvString("unix:%s", pipename));
     WvUnixAddr addr(pipename);
     WvUnixConn *sock = new WvUnixConn(addr);
     UniConfDaemonTestConn conn(sock, &commands, &expected_responses);
@@ -312,9 +312,7 @@ static WvPipe * setup_master_daemon(bool implicit_root,
     const char * const uniconfd_args[] = {
         "uniconf/daemon/uniconfd",
         "-d", "--pid-file", pidfile.cstr(),
-        "-p", "0",
-        "-s", "0",
-        "-u", masterpipename.cstr(),
+        "-l", WvString("unix:%s", masterpipename).cstr(),
         mount1.cstr(),
         mount2.cstr(),
         NULL
@@ -339,9 +337,7 @@ static WvPipe * setup_slave_daemon(bool implicit_root, WvStringParm masterpipena
     const char * const uniconfd_args[] = {
         "uniconf/daemon/uniconfd",
         "-d", "--pid-file", pidfile.cstr(),
-	"-p", "0",
-        "-s"  "0",
-        "-u", slavepipename.cstr(),
+        "-l", WvString("unix:%s", slavepipename).cstr(),
         rootmount.cstr(),
         NULL
     };

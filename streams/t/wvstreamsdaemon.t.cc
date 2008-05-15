@@ -3,6 +3,7 @@
 #include <wvfork.h>
 #include <wvfile.h>
 #include <wvunixsocket.h>
+#include <wvunixlistener.h>
 #include <stdio.h>
 #include <signal.h>
 #include <sys/types.h>
@@ -32,7 +33,7 @@ static void client_cb(WvStream &stream)
 
 static void accept_cb(WvUnixListener *listen)
 {
-    WvUnixConn *conn = listen->accept();
+    WvUnixConn *conn = (WvUnixConn*)listen->accept();
     conn->setcallback(wv::bind(client_cb, wv::ref(*conn)));
     WvIStreamList::globallist.append(conn, true, "WvUnixConn");
 }
@@ -42,7 +43,7 @@ static void accept_cb(WvUnixListener *listen)
 static void startup(WvStreamsDaemon *daemon)
 {
     WvUnixListener *listener = new WvUnixListener(sock_name, 0700);
-    listener->setcallback(wv::bind(accept_cb, listener)); 
+    listener->onaccept(wv::bind(accept_cb, listener)); 
     daemon->add_die_stream(listener, true, "Listener");
 }
 

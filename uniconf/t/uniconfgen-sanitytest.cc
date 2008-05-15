@@ -35,7 +35,7 @@ void UniConfTestDaemon::boring_server_cb(WvStringParm sockname,
         UniConfDaemon daemon(uniconf, false, NULL);
 
         unlink(sockname);
-        daemon.setupunixsocket(sockname);
+        daemon.listen(WvString("unix:%s", sockname));
 
         WvIStreamList::globallist.append(&daemon, false, "uniconfd");
         // Make sure to commit suicide after half an hour, just in case
@@ -60,7 +60,7 @@ void UniConfTestDaemon::autoinc_server_cb(WvStringParm sockname,
         UniConfDaemon daemon(uniconf, false, NULL);
 
         unlink(sockname);
-        daemon.setupunixsocket(sockname);
+        daemon.listen(WvString("unix:%s", sockname));
 
         WvIStreamList::globallist.append(&daemon, false, "uniconfd");
         // Make sure to commit suicide after half an hour, just in case

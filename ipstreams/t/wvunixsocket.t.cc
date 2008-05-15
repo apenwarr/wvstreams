@@ -1,5 +1,6 @@
 #include "wvtest.h"
 #include "wvunixsocket.h"
+#include "wvunixlistener.h"
 #include "wvstring.h"
 
 #include <sys/types.h>

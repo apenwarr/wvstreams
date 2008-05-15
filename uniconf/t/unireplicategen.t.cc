@@ -110,9 +110,7 @@ WVTEST_MAIN("retry:uniconfd")
     char * uniconfd_argv[] =
         {
             "uniconfd",
-            "-p", "0",
-            "-s", "0",
-            "-u", uniconfd_sock.edit(),
+            "-l", (char *)WvString("unix:%s", uniconfd_sock.edit()).cstr(),
             ini_moniker.edit(),
             NULL
         };
