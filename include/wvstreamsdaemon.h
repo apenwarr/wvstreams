@@ -129,6 +129,13 @@ public:
     //! Change the callback function and userdata
     void setcallback(WvDaemonCallback cb);
 
+private:
+    //! Create some undefined overrides to prevent accidentally using a
+    //! WvString as an id; these functions will keep a long-term reference to
+    //! the string, so you should probably use a string constant.
+    void add_stream(IWvStream *istream, bool auto_free, WvString id);
+    void add_restart_stream(IWvStream *istream, bool auto_free, WvString id);
+    void add_die_stream(IWvStream *istream, bool auto_free, WvString id);
 public:
     const char *wstype() const { return "WvStreamsDaemon"; }
 };
