@@ -110,7 +110,8 @@ WVTEST_MAIN("Checking Daemon created")
 				     wv::bind(startup, wv::ref(daemon)));
 	daemon->pid_file = pidfile;
 	int fake_argc = 2;
-	char *fake_argv[] = { "WvStreamsDaemon_nonexistant", "-d", NULL };
+	char *fake_argv[] = 
+            { (char*)"WvStreamsDaemon_nonexistant", (char*)"-d", NULL };
 	_exit(daemon->run(fake_argc, fake_argv));
     }
     else
