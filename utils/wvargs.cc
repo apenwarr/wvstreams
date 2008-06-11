@@ -9,6 +9,7 @@
 
 // Some screwy defines that show up in _WIN32 and cause problems
 #undef error_t
+#undef __error_t_defined
 #undef argc
 #undef argv
 #undef __argc

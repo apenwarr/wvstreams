@@ -167,8 +167,10 @@ gl_INIT
 
 # Check for error_t
 AC_CHECK_HEADERS([argz.h errno.h])
-AC_CHECK_TYPE(error_t,, AC_DEFINE([error_t], [int],
-				  [Define to a type to use for `error_t' if it is not otherwise available.]),dnl `
+AC_CHECK_TYPE(error_t,, [AC_DEFINE([error_t], [int],
+				  [Define to a type to use for `error_t' if it is not otherwise available.])
+AC_DEFINE([__error_t_defined], [1], [Define so that glibc/gnulib argp.h
+    does not typedef error_t.])],dnl `
 [#if HAVE_ARGZ_H
 # include <argz.h>
 #else
