@@ -1,6 +1,6 @@
 #include "wvstreamsdaemon.h"
 #include "wvstreamclone.h"
-#include "wvtcp.h"
+#include "wvtcplistener.h"
 #include "wvlog.h"
 
 const char * NAME = "MyWvStreamsDaemon";

@@ -9,6 +9,7 @@
 #include "wvfile.h"
 #include "wvistreamlist.h"
 #include "wvtcplistener.h"
+#include "wvtcp.h"
 #include "wvlog.h"
 #include <signal.h>
 
