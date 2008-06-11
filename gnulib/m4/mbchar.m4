@@ -9,7 +9,7 @@ dnl From Bruno Haible.
 
 AC_DEFUN([gl_MBCHAR],
 [
-  AC_REQUIRE([AC_GNU_SOURCE])
+  AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
   dnl The following line is that so the user can test
   dnl HAVE_WCHAR_H && HAVE_WCTYPE_H before #include "mbchar.h".
   AC_CHECK_HEADERS_ONCE(wchar.h wctype.h)

@@ -7,7 +7,7 @@ dnl with or without modifications, as long as this notice is preserved.
 AC_DEFUN([gl_ARGP],
 [
   AC_REQUIRE([AC_C_INLINE])
-  AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+  AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
   AC_REQUIRE([gl_GETOPT_SUBSTITUTE])
   AC_CHECK_DECLS([program_invocation_name, program_invocation_short_name],,,
     [#include <errno.h>])

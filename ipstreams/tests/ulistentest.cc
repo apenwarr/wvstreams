@@ -3,6 +3,7 @@
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  */
 #include "wvunixsocket.h"
+#include "wvunixlistener.h"
 #include "wvistreamlist.h"
 #include "wvlog.h"
 
@@ -37,12 +38,12 @@ static void stream_bounce_to_list(WvStream *in, WvIStreamList *list,
 }
 
 
-static void accept_callback(WvUnixListener *listen, WvIStreamList *list)
+static void accept_callback(WvIStreamList *list, IWvStream *_s)
 {
-    WvUnixConn *conn = listen->accept();
-    conn->setcallback(wv::bind(stream_bounce_to_list, conn, list,
-			       conn->localaddr()));
-    list->append(conn, true, "WvUnixConn");
+    WvStreamClone *s = new WvStreamClone(_s);
+    s->setcallback(wv::bind(stream_bounce_to_list, s, list, 
+                  ((WvUnixConn *)_s)->localaddr()));
+    list->append(s, true, "WvUnixConn");
 }
 
 
@@ -56,7 +57,7 @@ int main(int argc, char **argv)
 			    0777);
 	
 	wvin->setcallback(wv::bind(stream_bounce_to_list, wvin, &l, NULL));
-	sock.setcallback(wv::bind(accept_callback, &sock, &l));
+	sock.onaccept(wv::bind(accept_callback, &l, _1));
 	
 	log("Listening on port %s\n", *sock.src());
 	

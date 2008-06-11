@@ -9,7 +9,7 @@ AC_DEFUN([gl_FUNC_MEMPCPY],
   AC_LIBSOURCES([mempcpy.c, mempcpy.h])
 
   dnl Persuade glibc <string.h> to declare mempcpy().
-  AC_REQUIRE([AC_GNU_SOURCE])
+  AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
 
   AC_REPLACE_FUNCS(mempcpy)
   if test $ac_cv_func_mempcpy = no; then

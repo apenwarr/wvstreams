@@ -5,6 +5,7 @@
  * WvTCPListener test.  Listens on a port, and bounces stdin and stdout 
  * between all connections established to it.
  */
+#include "wvtcplistener.h"
 #include "wvtcp.h"
 #include "wvistreamlist.h"
 #include "wvlog.h"

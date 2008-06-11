@@ -4,7 +4,7 @@
 #include "wvlog.h"
 #include "wvsslstream.h"
 #include "wvstrutils.h"
-#include "wvtcp.h"
+#include "wvtcplistener.h"
 #include "wvx509mgr.h"
 #include <signal.h>
 

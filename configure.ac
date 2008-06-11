@@ -97,8 +97,8 @@ AC_ARG_VAR(MOC, [Qt meta object compiler])
 AC_ARG_VAR(WEAVER_BUILD_INFO, [Extra version info])
 
 # avoid autoconf's default values, but keep those the user might have given
-CFLAGS="$CFLAGS"
-CXXFLAGS="$CXXFLAGS"
+CFLAGS="-fPIC $CFLAGS"
+CXXFLAGS="-fPIC $CXXFLAGS"
 
 AC_PROG_CC
 AC_PROG_CXX
@@ -367,7 +367,10 @@ fi
 if test "$with_dbus" != "no"; then
     WV_APPEND(CPPFLAGS, -DDBUS_API_SUBJECT_TO_CHANGE -Iinclude/dbus-upstream)
     if test "$with_dbus" = ""; then
-        DBUS_LIBDIR=/usr/lib
+        DBUS_LIBDIR="$(pkg-config --libs-only-L dbus-1 | sed 's/^-L//' | awk '{print $1}')"
+	if test -z "$DBUS_LIBDIR"; then
+	    DBUS_LIBDIR=/usr/lib  # Default path for static linking
+	fi
         WV_APPEND(CPPFLAGS, [`pkg-config --cflags dbus-1`])
         WV_APPEND(LDFLAGS, [`pkg-config --libs-only-L dbus-1`])
     else

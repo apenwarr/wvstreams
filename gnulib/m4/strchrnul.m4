@@ -7,7 +7,7 @@ dnl with or without modifications, as long as this notice is preserved.
 AC_DEFUN([gl_FUNC_STRCHRNUL],
 [
   dnl Persuade glibc <string.h> to declare strchrnul().
-  AC_REQUIRE([AC_GNU_SOURCE])
+  AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
 
   AC_REPLACE_FUNCS(strchrnul)
   if test $ac_cv_func_strchrnul = no; then

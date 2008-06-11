@@ -9,7 +9,7 @@ AC_DEFUN([gl_FUNC_STRNDUP],
   AC_LIBSOURCES([strndup.c, strndup.h])
 
   dnl Persuade glibc <string.h> to declare strndup().
-  AC_REQUIRE([AC_GNU_SOURCE])
+  AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
 
   AC_REPLACE_FUNCS(strndup)
   if test $ac_cv_func_strndup = no; then

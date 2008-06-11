@@ -5,11 +5,12 @@
  * WvStream test using the new WvTask support.  This is in ipstreams
  * because there are more fun and stressful streams to test here.
  */
-#include "wvtcp.h"
+#include "wvtcplistener.h"
 #include "wvistreamlist.h"
 #include "wvlog.h"
 #include "strutils.h"
 #include "wvcont.h"
+#include "wvstreamclone.h"
 
 static void *stream_call(WvStream& s)
 {
