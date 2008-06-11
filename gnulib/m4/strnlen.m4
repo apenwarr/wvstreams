@@ -9,7 +9,7 @@ AC_DEFUN([gl_FUNC_STRNLEN],
   AC_LIBSOURCES([strnlen.c, strnlen.h])
 
   dnl Persuade glibc <string.h> to declare strnlen().
-  AC_REQUIRE([AC_GNU_SOURCE])
+  AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
 
   AC_FUNC_STRNLEN
   if test $ac_cv_func_strnlen_working = no; then
