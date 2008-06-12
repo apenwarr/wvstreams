@@ -5,8 +5,8 @@
 // START callbacktest.cc definitions
 struct A
 {
-    int x, y;
-    A(int _x = 0, int _y = 0)
+    long x, y;
+    A(long _x = 0, long _y = 0)
         { x = _x; y = _y; }
    
     A add(const A &a)
@@ -20,7 +20,7 @@ typedef wv::function<A(void*)> A3Callback;
 
 static A bunk(const A &a, void *userdata)
 {
-    int incr = (int)userdata;
+    long incr = (long)userdata;
     return A(a.x+incr, a.y+incr*2);
 }
 

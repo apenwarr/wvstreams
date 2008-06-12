@@ -173,7 +173,7 @@ WVTEST_MAIN("hashtest.cc")
         printf("   because [%p] != [0xbffffaa8]\n", d[b.i]);
     if (!WVPASS((unsigned)d[7] == 0xbffffa9c))
         printf("   because [%p] != [0xbffffa9c]\n", d[7]);*/
-    if (!WVPASS((unsigned)d[10] == 0x00000000))
+    if (!WVPASS((unsigned long)d[10] == 0x00000000))
         printf("   because [%p] != [0x00000000]\n", d[10]);
 
     d.remove(&b);
@@ -183,7 +183,7 @@ WVTEST_MAIN("hashtest.cc")
         printf("   because [%p] != [0x00000000]\n", d[b.i]);
     if (!WVPASS((unsigned)d[7] == 0xbffffa9c))
         printf("   because [%p] != [0xbffffa9c]\n", d[7]);*/
-    if (!WVPASS((unsigned)d[10] == 0x00000000))
+    if (!WVPASS((unsigned long)d[10] == 0x00000000))
         printf("   because [%p] != [0x00000000]\n", d[10]);
 }
 

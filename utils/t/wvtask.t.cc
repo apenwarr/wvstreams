@@ -10,11 +10,11 @@
 #endif
 
 // BEGIN simple definition
-int glob;
+long glob;
 
 static void gentask(void *userdata)
 {
-    int startval = (int)userdata, val = startval;
+    long startval = (long)userdata, val = startval;
     
     while (val - startval < 3)
     {
