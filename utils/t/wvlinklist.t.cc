@@ -221,13 +221,13 @@ WVTEST_MAIN("listtest.cc")
     l.append(&y, false);
     l.append(&z, false);
     
-    char *out1[3] = {"foo", "blue", "true"};
+    const char *out1[3] = {"foo", "blue", "true"};
     int j = 0;
     for (i.rewind(); i.next(); j++)
         if (!WVPASS(i() == out1[j]))
             printf("   because [%s] != [%s]\n", i().cstr(), out1[j]);
 
-    char *out2[4] = {"Foo", "bar", "baz", "bob"};
+    const char *out2[4] = {"Foo", "bar", "baz", "bob"};
     j = 0;
     l.zap();
     l.split(bob, ": ");
@@ -235,7 +235,7 @@ WVTEST_MAIN("listtest.cc")
         if (!WVPASS(i() == out2[j]))
             printf("   because [%s] != [%s]\n", i().cstr(), out2[j]);
 
-    char *out3[2] = {"Foo", "bar: baz: bob"};
+    const char *out3[2] = {"Foo", "bar: baz: bob"};
     j = 0;
     l.zap();
     l.split(bob, ": ", 2);
@@ -243,7 +243,7 @@ WVTEST_MAIN("listtest.cc")
         if (!WVPASS(i() == out3[j]))
             printf("   because [%s] != [%s]\n", i().cstr(), out3[j]);
 
-    char *out4[3] = {"Foo", "bar", "baz: bob"};
+    const char *out4[3] = {"Foo", "bar", "baz: bob"};
     j = 0;
     l.zap();
     l.split(bob, ": ", 3);

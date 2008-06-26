@@ -7,7 +7,7 @@
 WVTEST_MAIN("basic")
 {
     WvString output, desired;
-    char * input[] = {"mahoooey", "", "kablooey", "mafooey", 0};
+    const char * input[] = {"mahoooey", "", "kablooey", "mafooey", 0};
     WvStringList l;
 
     // test fill()

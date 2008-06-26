@@ -23,15 +23,15 @@ int oranges_to_apples(const WvString *a, const WvString *b)
 WVTEST_MAIN("sorttest.cc")
 {
     free(malloc(1));
-    char *frontwards[10] = {"eight", "five", "four", "nine", "one", "seven",
-        "six", "ten", "three", "two"};
-    char *backwards[10] = {"two", "three", "ten", "six", "seven", "one", 
-        "nine", "four", "five", "eight"};
+    const char *frontwards[10] = {"eight", "five", "four", "nine", "one", 
+        "seven", "six", "ten", "three", "two"};
+    const char *backwards[10] = {"two", "three", "ten", "six", "seven", 
+        "one", "nine", "four", "five", "eight"};
         
     // linked list sorter test
     {
-        char *unsorted[10] = {"one", "two", "three", "four", "five", "six",
-            "seven", "eight", "nine", "ten"};
+        const char *unsorted[10] = {"one", "two", "three", "four", "five", 
+            "six", "seven", "eight", "nine", "ten"};
 	WvStringList l;
         for (int i = 0; i < 10; i++)
             l.append(new WvString(unsorted[i]), true);
@@ -69,8 +69,8 @@ WVTEST_MAIN("sorttest.cc")
 
     // sorted hash table
     {
-        char *unsorted[10] = {"one", "two", "three", "four", "seven", "eight",
-            "five", "six", "nine", "ten"};
+        const char *unsorted[10] = {"one", "two", "three", "four", "seven", 
+            "eight", "five", "six", "nine", "ten"};
 	WvStringTable t(3);
         for (int i = 0; i < 10; i++)
 	    t.add(new WvString(unsorted[i]), true);
@@ -98,8 +98,8 @@ WVTEST_MAIN("sorttest.cc")
     
     // sorted scatter hash table
     {
-        char *unsorted[10] = {"one", "ten", "seven", "five", "nine", "eight",
-            "six", "three", "two", "four"};
+        const char *unsorted[10] = {"one", "ten", "seven", "five", "nine", 
+            "eight", "six", "three", "two", "four"};
 	WvStringTable2 t(3);
         for (int i = 0; i < 10; i++)
             t.add(new WvString(unsorted[i]), true);
