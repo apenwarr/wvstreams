@@ -17,8 +17,9 @@ public:
     TestDBusServer()
     {
 	fprintf(stderr, "Creating a test DBus server.\n");
-	WvString smoniker("unix:tmpdir=%s.dir",
-			 wvtmpfilename("wvdbus-sock-"));
+	// We might prefer to use a unix: moniker, but get_addr() only
+	// supports tcp: monikers just now.
+	WvString smoniker("tcp:0.0.0.0");
 	s = new WvDBusServer();
 	s->listen(smoniker);
 	moniker = s->get_addr();
