@@ -51,7 +51,7 @@ public:
     Token *tokline(const char *line);
     
     /** Convert token strings to enum values */
-    int tokanal(const Token &t, char **lookup,
+    int tokanal(const Token &t, const char **lookup,
 		bool case_sensitive = false);
     
     // finite state machine

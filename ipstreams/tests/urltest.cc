@@ -7,7 +7,7 @@
 #include "wvurl.h"
 #include "wvstream.h"
 
-char *urls[] = {
+const char *urls[] = {
     "http://www.test.test",
     "http://www.test.test:100",
     "http://www.test.test:80",
@@ -26,7 +26,7 @@ char *urls[] = {
 
 int main()
 {
-    char **s;
+    const char **s;
     for (s = urls; *s != NULL; s++)
     {
         WvUrl url(*s);

@@ -16,7 +16,7 @@ int main(int argc, char **argv)
     // correct output (all on one line):
     //   'chicken hammer {} {banana split} {shameless{frog}parts}
     //   big\}monkey\ \{potatoes {hammer\}time} {"quotable quote"}'
-    static char *strarray[] = {
+    static const char *strarray[] = {
 	    "chicken",
 	    "hammer",
 	    "",

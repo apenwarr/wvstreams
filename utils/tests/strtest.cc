@@ -56,7 +56,7 @@ int main()
     printf("A WvString is %d bytes long.\n", sizeof(WvString));
 
     WvString a, b("Foo"), c("Foo"), d("Blue"), e;
-    char *ca = "Fork", *cb = "Foo", *cc = "Foo", *cd = NULL;
+    const char *ca = "Fork", *cb = "Foo", *cc = "Foo", *cd = NULL;
     
     {
 	WvString *x = new WvString(a);

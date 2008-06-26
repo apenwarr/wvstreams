@@ -30,7 +30,7 @@ enum States {
 };
 
 
-char *toks[] = {
+const char *toks[] = {
     "quit",
     "one",
     "Two",

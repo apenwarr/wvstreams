@@ -158,12 +158,12 @@ WvProtoStream::Token *WvProtoStream::tokline(const char *line)
 /* returns -1 if t is not in lookup[], or else the index into lookup where
  * the token was found.
  */
-int WvProtoStream::tokanal(const Token &t, char **lookup,
+int WvProtoStream::tokanal(const Token &t, const char **lookup,
 			   bool case_sensitive)
 {
     assert(lookup);
     
-    char **i;
+    const char **i;
     
     for (i = lookup; *i; i++)
     {

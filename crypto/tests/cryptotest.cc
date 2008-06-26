@@ -239,7 +239,7 @@ int main(int argc, char **argv)
 
    case TripleDES:
    {
-	char *private_key = PRIVATE_KEY;
+	const char *private_key = PRIVATE_KEY;
 	log("Using %s-bit TripleDES encryption.\n", numbits);
 	
 	deskey1 = new unsigned char[DES_KEY_SZ];
