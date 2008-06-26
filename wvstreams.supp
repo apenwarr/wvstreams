@@ -108,6 +108,16 @@
    obj:/lib/ld-2.6*.so
 }
 {
+   stupid_ld_error_6
+   Memcheck:Cond
+   obj:/lib/ld-2.7*.so
+}
+{
+   stupid_ld_error_7
+   Memcheck:Addr4
+   obj:/lib/ld-2.7*.so
+}
+{
    stupid_ecard_stuff
    Memcheck:Leak
    fun:malloc
@@ -230,3 +240,4 @@
    fun:_ZN10UniConfKey5StoreC1EiiRK12WvFastString
    fun:_Z41__static_initialization_and_destruction_0ii
 }
+
