@@ -31,9 +31,9 @@ static void client_cb(WvStream &stream)
 }     
 
 
-static void accept_cb(WvUnixListener *listen)
+static void accept_cb(IWvStream *_conn)
 {
-    WvUnixConn *conn = (WvUnixConn*)listen->accept();
+    WvUnixConn *conn = (WvUnixConn*)_conn;
     conn->setcallback(wv::bind(client_cb, wv::ref(*conn)));
     WvIStreamList::globallist.append(conn, true, "WvUnixConn");
 }
@@ -42,8 +42,9 @@ static void accept_cb(WvUnixListener *listen)
 //Callback function for the daemon
 static void startup(WvStreamsDaemon *daemon)
 {
+    signal(SIGPIPE, SIG_IGN);
     WvUnixListener *listener = new WvUnixListener(sock_name, 0700);
-    listener->onaccept(wv::bind(accept_cb, listener)); 
+    listener->onaccept(wv::bind(accept_cb, _1)); 
     daemon->add_die_stream(listener, true, "Listener");
 }
 
@@ -101,7 +102,7 @@ WVTEST_MAIN("Checking Daemon created")
     //Forking the server (daemon) and client processes
     pid_t child = wvfork();
 
-    if(child == 0)
+    if (child == 0)
     {
         // This is the server process
         WvStreamsDaemon *daemon = NULL;
@@ -144,7 +145,6 @@ WVTEST_MAIN("Checking Daemon created")
         }
       
         printf("Process id for daemon is %d\n", pid_daemon);
-      
         if (WVPASS(pid_daemon > 0))
         {
             kill(pid_daemon, SIGTERM);
