@@ -33,7 +33,7 @@
 // helper method to let us return and warn gracefully when getting/setting an 
 // element in a null certificate
 static const char * warning_str_set = "Tried to set %s, but certificate not ok.\n";
-static const char * warning_str_get = "Tried to set %s, but certificate not ok.\n";
+static const char * warning_str_get = "Tried to get %s, but certificate not ok.\n";
 #define CHECK_CERT_EXISTS_SET(x)                                        \
     if (!cert) {                                                        \
         debug(WvLog::Warning, warning_str_set, x);                      \
