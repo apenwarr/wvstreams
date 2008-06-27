@@ -159,16 +159,27 @@ WVTEST_MAIN("Recursion avoidance")
     WvString noise("Recursive noise");
     WvNoisyLogRcv noisy(noise, dup(1), WvLog::Debug5);
 
+    mkdir("/tmp");
     WvString logfilename("/tmp/wvlog-recursive-test.%s", getpid());
     WvLogFileBase logfile(logfilename, WvLog::Debug5);
-
+    
+    if (!WVPASS(logfile.isok()))
+    {
+	wverr->print("open %s: %s\n", logfilename, logfile.errstr());
+	return;
+    }
+    
     WvLog log("Regular log", WvLog::Error);
     WvString logmsg("The pebble that starts an avalanche...");
     log(logmsg);
     logfile.close();
 
     WvFile file(logfilename, O_RDONLY);
-    WVPASS(file.isok());
+    if (!WVPASS(file.isok()))
+    {
+	wverr->print("open %s: %s\n", logfilename, file.errstr());
+	return;
+    }
 
     // Test that we received all the log messages we were due
     WVPASS(strstr(file.getline(), "Too many extra log messages "
