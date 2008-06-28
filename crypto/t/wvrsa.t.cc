@@ -121,22 +121,23 @@ WVTEST_MAIN("rsa isok")
 	WvRSAKey rsa(rsa_public, true);
 	WVFAIL(rsa.isok());
     }
-
-    {
-
-        // test to make sure copying works with private + public keys
-        WvRSAKey rsa(512);
-
-        WvRSAKey rsa_priv(rsa);
-        WVPASSEQ(rsa.encode(WvRSAKey::RsaHex), 
-                 rsa_priv.encode(WvRSAKey::RsaHex));
-
-        WvString pub_hex = rsa.encode(WvRSAKey::RsaPubHex);
-        WvRSAKey rsa_pub(pub_hex, false);
-        WvRSAKey rsa_pub2(rsa_pub);
-        WVPASSEQ(rsa_pub.encode(WvRSAKey::RsaPubHex), 
-                 rsa_pub2.encode(WvRSAKey::RsaPubHex));
-    }
 }
 
-
+WVTEST_MAIN("rsagen")
+{
+    // test to make sure copying works with private + public keys
+    WvRSAKey rsa(512);
+    WVPASS(1);
+    
+    WvRSAKey rsa_priv(rsa);
+    WVPASS(2);
+    WVPASSEQ(rsa.encode(WvRSAKey::RsaHex), 
+	     rsa_priv.encode(WvRSAKey::RsaHex));
+    WVPASS(3);
+    
+    WvString pub_hex = rsa.encode(WvRSAKey::RsaPubHex);
+    WvRSAKey rsa_pub(pub_hex, false);
+    WvRSAKey rsa_pub2(rsa_pub);
+    WVPASSEQ(rsa_pub.encode(WvRSAKey::RsaPubHex), 
+	     rsa_pub2.encode(WvRSAKey::RsaPubHex));
+}
