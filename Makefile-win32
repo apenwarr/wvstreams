@@ -11,22 +11,18 @@ default: all
 
 runconfigure: aclocal.m4 configure include/wvautoconf.h.in
 
-aclocal.m4: $(wildcard gnulib/m4/*.m4) acinclude.m4
-	aclocal -I gnulib/m4
+aclocal.m4: acinclude.m4
+	aclocal
 	@touch $@
 
 configure: configure.ac include/wvautoconf.h.in aclocal.m4
 	autoconf
-	@rm -f config.mk include/wvautoconf.h gnulib/Makefile
+	@rm -f config.mk include/wvautoconf.h
 	@touch $@
 
 include/wvautoconf.h.in: configure.ac aclocal.m4
 	autoheader
 	@touch $@
-
-gnulib: FORCE
-	$(MAKE) -C gnulib
-
 
 %.exe: %
 	rm -f $@
@@ -36,7 +32,7 @@ ifneq ($(have_dbus),no)
   DBUSEXE=dbus/tests/wvdbus dbus/tests/wvdbusd
 endif
 
-all: fake-libs gnulib \
+all: fake-libs \
 	ipstreams/tests/tcptest crypto/tests/ssltest \
 	uniconf/tests/uni uniconf/daemon/uniconfd \
 	$(DBUSEXE) \

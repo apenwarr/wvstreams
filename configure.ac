@@ -109,9 +109,6 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_RANLIB
 
-# Poke gnulib
-gl_EARLY
-
 # Detect target build environment
 AC_CANONICAL_TARGET
 case "$target" in
@@ -161,9 +158,6 @@ CPPFLAGS="$CPPFLAGS_save"
 AC_FUNC_ALLOCA
 
 AC_CHECK_HEADERS(execinfo.h)
-
-# Initialise gnulib
-gl_INIT
 
 # Check for error_t
 AC_CHECK_HEADERS([argz.h errno.h])
@@ -668,7 +662,6 @@ AC_SUBST(COMPILER_STANDARD)
 AC_DEFINE_UNQUOTED([VERBOSE_PACKAGE_VERSION],["$PACKAGE_VERSION$WEAVER_BUILD_INFO"],[Verbose package version])
 
 AC_CONFIG_FILES(config.mk)
-AC_CONFIG_FILES(gnulib/Makefile)
 AC_CONFIG_FILES([pkgconfig/libuniconf.pc
                  pkgconfig/libuniconf-uninstalled.pc
 		 pkgconfig/libwvbase.pc

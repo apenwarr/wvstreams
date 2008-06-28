@@ -14,7 +14,7 @@ XPATH=include
 
 include vars.mk
 
-SUBDIRS = gnulib
+SUBDIRS =
 
 all: runconfigure xplc $(TARGETS)
 
@@ -48,8 +48,6 @@ dist-hack-clean:
 
 export AM_CFLAGS
 AM_CFLAGS=-fPIC
-gnulib/libgnu.a:
-	$(call subdirs_func,libgnu.a,gnulib)
 
 # Comment this assignment out for a release.
 ifdef PKGSNAPSHOT
@@ -64,7 +62,7 @@ dist-hook: dist-hack-clean configure
 	    cp -Lpr .xplc/build/xplc .; \
 	fi
 
-runconfigure: config.mk include/wvautoconf.h gnulib/Makefile
+runconfigure: config.mk include/wvautoconf.h
 
 ifndef CONFIGURING
 configure=$(error Please run the "configure" script)
@@ -78,13 +76,10 @@ config.mk: configure config.mk.in
 include/wvautoconf.h: include/wvautoconf.h.in
 	$(call configure)
 
-gnulib/Makefile: gnulib/Makefile.in
-	$(call configure)
-
 # FIXME: there is some confusion here
 ifdef WE_ARE_DIST
-aclocal.m4: $(wildcard gnulib/m4/*.m4) acinclude.m4
-	$(warning "$@" is old, please run "aclocal -I gnulib/m4")
+aclocal.m4: acinclude.m4
+	$(warning "$@" is old, please run "aclocal")
 
 configure: configure.ac config.mk.in include/wvautoconf.h.in aclocal.m4
 	$(warning "$@" is old, please run "autoconf")
@@ -92,13 +87,13 @@ configure: configure.ac config.mk.in include/wvautoconf.h.in aclocal.m4
 include/wvautoconf.h.in: configure.ac aclocal.m4
 	$(warning "$@" is old, please run "autoheader")
 else
-aclocal.m4: $(wildcard gnulib/m4/*.m4) acinclude.m4
-	aclocal -I gnulib/m4
+aclocal.m4: acinclude.m4
+	aclocal
 	@touch $@
 
 configure: configure.ac include/wvautoconf.h.in aclocal.m4
 	autoconf
-	@rm -f config.mk include/wvautoconf.h gnulib/Makefile
+	@rm -f config.mk include/wvautoconf.h
 	@touch $@
 
 include/wvautoconf.h.in: configure.ac aclocal.m4
@@ -125,14 +120,11 @@ realclean: distclean
 distclean: clean
 	$(call wild_clean,$(DISTCLEAN))
 	@rm -rf autom4te.cache
-	@rm -f gnulib/Makefile
 	@rm -f pkgconfig/*.pc
 	@rm -f .xplc
 
 clean: depend dust xplc/clean
-	@if ! test -f gnulib/Makefile; then echo 'clean:' >gnulib/Makefile; fi
 	$(subdirs)
-	@if test `wc -c <gnulib/Makefile` = '7'; then rm gnulib/Makefile; fi
 	$(call wild_clean,$(TARGETS) uniconf/daemon/uniconfd \
 		$(GARBAGE) $(TESTS) tmp.ini \
 		$(shell find . -name '*.o' -o -name '*.moc'))
