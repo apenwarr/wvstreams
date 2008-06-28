@@ -159,7 +159,7 @@ WVTEST_MAIN("Recursion avoidance")
     WvString noise("Recursive noise");
     WvNoisyLogRcv noisy(noise, dup(1), WvLog::Debug5);
 
-    mkdir("/tmp");
+    wvmkdir("/tmp");
     WvString logfilename("/tmp/wvlog-recursive-test.%s", getpid());
     WvLogFileBase logfile(logfilename, WvLog::Debug5);
     
