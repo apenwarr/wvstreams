@@ -92,6 +92,7 @@ AC_ARG_WITH(qt, AC_HELP_STRING([--with-qt], [Qt]))
 xplc_version='0.3.13'
 AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC ${xplc_version} (required)]))
 AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib (required)]))
+AC_ARG_WITH(argp, AC_HELP_STRING([--with-argp], [argp (required)]))
 
 AC_ARG_VAR(MOC, [Qt meta object compiler])
 AC_ARG_VAR(WEAVER_BUILD_INFO, [Extra version info])
@@ -559,6 +560,11 @@ if test "$with_zlib" != "no"; then
     AC_CHECK_LIB(z, compress,, [with_zlib=no])
 fi
 
+# argp
+if test "$with_argp" != "no"; then
+    AC_CHECK_HEADERS(argp.h,, [with_argp=no])
+fi
+
 # check for missing packages
 missing_required=
 missing_devel=
@@ -591,6 +597,10 @@ fi
 if test "$with_zlib" = "no"; then
     AC_MSG_WARN([zlib is missing.])
     missing_required="$missing_required zlib"
+fi
+if test "$with_argp" = "no"; then
+    AC_MSG_WARN([argp is missing.])
+    missing_required="$missing_required argp"
 fi
 
 if test -n "$missing_required"; then
@@ -646,6 +656,7 @@ AC_SUBST(with_qt)
 AC_SUBST(with_tcl)
 AC_SUBST(with_xplc)
 AC_SUBST(with_zlib)
+AC_SUBST(with_argp)
 
 AC_SUBST(LIBS_XPLC)
 AC_SUBST(LIBS_DBUS)

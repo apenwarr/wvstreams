@@ -15,4 +15,4 @@ AR=i586-mingw32msvc-ar
 # CFLAGS+=-include $(WVSTREAMS)/include/wvwin32-sanitize.h -Wno-unknown-pragmas
 
 LIBS+=-lssl -lcrypto -lz -lole32 -lrpcrt4 -lwsock32 -lgdi32 -limagehlp \
-	-lxplc-cxx -lxplc -lstdc++
+	-lxplc-cxx -lxplc -lstdc++ -largp
