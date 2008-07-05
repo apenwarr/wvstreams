@@ -1,6 +1,5 @@
 
 #include "wvautoconf.h"
-#ifdef WITH_POPT
 
 #include "wvtest.h"
 #include "wvargs.h"
@@ -18,48 +17,48 @@ WVTEST_MAIN("bools")
     args.set_flag(WvArgs::NO_EXIT_ON_ERRORS, true);
 
     bool_val = false;
-    char *av0[] = { "test" };
-    WVPASS(args.process(1, av0));
+    const char *av0[] = { "test" };
+    WVPASS(args.process(1, (char **)av0));
     WVPASS(!bool_val);
     
     bool_val = false;
-    char *av01[] = { "test", "--bad"};
-    WVFAIL(args.process(2, av01));
+    const char *av01[] = { "test", "--bad"};
+    WVFAIL(args.process(2, (char **)av01));
     WVPASS(!bool_val);
     
     bool_val = false;
-    char *av1[] = { "test", "-s" };
-    WVPASS(args.process(2, av1));
+    const char *av1[] = { "test", "-s" };
+    WVPASS(args.process(2, (char **)av1));
     WVPASS(bool_val);
     
     bool_val = true;
-    char *av2[] = { "test", "-r" };
-    WVPASS(args.process(2, av2));
+    const char *av2[] = { "test", "-r" };
+    WVPASS(args.process(2, (char **)av2));
     WVPASS(!bool_val);
     
     bool_val = false;
-    char *av3[] = { "test", "--set-bool" };
-    WVPASS(args.process(2, av3));
+    const char *av3[] = { "test", "--set-bool" };
+    WVPASS(args.process(2, (char **)av3));
     WVPASS(bool_val);
     
     bool_val = true;
-    char *av21[] = { "test", "-f" };
-    WVPASS(args.process(2, av21));
+    const char *av21[] = { "test", "-f" };
+    WVPASS(args.process(2, (char **)av21));
     WVPASS(!bool_val);
     
     bool_val = false;
-    char *av31[] = { "test", "--flip-bool" };
-    WVPASS(args.process(2, av31));
+    const char *av31[] = { "test", "--flip-bool" };
+    WVPASS(args.process(2, (char **)av31));
     WVPASS(bool_val);
     
     bool_val = true;
-    char *av4[] = { "test", "--reset-bool" };
-    WVPASS(args.process(2, av4));
+    const char *av4[] = { "test", "--reset-bool" };
+    WVPASS(args.process(2, (char **)av4));
     WVPASS(!bool_val);
     
     bool_val = false;
-    char *av5[] = { "test", "-s", "--reset-bool" };
-    WVPASS(args.process(3, av5));
+    const char *av5[] = { "test", "-s", "--reset-bool" };
+    WVPASS(args.process(3, (char **)av5));
     WVPASS(!bool_val);
 }
 
@@ -68,7 +67,9 @@ void numeric_test()
 {
     T val;
     char arg[64];
-    char *argv[] = { "test", arg };
+    /* We lie and make the above 'const' to prevent GCC from warning us that
+     * assigning "test" to a "char *" is deprecated */
+    const char *argv[] = { "test", arg };
 
     WvArgs args;
 
@@ -77,42 +78,42 @@ void numeric_test()
     args.set_flag(WvArgs::NO_EXIT_ON_ERRORS, true);
 
     val = 1;
-    WVPASS(args.process(1, argv));
+    WVPASS(args.process(1, (char **)argv));
     WVFAIL(val == 0);
 
     val = 1;
     sprintf(arg, "-s");
-    WVFAIL(args.process(2, argv));
+    WVFAIL(args.process(2, (char **)argv));
     WVFAIL(val == 0);
 
     val = 1;
     sprintf(arg, "-s-");
-    WVFAIL(args.process(2, argv));
+    WVFAIL(args.process(2, (char **)argv));
     WVFAIL(val == 0);
 
     val = 1;
     sprintf(arg, "-s0");
-    WVPASS(args.process(2, argv));
+    WVPASS(args.process(2, (char **)argv));
     WVPASS(val == 0);
 
     val = 1;
     sprintf(arg, "--set");
-    WVFAIL(args.process(2, argv));
+    WVFAIL(args.process(2, (char **)argv));
     WVFAIL(val == 0);
 
     val = 1;
     sprintf(arg, "--set-");
-    WVFAIL(args.process(2, argv));
+    WVFAIL(args.process(2, (char **)argv));
     WVFAIL(val == 0);
 
     val = 1;
     sprintf(arg, "--set0");
-    WVFAIL(args.process(2, argv));
+    WVFAIL(args.process(2, (char **)argv));
     WVFAIL(val == 0);
 
     val = 1;
     sprintf(arg, "--set=0");
-    WVPASS(args.process(2, argv));
+    WVPASS(args.process(2, (char **)argv));
     WVPASS(val == 0);
 }
 
@@ -135,5 +136,3 @@ WVTEST_MAIN("numerics double")
 {
     numeric_test<double>();
 }
-
-#endif // WITH_POPT
