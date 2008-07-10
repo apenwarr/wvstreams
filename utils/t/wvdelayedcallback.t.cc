@@ -16,25 +16,55 @@ WVTEST_MAIN("repetition")
     num = 0;
 
     WvIStreamList l;
-    InnerCallback cb1 = WvDelayedCallback<InnerCallback>(&add_cb);
     
-    l.runonce(0);
+    // Create all these with different syntax to make sure all the different
+    // syntaxes actually work.
+    InnerCallback xx = &add_cb;
+    InnerCallback cb1 = WvDelayedCallback<InnerCallback>(xx);
+    InnerCallback cb2 = wv::delayed(xx);
+    wv::delayed(&add_cb);
+    InnerCallback cb3 = wv::delayed<InnerCallback>(wv::bind(&add_cb, _1));
+    InnerCallback cb4 = wv::delayed(&add_cb);
+    InnerCallback cb5 = wv::delayed(wv::delayed(wv::delayed(&add_cb)));
+    
+    l.runonce(10);
     WVPASSEQ(num, 0);
+    
     cb1(5);
-    l.runonce(0);
+    l.runonce(10);
     WVPASSEQ(num, 5);
-    l.runonce(0);
+    
+    l.runonce(10);
     WVPASSEQ(num, 5);
+    
     cb1(1);
     cb1(2);
     WVPASSEQ(num, 5);
-    l.runonce(0);
+    l.runonce(10);
     WVPASSEQ(num, 7);
-    l.runonce(0);
+    
+    l.runonce(10);
     WVPASSEQ(num, 7);
+    
     cb1(1);
-    cb1 = 0;
-    l.runonce(0);
+    cb1 = 0; // callback hasn't actually run yet, and this should cancel it
+    l.runonce(10);
     WVPASSEQ(num, 7);
+
+#if WVDELAYED_SUPPORTS_NESTING_PROPERLY
+    // FIXME: See wvdelayedcallback.h for information about why nested
+    // WvDelayedCallback objects don't actually work.
+    cb5(100);
+    cb4(200);
+    WVPASSEQ(num, 7);
+    l.runonce(10);
+    WVPASSEQ(num, 207);
+    l.runonce(10);
+    WVPASSEQ(num, 207);
+    l.runonce(10);
+    WVPASSEQ(num, 207);
+    l.runonce(10);
+    WVPASSEQ(num, 307);
+#endif    
 }
 

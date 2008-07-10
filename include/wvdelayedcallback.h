@@ -16,6 +16,15 @@
  * There are restrictions on the type of the wrapped callback though:
  *   1. The return type must be void
  *   2. All parameter types must be copy-constructible value types
+ * 
+ * Example: setcallback(wv::delayed(mycallback));
+ * 
+ * FIXME: Because operator() makes a copy of the inner callback and thaw()
+ * destroys the copy, nesting WvDelayedCallback doesn't work as you might
+ * expect.  That is, don't do: wv::delayed(wv::delayed(mycallback)).
+ * It creates a copy of the inner WvDelayedCallback, but that copy
+ * gets frozen, then destroyed before it has a chance to thaw!  Anyway,
+ * it's a stupid thing to do anyway, so don't.
  */
 template<class Functor>
 class WvDelayedCallback
@@ -133,5 +142,41 @@ public:
         stream->alarm(0);
     }
 };
+
+
+/*
+ * We put the following in the wv:: namespace so that they match wv::bind
+ * and wv::function from wvtr1.h.
+ */
+namespace wv
+{
+    /**
+     * A convenience function for constructing WvDelayedCallback objects 
+     * from wv::functions without explicitly specifying the type.  
+     * Example: 
+     *    typedef wv::function<void(int, int)> Func;
+     *    Func f = wv::delayed(wv::bind(mycallback, 5, _1));
+     *    f(10);
+     */
+    template <typename T>
+    inline T delayed(T cb)
+    {
+	return WvDelayedCallback<T>(cb);
+    }
+    
+    /**
+     * A convenience function for constructing WvDelayedCallback objects 
+     * from function pointers without explicitly specifying the type.  
+     * Example: 
+     *    typedef wv::function<void(int)> Func;
+     *    Func f = wv::delayed(mycallback);
+     *    f(10);
+     */
+    template <typename T>
+    inline wv::function<T> delayed(T *cb)
+    {
+	return WvDelayedCallback< wv::function<T> >(cb);
+    }
+}
 
 #endif
