@@ -20,6 +20,7 @@
 #include "wvhashtable.h"
 #include "wvlog.h"
 #include "wvistreamlist.h"
+#include <stdint.h>
 
 class WvDBusMsg;
 class WvDBusConn;

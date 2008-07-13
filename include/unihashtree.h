@@ -22,6 +22,7 @@ typedef wv::function<bool(const UniHashTreeBase*,
 
 class UniHashTreeBase
 {
+protected:
     struct Accessor
     {
         static const UniConfKey *get_key(const UniHashTreeBase *obj)
@@ -73,6 +74,7 @@ private:
 
     UniConfKey xkey;   /*!< the name of this entry */
 
+protected:
     class Iter : public Container::Iter
     {
     public:
