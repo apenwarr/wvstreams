@@ -325,6 +325,21 @@ AC_SUBST(LN)
 # used for compile tests.
 AC_LANG(C++)
 
+# __libc_stack_end isn't available to shared libraries with some libc versions
+AC_MSG_CHECKING([whether __libc_stack_end is public])
+AH_TEMPLATE([HAVE_LIBC_STACK_END], [Whether libc supports __libc_stack_end])
+LDFLAGS_save="$LDFLAGS"
+WV_APPEND(LDFLAGS, [-Wl,-z,defs -shared])
+HAVE_LIBC_STACK_END=no
+AC_TRY_LINK([extern const void *__libc_stack_end; ],
+	    [volatile const void *x = __libc_stack_end; ],
+	    [HAVE_LIBC_STACK_END=yes; ])
+if test "$HAVE_LIBC_STACK_END" = "yes"; then
+	AC_DEFINE([HAVE_LIBC_STACK_END])
+fi
+AC_MSG_RESULT([$HAVE_LIBC_STACK_END])
+LDFLAGS="$LDFLAGS_save"
+
 # Detect pkg-config
 AC_PATH_PROG([PKGCONFIG], [pkg-config], [no])
 if test "$PKGCONFIG" = "no"; then

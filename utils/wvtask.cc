@@ -535,11 +535,15 @@ void WvTaskMan::do_task()
 
 const void *WvTaskMan::current_top_of_stack()
 {
+#ifdef HAVE_LIBC_STACK_END
     extern const void *__libc_stack_end;
     if (use_shared_stack() || current_task == NULL)
         return __libc_stack_end;
     else
         return (const char *)current_task->stack + current_task->stacksize;
+#else
+    return 0;
+#endif
 }
 
 
