@@ -140,7 +140,7 @@ libwvstreams.a libwvstreams.so: $(filter-out $(BASEOBJS), \
 	$(call objects,configfile crypto ipstreams \
 		$(ARCH_SUBDIRS) streams urlget))
 libwvstreams.so: libwvutils.so libwvbase.so
-libwvstreams.so: LIBS+=-lssl -lcrypto 
+libwvstreams.so: LIBS+=-lz -lssl -lcrypto 
 
 libuniconf.a libuniconf.so: $(filter-out $(BASEOBJS), \
 	$(call objects,uniconf))
