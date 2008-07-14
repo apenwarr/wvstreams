@@ -72,6 +72,12 @@ pid_t WvLockFile::readpid()
 		return 0;
 	    }
 	}
+        else
+        {
+		// blank lock file; clean it up.
+		::unlink(lockname);
+		return 0;
+        }
     }
     
     return pid;
