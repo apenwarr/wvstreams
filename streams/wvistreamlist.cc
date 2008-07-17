@@ -92,7 +92,6 @@ void WvIStreamList::pre_select(SelectInfo &si)
     bool already_sure = false;
     SelectRequest oldwant = si.wants;
     
-    dead_stream = false;
     sure_thing.zap();
     
     time_t alarmleft = alarm_remaining();
@@ -116,18 +115,11 @@ void WvIStreamList::pre_select(SelectInfo &si)
 	WvCrashInfo::in_stream_id = i.link->id;
 #endif
 	si.wants = oldwant;
-
-	if (!s.isok())
-	{
-	    dead_stream = true;
-	    already_sure = true;
-	    if (auto_prune)
-		i.xunlink();
-	    continue;
-	}
-	else 
-            s.pre_select(si);
+	s.pre_select(si);
 	
+	if (!s.isok())
+	    already_sure = true;
+
 	TRACE("after pre_select(%s): msec_timeout is %ld\n",
 	      i.link->id, (long)si.msec_timeout);
     }
@@ -149,11 +141,9 @@ void WvIStreamList::pre_select(SelectInfo &si)
 bool WvIStreamList::post_select(SelectInfo &si)
 {
     //BoolGuard guard(in_select);
-    bool already_sure = dead_stream;
+    bool already_sure = false;
     SelectRequest oldwant = si.wants;
     
-    dead_stream = false;
-
     time_t alarmleft = alarm_remaining();
     if (alarmleft == 0)
 	already_sure = true;
@@ -175,28 +165,31 @@ bool WvIStreamList::post_select(SelectInfo &si)
 	WvCrashInfo::in_stream_id = i.link->id;
 #endif
 
-	if (s.isok())
+	si.wants = oldwant;
+	if (s.post_select(si))
 	{
-	    si.wants = oldwant;
-	    if (s.post_select(si))
-	    {
-		TRACE("post_select(%s) was true\n", i.link->id);
-		sure_thing.unlink(&s); // don't add it twice!
-		sure_thing.append(&s, false, i.link->id);
-	    }
-	    else
-	    {
-		TRACE("post_select(%s) was false\n", i.link->id);
-		WvIStreamListBase::Iter j(sure_thing);
-		WvLink* link = j.find(&s);
-
-		wvassert(!link, "stream \"%s\" (%s) was ready in "
-			 "pre_select, but not in post_select",
-			 link->id, ptr2str(link->data));
-	    }
+	    TRACE("post_select(%s) was true\n", i.link->id);
+	    sure_thing.unlink(&s); // don't add it twice!
+	    s.addRef();
+	    sure_thing.append(&s, true, i.link->id);
 	}
 	else
+	{
+	    TRACE("post_select(%s) was false\n", i.link->id);
+	    WvIStreamListBase::Iter j(sure_thing);
+	    WvLink* link = j.find(&s);
+	    
+	    wvassert(!link, "stream \"%s\" (%s) was ready in "
+		     "pre_select, but not in post_select",
+		     link->id, ptr2str(link->data));
+	}
+	
+	if (!s.isok())
+	{
 	    already_sure = true;
+	    if (auto_prune)
+		i.xunlink();
+	}
     }
     
     WvCrashInfo::in_stream = old_in_stream;
@@ -234,6 +227,7 @@ void WvIStreamList::execute()
 		  i.cur());
 #endif
 	IWvStream &s(*i);
+	s.addRef();
 	
 	id = i.link->id;
 
@@ -241,26 +235,24 @@ void WvIStreamList::execute()
 	
 	i.xunlink();
 	
-	if (s.isok())
-        {
 #if DEBUG
-            if (!RUNNING_ON_VALGRIND)
-            {
-                WvString strace_node("%s: %s", s.wstype(), s.wsname());
-                ::write(-1, strace_node, strace_node.len()); 
-            }
+	if (!RUNNING_ON_VALGRIND)
+	{
+	    WvString strace_node("%s: %s", s.wstype(), s.wsname());
+	    ::write(-1, strace_node, strace_node.len()); 
+	}
 #endif
 #if I_ENJOY_FORMATTING_STRINGS
-	    WvCrashWill my_will("executing stream: %s\n%s",
-				id ? id : "unknown stream",
-				wvcrash_read_will());
+	WvCrashWill my_will("executing stream: %s\n%s",
+			    id ? id : "unknown stream",
+			    wvcrash_read_will());
 #else
-	    WvCrashInfo::in_stream = &s;
-	    WvCrashInfo::in_stream_id = id;
+	WvCrashInfo::in_stream = &s;
+	WvCrashInfo::in_stream_id = id;
 #endif
-
-	    s.callback();
-        }
+	
+	s.callback();
+	s.release();
 	
 	// list might have changed!
 	i.rewind();

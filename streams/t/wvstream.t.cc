@@ -404,6 +404,57 @@ WVTEST_MAIN("force_select and globallist")
 }
 
 
+static int acbi;
+static void acb()
+{
+    acbi++;
+}
+
+
+WVTEST_MAIN("close_and_alarm")
+{
+    {
+	acbi = 0;
+	WvStream a;
+	a.setcallback(wv::bind(acb));
+	a.runonce(0);
+	WVPASSEQ(acbi, 0);
+	a.alarm(0);
+	a.runonce(0);
+	WVPASSEQ(acbi, 1);
+	a.runonce(0);
+	WVPASSEQ(acbi, 1);
+	a.alarm(0);
+	a.close();
+	a.runonce(0);
+	WVPASSEQ(acbi, 2);
+	a.runonce(0);
+	WVPASSEQ(acbi, 2);
+    }
+    
+    {
+	acbi = 0;
+	WvIStreamList l;
+	WvStream a;
+	a.setcallback(wv::bind(acb));
+	l.append(&a, false);
+	l.runonce(0);
+	WVPASSEQ(acbi, 0);
+	a.alarm(0);
+	l.runonce(0);
+	WVPASSEQ(acbi, 1);
+	l.runonce(0);
+	WVPASSEQ(acbi, 1);
+	a.alarm(0);
+	a.close();
+	l.runonce(0);
+	WVPASSEQ(acbi, 2);
+	l.runonce(0);
+	WVPASSEQ(acbi, 2);
+    }
+}
+
+
 static void cont_cb(WvStream &s, int *x)
 {
     int next = 1, sgn = 1;

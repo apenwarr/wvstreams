@@ -847,7 +847,7 @@ void WvStream::pre_select(SelectInfo &si)
     
     time_t alarmleft = alarm_remaining();
     
-    if (!si.inherit_request && alarmleft == 0)
+    if (!isok() || (!si.inherit_request && alarmleft == 0))
     {
 	si.msec_timeout = 0;
 	return; // alarm has rung
@@ -923,8 +923,6 @@ void WvStream::_build_selectinfo(SelectInfo &si, time_t msec_timeout,
     si.inherit_request = ! forceable;
     si.global_sure = false;
 
-    if (!isok()) return;
-
     wvstime_sync();
 
     pre_select(si);
@@ -978,8 +976,6 @@ int WvStream::_do_select(SelectInfo &si)
 
 bool WvStream::_process_selectinfo(SelectInfo &si, bool forceable)
 {
-    if (!isok()) return false;
-
     // We cannot move the clock backward here, because timers that
     // were expired in pre_select could then not be expired anymore,
     // and while time going backward is rather unsettling in general,
@@ -1009,9 +1005,6 @@ bool WvStream::_select(time_t msec_timeout, bool readable, bool writable,
     SelectInfo si;
     _build_selectinfo(si, msec_timeout, readable, writable, isexcept,
 		      forceable);
-    
-    if (!isok())
-	return false;
     
     bool sure = false;
     int sel = _do_select(si);
