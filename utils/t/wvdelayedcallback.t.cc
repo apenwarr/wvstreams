@@ -47,9 +47,11 @@ WVTEST_MAIN("repetition")
     WVPASSEQ(num, 7);
     
     cb1(1);
-    cb1 = 0; // callback hasn't actually run yet, and this should cancel it
+    cb1 = 0;  // though the callback is now gone, the underlying stream is still
+	      // on the globallist (though close()d), and alarm(0)'d; it will
+	      // still run.
     l.runonce(10);
-    WVPASSEQ(num, 7);
+    WVPASSEQ(num, 8);
 
 #if WVDELAYED_SUPPORTS_NESTING_PROPERLY
     // FIXME: See wvdelayedcallback.h for information about why nested
