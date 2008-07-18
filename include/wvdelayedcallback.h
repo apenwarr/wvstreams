@@ -34,47 +34,37 @@ private:
     WvStream *stream;
     wv::function<void()> frozen;
 
-    void thaw()
-    {
-	assert(frozen);
-	frozen();
-	frozen = 0;
-    }
-
 public:
   WvDelayedCallback(const Functor& _func):
       func(_func), stream(new WvStream), frozen(0)
     {
-        stream->setcallback(wv::bind(&WvDelayedCallback::thaw, this));
         WvIStreamList::globallist.append(stream, true, "WvDelayedCallback");
     }
     WvDelayedCallback(const WvDelayedCallback &other):
 	func(other.func), stream(new WvStream), frozen(0)
     {
-        stream->setcallback(wv::bind(&WvDelayedCallback::thaw, this));
         WvIStreamList::globallist.append(stream, true, "WvDelayedCallback");
     }
     ~WvDelayedCallback()
     {
-        stream->setcallback(0);
         stream->close();
     }
     void operator()()
     {
-        frozen = func;
+        stream->setcallback(func);
         stream->alarm(0);
     }
     template<typename P1>
     void operator()(P1 &p1)
     {
-	frozen = wv::bind(func, p1);
+	stream->setcallback(wv::bind(func, p1));
         stream->alarm(0);
     }
     template<typename P1,
 	     typename P2>
     void operator()(P1 &p1, P2 &p2)
     {
-        frozen = wv::bind(func, p1, p2);
+	stream->setcallback(wv::bind(func, p1, p2));
         stream->alarm(0);
     }
     template<typename P1,
@@ -82,7 +72,7 @@ public:
 	     typename P3>
     void operator()(P1 &p1, P2 &p2, P3 &p3)
     {
-        frozen = wv::bind(func, p1, p2, p3);
+	stream->setcallback(wv::bind(func, p1, p2, p3));
         stream->alarm(0);
     }
     template<typename P1,
@@ -91,7 +81,7 @@ public:
 	     typename P4>
     void operator()(P1 &p1, P2 &p2, P3 &p3, P4 &p4)
     {
-        frozen = wv::bind(func, p1, p2, p3, p4);
+	stream->setcallback(wv::bind(func, p1, p2, p3, p4));
         stream->alarm(0);
     }
     template<typename P1,
@@ -101,7 +91,7 @@ public:
 	     typename P5>
     void operator()(P1 &p1, P2 &p2, P3 &p3, P4 &p4, P5 &p5)
     {
-        frozen = wv::bind(func, p1, p2, p3, p4, p5);
+	stream->setcallback(wv::bind(func, p1, p2, p3, p4, p5));
         stream->alarm(0);
     }
     template<typename P1,
@@ -112,7 +102,7 @@ public:
 	     typename P6>
     void operator()(P1 &p1, P2 &p2, P3 &p3, P4 &p4, P5 &p5, P6 &p6)
     {
-        frozen = wv::bind(func, p1, p2, p3, p4, p5, p6);
+	stream->setcallback(wv::bind(func, p1, p2, p3, p4, p5, p6));
         stream->alarm(0);
     }
     template<typename P1,
@@ -124,7 +114,7 @@ public:
 	     typename P7>
     void operator()(P1 &p1, P2 &p2, P3 &p3, P4 &p4, P5 &p5, P6 &p6, P7 &p7)
     {
-        frozen = wv::bind(func, p1, p2, p3, p4, p5, p6, p7);
+	stream->setcallback(wv::bind(func, p1, p2, p3, p4, p5, p6, p7));
         stream->alarm(0);
     }
     template<typename P1,
@@ -138,7 +128,7 @@ public:
     void operator()(P1 &p1, P2 &p2, P3 &p3, P4 &p4, P5 &p5, P6 &p6, P7 &p7,
 		    P8 &p8)
     {
-        frozen = wv::bind(func, p1, p2, p3, p4, p5, p6, p7, p8);
+	stream->setcallback(wv::bind(func, p1, p2, p3, p4, p5, p6, p7, p8));
         stream->alarm(0);
     }
 };
