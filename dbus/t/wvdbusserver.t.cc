@@ -29,7 +29,7 @@ public:
     
     ~TestDBusServer()
     {
-	delete s;
+	WVRELEASE(s);
     }
 };
 
@@ -271,4 +271,14 @@ WVTEST_MAIN("GetConnectionUnixUser")
     while (!got_uname)
         WvIStreamList::globallist.runonce();
     WVPASS(got_uname);
+
+    /* Kill connection, then
+     * flush connection out of globallist, only necessary to trigger the actual
+     * killing of the WvDBusServer object at the end of this block (it's ref-
+     * counted based on #connections).  No self-respecting program would need to
+     * do this, but we don't want Valgrind thinking we're leaking memory.
+     */
+    conn1.close();
+    for (int i = 0; i < 1; ++i)
+    	WvIStreamList::globallist.runonce();
 }
