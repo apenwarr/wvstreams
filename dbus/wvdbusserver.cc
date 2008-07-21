@@ -13,6 +13,7 @@
 #include "wvstrutils.h"
 #include "wvuid.h"
 #include "wvtcplistener.h"
+#include "wvdelayedcallback.h"
 #undef interface // windows
 #include <dbus/dbus.h>
 
@@ -426,11 +427,14 @@ void WvDBusServer::conn_closed(WvStream &s)
 void WvDBusServer::new_connection_cb(IWvStream *s)
 {
     WvDBusConn *c = new WvDBusConn(s, new WvDBusServerAuth, false);
-    all_conns.append(c, false);
+    c->addRef();
+    this->addRef();
+    all_conns.append(c, true);
     register_name(c->uniquename(), c);
-    c->setclosecallback(wv::bind(&WvDBusServer::conn_closed, this,
-				 wv::ref(*c)));
-    
+    IWvStreamCallback mycb = wv::bind(&WvDBusServer::conn_closed, this,
+				 wv::ref(*c));
+    c->setclosecallback(wv::delayed(mycb));
+
     c->add_callback(WvDBusConn::PriSystem,
 		    wv::bind(&WvDBusServer::do_server_msg, this,
 			     wv::ref(*c), _1));
