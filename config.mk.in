@@ -2,8 +2,6 @@ EXEEXT=@EXEEXT@
 CC=@CC@
 CFLAGS=@CFLAGS@
 CPP=@CPP@
-INCFLAGS=@INCFLAGS@
-DEPFLAGS=@DEPFLAGS@
 CPPFLAGS=@CPPFLAGS@
 CXX=@CXX@
 CXXCPP=@CXXCPP@
@@ -50,17 +48,12 @@ libexecdir=@libexecdir@
 sbindir=@sbindir@
 
 enable_debug=@enable_debug@
-enable_devel=@enable_devel@
-enable_efence=@enable_efence@
-enable_fatal_warnings=@enable_fatal_warnings@
 enable_optimization=@enable_optimization@
 enable_resolver_fork=@enable_resolver_fork@
-enable_verbose=@enable_verbose@
 enable_warnings=@enable_warnings@
 enable_testgui=@enable_testgui@
 
 with_dbus=@with_dbus@
-with_gtk=@with_gtk@
 with_openssl=@with_openssl@
 with_pam=@with_pam@
 with_tcl=@with_tcl@
@@ -68,6 +61,3 @@ with_readline=@with_readline@
 with_qt=@with_qt@
 with_xplc=@with_xplc@
 with_zlib=@with_zlib@
-
-build_xplc=@build_xplc@
-

@@ -12,6 +12,10 @@
 # It will only work with GNU make.
 #
 
+# we need a default rule, since the 'includes' below can cause trouble
+.PHONY: default all
+default: all
+
 # if WVSTREAMS_SRC is set assume everything else is set.
 # For packages that use WvStreams use WVSTREAMS_SRC=. for distribution.
 ifneq ($(WVSTREAMS),)
@@ -24,14 +28,16 @@ export WVSTREAMS WVSTREAMS_SRC WVSTREAMS_LIB WVSTREAMS_INC WVSTREAMS_BIN
 
 SHELL=/bin/bash
 
-ifneq ($(wildcard $(WVSTREAMS_SRC)/config.mk),)
-  include $(WVSTREAMS_SRC)/config.mk
-  __junk:=$(shell echo "Using compiler type '$(COMPILER_STANDARD)'" >&2)
-  include $(WVSTREAMS_SRC)/wvrules-$(COMPILER_STANDARD).mk
-else
+include $(WVSTREAMS_SRC)/config.defaults.mk
+-include $(WVSTREAMS_SRC)/config.mk
+-include $(WVSTREAMS_SRC)/config.overrides.mk
+-include $(WVSTREAMS_SRC)/local.mk
+
+ifeq ($(wildcard $(WVSTREAMS_SRC)/config.mk),)
   __junk:=$(shell echo "Warning: $(WVSTREAMS_SRC)/config.mk doesn't exist" >&2)
-  COMPILER_STANDARD=posix
 endif
+
+include $(WVSTREAMS_SRC)/wvrules-$(COMPILER_STANDARD).mk
 
 ifeq (${EXEEXT},.exe)
   include $(WVSTREAMS_SRC)/wvrules-win32.mk
@@ -41,36 +47,18 @@ ifeq (${WVTESTRUN},)
   WVTESTRUN=$(WVSTREAMS_BIN)/wvtesthelper
 endif
 
-STRIP=strip --remove-section=.note --remove-section=.comment
-#STRIP=echo
-
 # macros that expand to the object files in the given directories
 objects=$(sort $(foreach type,c cc,$(call objects_$(type),$1)))
 objects_c=$(patsubst %.c,%.o,$(wildcard $(addsuffix /*.c,$1)))
 objects_cc=$(patsubst %.cc,%.o,$(wildcard $(addsuffix /*.cc,$1)))
 
-# macro that expands to the subdir.mk files to include
-xsubdirs=$(sort $(wildcard $1/*/subdir.mk)) /dev/null
-
-# we need a default rule, since the 'includes' below causes trouble
-.PHONY: default all
-default: all
-
 # default "test" rule does nothing...
-.PHONY: test runtests clean-valgrind
+.PHONY: test runtests
 test:
-runtests: clean-valgrind
-
-clean-valgrind:
-	@rm -f valgrind.log.pid*
+runtests:
 
 %/test:
 	$(MAKE) -C $(dir $@) test
-
-$(WVSTREAMS_SRC)/rules.local.mk:
-	@true
-
--include $(WVSTREAMS_SRC)/rules.local.mk
 
 INCFLAGS=$(addprefix -I,$(WVSTREAMS_INC) $(XPATH))
 CPPFLAGS+=$(INCFLAGS) \
@@ -95,10 +83,10 @@ endif
 FORCE:
 
 ifeq ($(LN_S),)
-LN_S := ln -s
+  LN_S := ln -s
 endif
 ifeq ($(LN),)
-LN := ln
+  LN := ln
 endif
 
 # Create symbolic links
@@ -157,30 +145,13 @@ $(addsuffix .o,$(basename $(wildcard *.c) $(wildcard *.cc) $(wildcard *.cpp))):
 	@ls -l $@
 
 #
-# Header files for tcl/tk packages
-#
-pkgIndex.tcl: $(filter-out pkgIndex.tcl,$(wildcard *.tcl))
-	@echo Generating pkgIndex.tcl...
-	@rm -f $@
-	@echo pkg_mkIndex . \
-		$$(echo $^ | sed 's,\.tcl_paths,,') | tclsh
-
-pkgIndex.tcl $(wildcard *.tcl): .tcl_paths
-.tcl_paths:
-	@echo Generating .tcl_paths...
-	@rm -f $@
-	@find . $(TOPDIR) -name '*.tcl' -printf '%h\n' | sort | uniq | \
-		(echo lappend auto_path \\; sed 's/^.*$$/	& \\/'; echo) >$@.tmp
-	@mv $@.tmp $@
-
-#
 # We automatically generate header dependencies for .c and .cc files.  The
-# dependencies are stored in the file ".filename.d"
+# dependencies are stored in the file ".filename.d", and we include them
+# automatically here if they exist.
 #
 depfiles_sf = $(wildcard .*.d t/.*.d)
-
 ifneq ($(depfiles_sf),)
--include $(depfiles_sf)
+  -include $(depfiles_sf)
 endif
 
 
@@ -205,10 +176,6 @@ endef
 
 subdirs = $(call subdirs_func,$(subst subdirs,all,$(if $1,$1,$@)),$(if $2,$2,$(SUBDIRS)))
 
-# # $(call reverse,$(SUBDIRS)) works since GNU make 3.80 only
-# reverse = \
-# 	$(if $(1),$(call reverse,$(wordlist 2, 999, $(1))) $(firstword $(1)))
-
 define shell_reverse
 	revlist="" ; \
 	for word in $(1) ; do \
@@ -216,7 +183,6 @@ define shell_reverse
 	done ; \
 	echo "$${revlist}"
 endef
-
 reverse = $(shell $(call shell_reverse,$(1)))
 
 clean_subdirs = $(call subdirs,clean,$(call reverse,$(SUBDIRS)),keep)
@@ -229,7 +195,7 @@ subdirs: ${SUBDIRS}
 
 #
 # Auto-clean rule.  Feel free to append to this in your own directory, by
-# defining your own "clean" rule.
+# defining your own "clean" and/or "distclean" rules.
 #
 .PHONY: clean _wvclean
 
@@ -246,24 +212,7 @@ _wvclean:
 	@rm -f semantic.cache tags
 	@rm -rf debian/tmp
 
-#
-# default dist rules.
 distclean: clean
-
-PKGNAME := $(notdir $(shell pwd))
-PPKGNAME := $(shell echo $(PKGNAME) | tr a-z A-Z | tr - _)
-PKGVER := $(shell test -f wvver.h \
-	    && cat wvver.h | sed -ne "s/\#define $(PPKGNAME)_VER_STRING.*\"\([^ ]*\).*\".*/\1/p")
-ifneq ($(PKGVER),)
-PKGDIR := $(PKGNAME)-$(PKGVER)
-else
-PKGDIR := $(PKGNAME)
-endif
-ifneq ($(PKGSNAPSHOT),)
-PKGDIR := $(PKGDIR)+$(shell date +%Y%m%d)
-endif
-dist-dir:
-	@echo $(PKGDIR)
 
 dist-hook:
 

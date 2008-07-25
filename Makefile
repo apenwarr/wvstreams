@@ -175,14 +175,6 @@ all: runconfigure $(TARGETS)
 
 .PHONY: clean depend dust kdoc doxygen install install-shared install-dev uninstall tests dishes dist distclean realclean test
 
-# FIXME: little trick to ensure that the wvautoconf.h.in file is there
-.PHONY: dist-hack-clean
-dist-hack-clean:
-	@rm -f stamp-h.in
-
-dist-hook: dist-hack-clean configure
-	@rm -rf autom4te.cache
-
 runconfigure: config.mk include/wvautoconf.h
 
 ifndef CONFIGURING
