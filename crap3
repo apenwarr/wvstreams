@@ -1,0 +1,23 @@
+$(TESTS): $(LIBUNICONF) $(LIBWVTEST) $(LIBWVDBUS)
+$(addsuffix .o,$(TESTS)):
+tests: $(TESTS)
+
+-include $(shell find . -name '.*.d') /dev/null
+
+test: runconfigure all tests qtest
+
+qtest: runconfigure all wvtestmain
+	LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(WVSTREAMS_LIB)" $(WVTESTRUN) $(MAKE) runtests
+
+runtests:
+	$(VALGRIND) ./wvtestmain '$(TESTNAME)'
+ifeq ("$(TESTNAME)", "unitest")
+	cd uniconf/tests && DAEMON=0 ./unitest.sh
+	cd uniconf/tests && DAEMON=1 ./unitest.sh
+endif
+
+wvtestmain: \
+	$(call objects, $(filter-out ./Win32WvStreams/%, \
+		$(shell find . -type d -name t))) \
+	$(LIBWVDBUS) $(LIBUNICONF) $(LIBWVSTREAMS) $(LIBWVTEST)
+

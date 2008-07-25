@@ -26,13 +26,6 @@ else
   DEBUG:=0
 endif
 
-ifeq ("$(enable_fatal_warnings)", "yes")
-  CXXFLAGS+=-Werror
-  # FIXME: not for C, because our only C file, crypto/wvsslhack.c, has
-  #        a few warnings on purpose.
-  #CFLAGS+=-Werror
-endif
-
 ifneq ("$(enable_optimization)", "no")
   CXXFLAGS+=-O2
   #CXXFLAGS+=-felide-constructors
@@ -40,49 +33,8 @@ ifneq ("$(enable_optimization)", "no")
 endif
 
 ifneq ("$(enable_warnings)", "no")
-#WLACH:FIXME: Conditional on using MSVC
-#  CXXFLAGS+=-Wall -Woverloaded-virtual
-#  CFLAGS+=-Wall
-endif
-
-ifeq ("$(enable_efence)", "yes")
-  EFENCE:=-lefence
-  USE_EFENCE:=1
-endif
-
-ifeq (USE_EFENCE,1)
-  LDLIBS+=$(EFENCE)
-endif
-
-ifeq ("$(enable_verbose)", "yes")
-  VERBOSE:=1
-endif
-
-ifdef DONT_LIE
-  VERBOSE:=1 $(warning DONT_LIE is deprecated, use VERBOSE instead)
-endif
-
-#
-# Figure out which OS we're running (for now, only picks out Linux or BSD)
-#
-OS:=$(shell uname -a | awk '{print $$1}' | sed -e 's/^.*BSD/BSD/g' )
-
-#
-# (Just BSD and LINUX clash with other symbols, so use ISLINUX and ISBSD)
-# This sucks.  Use autoconf for most things!
-#
-ifeq ($(OS),Linux)
-  OSDEFINE:=-DISLINUX
-endif
-
-ifeq ($(OS),BSD)
-  OSDEFINE:=-DISBSD
-endif
-
-ifeq ($(CCMALLOC),1)
- ifeq ($(DEBUG),1)
-   XX_LIBS += -lccmalloc -ldl
- endif
+  CXXFLAGS+=-Wall -Woverloaded-virtual
+  CFLAGS+=-Wall
 endif
 
 ifeq ($(DEBUG),1)

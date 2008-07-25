@@ -1,0 +1,22 @@
+streams/tests: $(patsubst %.cc,%,$(wildcard streams/tests/*.cc))
+
+
+TESTS+=$(patsubst %.cc,%,$(wildcard streams/tests/*.cc))
+
+.PHONY: uniconf/tests
+uniconf/tests: $(patsubst %.cc,%,$(wildcard uniconf/tests/*.cc))
+
+TESTS+=$(patsubst %.cc,%,$(wildcard uniconf/tests/*.cc)) uniconf/tests/uni
+
+TESTS+=$(patsubst %.cc,%,$(wildcard urlget/tests/*.cc))
+
+urlget/tests/http2test: LDFLAGS+=-lssl -rdynamic
+
+
+.PHONY: utils/tests
+utils/tests: $(patsubst %.cc,%,$(wildcard utils/tests/*.cc))
+
+
+TESTS+=$(patsubst %.cc,%,$(wildcard utils/tests/*.cc))
+
+utils/tests/encodertest: LDFLAGS+=-lz

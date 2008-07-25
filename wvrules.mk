@@ -1,6 +1,7 @@
-# wvrules.mk:  2007 08 15
+# wvrules.mk
 #
-# Copyright (C) 1998-2007 by Avery Pennarun <apenwarr@alumnit.ca>.
+# Copyright (C) 1998-2007 by Avery Pennarun <apenwarr@alumnit.ca>
+#   and contributors.
 #   Use, distribute, modify, and redistribute freely.  (But if you're nice,
 #   you'll send all your changes back to me.)
 #
@@ -266,7 +267,7 @@ dist-dir:
 
 dist-hook:
 
-dist: dist-hook ChangeLog
+dist: dist-hook
 	@echo '--> Making dist in ../build/$(PKGDIR)...'
 	@test -d ../build || mkdir ../build
 	@rsync -a --delete --force '$(shell pwd)/' '../build/$(PKGDIR)'
@@ -276,24 +277,3 @@ dist: dist-hook ChangeLog
 	@rm -f '../build/$(PKGDIR).tar.gz'
 	@cd ../build; tar -zcf '$(PKGDIR).tar.gz' '$(PKGDIR)'
 	@echo '--> Created tarball in ../build/$(PKGDIR).tar.gz.'
-
-ChangeLog: FORCE
-	@echo '--> Generating ChangeLog from Subversion...'
-	@rm -f ChangeLog ChangeLog.bak
-	@svn log --xml --verbose | xsltproc svn2cl.xsl - > ChangeLog
-
-#
-# Make 'tags' file using the ctags program - useful for editing
-#
-#tags: $(shell find -name '*.cc' -o -name '*.[ch]')
-#	@echo '(creating "tags")'
-#	@if [ -x /usr/bin/ctags ]; then /usr/bin/ctags $^; fi
-
-print_vars:
-	@echo "CPPOPTS:  $(CPPOPTS)"
-	@echo "COPTS:    $(COPTS)"
-	@echo "CACXX:    $(C_AND_CXX_FLAGS)"
-	@echo "CPPFLAGS: $(CPPFLAGS)"
-	@echo "CFLAGS:   $(CFLAGS)"
-	@echo "CXXFLAGS: $(CXXFLAGS)"
-
