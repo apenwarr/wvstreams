@@ -1,68 +1,19 @@
 WVSTREAMS=.
 include wvrules.mk
 
-libwvqt.so-LIBS: $(LIBS_QT)
-
-qt/wvqtstreamclone.o: include/wvqtstreamclone.moc
-qt/wvqthook.o: include/wvqthook.moc
-
-ifneq ("$(with_qt)", "no")
-TESTS+=$(patsubst %.cc,%,$(wildcard qt/tests/*.cc))
-endif
-
-qt/tests/qtstringtest: libwvqt.a
-qt/tests/%: LDLIBS+=libwvqt.a
-qt/tests/%: LDLIBS+=$(LIBS_QT)
-
-
-libuniconf.so libuniconf.a: \
-	$(filter-out uniconf/daemon/uniconfd.o, \
-	     $(call objects,uniconf/daemon))
-
-ifeq ($(EXEEXT),.exe)
-uniconf/daemon/uniconfd: uniconf/daemon/uniconfd.o libwvwin32.a
-else
-uniconf/daemon/uniconfd: uniconf/daemon/uniconfd.o $(LIBUNICONF)
-endif
 
 %: %.in
 	@sed -e 's/#VERSION#/$(PACKAGE_VERSION)/g' < $< > $@
 
 
 ifeq ("$(enable_testgui)", "no")
-WVTESTRUN=env
+  WVTESTRUN=env
 endif
 
-ifneq ("$(with_pam)", "no")
-  libwvstreams.so: -lpam
-endif
-
-TARGETS += libwvbase.so libwvbase.a
-TARGETS += libwvutils.so libwvutils.a
-TARGETS += libwvstreams.so libwvstreams.a
-TARGETS += libuniconf.so libuniconf.a
-TARGETS += wvtestmain.o libwvtest.a
-TARGETS += uniconf/daemon/uniconfd uniconf/tests/uni
-TARGETS += crypto/tests/ssltest ipstreams/tests/unixtest
-TARGETS += crypto/tests/printcert
-ifneq ("$(with_dbus)", "no")
-TARGETS += dbus/tests/wvdbus dbus/tests/wvdbusd
-endif
-ifneq ("$(with_readline)", "no")
-TARGETS += ipstreams/tests/wsd
-endif
 GARBAGE += wvtestmain.o tmp.ini .wvtest-total
 
-ifneq ("$(with_qt)", "no")
-  TARGETS += libwvqt.so libwvqt.a
-endif
-
-ifneq ("$(with_dbus)", "no")
-  TARGETS += libwvdbus.so libwvdbus.a
-endif
-
-TARGETS_SO := $(filter %.so,$(TARGETS))
-TARGETS_A := $(filter %.a,$(TARGETS))
+TARGETS_SO = $(filter %.so,$(TARGETS))
+TARGETS_A = $(filter %.a,$(TARGETS))
 
 GARBAGE += $(wildcard lib*.so.*)
 
@@ -80,7 +31,6 @@ ifneq ("$(with_xplc)", "no")
 LIBS+=$(LIBS_XPLC) -lm
 endif
 
-libwvutils.so-LIBS+=$(LIBS_PAM)
 
 BASEOBJS= \
 	utils/wvbuffer.o utils/wvbufferstore.o \
@@ -120,83 +70,87 @@ BASEOBJS= \
 	streams/wvconstream.o \
 	utils/wvcrashbase.o
 
-TESTOBJS = utils/wvtest.o
+TARGETS += libwvbase.so
+libwvbase_OBJS += $(filter-out uniconf/unigenhack.o,$(BASEOBJS))
+libwvbase.so: $(libwvbase_OBJS) uniconf/unigenhack.o
+libwvbase.so-LIBS += $(LIBXPLC)
 
-libwvbase.a libwvbase.so: $(filter-out uniconf/unigenhack.o,$(BASEOBJS))
-libwvbase.a: uniconf/unigenhack_s.o
-libwvbase.so: uniconf/unigenhack.o
-libwvbase.so: LIBS+=$(LIBXPLC)
+TARGETS += libwvutils.so
+libwvutils.so-LIBS+=$(LIBS_PAM)
+libwvutils_OBJS += $(filter-out $(BASEOBJS) $(TESTOBJS),$(call objects,utils))
+libwvutils.so: $(libwvutils_OBJS) $(LIBWVBASE)
+libwvutils.so-LIBS += -lz -lcrypt
 
-libwvutils.a libwvutils.so: $(filter-out $(BASEOBJS) $(TESTOBJS),$(call objects,utils))
-libwvutils.so: libwvbase.so
-libwvutils.so: -lz -lcrypt
-
-libwvstreams.a libwvstreams.so: $(filter-out $(BASEOBJS), \
+TARGETS += libwvstreams.so
+TARGETS += crypto/tests/ssltest ipstreams/tests/unixtest
+TARGETS += crypto/tests/printcert
+crypto/tests/% ipstreams/tests/%: LIBS+=$(LIBWVSTREAMS)
+libwvstreams_OBJS += $(filter-out $(BASEOBJS), \
 	$(call objects,configfile crypto ipstreams \
 		$(ARCH_SUBDIRS) streams urlget))
-libwvstreams.so: libwvutils.so libwvbase.so
-libwvstreams.so: LIBS+=-lz -lssl -lcrypto 
+libwvstreams.so: $(libwvstreams_OBJS) $(LIBWVUTILS)
+libwvstreams.so-LIBS += -lz -lssl -lcrypto 
+ifneq ("$(with_pam)", "no")
+  libwvstreams.so-LIBS += -lpam
+endif
+ifneq ("$(with_readline)", "no")
+  TARGETS += ipstreams/tests/wsd
+endif
 
-libuniconf.a libuniconf.so: $(filter-out $(BASEOBJS), \
-	$(call objects,uniconf))
+TARGETS += libuniconf.so
+TARGETS += uniconf/daemon/uniconfd uniconf/tests/uni
+uniconf/daemon/uniconfd uniconf/tests/uni: $(LIBUNICONF)
+libuniconf_OBJS += $(filter-out $(BASEOBJS) uniconf/daemon/uniconfd.o, \
+	$(call objects,uniconf uniconf/daemon))
+libuniconf.so: $(libuniconf_OBJS) $(LIBWVSTREAMS)
 libuniconf.a: uniconf/uniconfroot.o
-libuniconf.so: libwvstreams.so libwvutils.so libwvbase.so
+uniconf/daemon/uniconfd: uniconf/daemon/uniconfd.o $(LIBUNICONF)
+uniconf/daemon/uniconfd: uniconf/daemon/uniconfd.ini \
+          uniconf/daemon/uniconfd.8
 
-libwvdbus.a libwvdbus.so: $(call objects,dbus)
-libwvdbus.so: libwvstreams.so libwvutils.so libwvbase.so
-libwvdbus.so: LIBS+=$(LIBS_DBUS)
+ifneq ("$(with_dbus)", "no")
+  TARGETS += dbus/tests/wvdbus dbus/tests/wvdbusd
+  TARGETS += libwvdbus.so
+  dbus/tests/wvdbus dbus/tests/wvdbusd: $(LIBWVDBUS)
+  libwvdbus_OBJS += $(call objects,dbus)
+  libwvdbus.so: $(libwvdbus_OBJS) $(LIBWVSTREAMS)
+  libwvdbus.so-LIBS += $(LIBS_DBUS)
+endif
 
+ifneq ("$(with_qt)", "no")
+  TARGETS += libwvqt.so
+  TESTS += $(patsubst %.cc,%,$(wildcard qt/tests/*.cc))
+  libwvqt_OBJS += $(call objects,qt)
+  libwvqt.so: $(libwvqt_OBJS) $(LIBWVSTREAMS)
+  libwvqt.so-LIBS += $(LIBS_QT)
+
+  qt/wvqtstreamclone.o: include/wvqtstreamclone.moc
+  qt/wvqthook.o: include/wvqthook.moc
+
+  qt/tests/qtstringtest: $(LIBWVQT)
+  qt/tests/%: LIBS+=$(LIBWVQT)
+  qt/tests/%: LIBS+=$(LIBS_QT)
+endif
+
+TARGETS += libwvstatic.a
+libwvstatic.a: \
+	$(libwvbase_OBJS) \
+	$(libwvutils_OBJS) \
+	$(libwvstreams_OBJS) \
+	$(libuniconf_OBJS) \
+	$(libwvdbus_OBJS) \
+	$(libwvqt_OBJS) \
+	uniconf/unigenhack_s.o
+
+TARGETS += wvtestmain.o libwvtest.a
+TESTOBJS = utils/wvtest.o
 libwvtest.a: wvtestmain.o $(TESTOBJS)
-
-ifeq ("$(wildcard /usr/lib/libqt-mt.so)", "/usr/lib/libqt-mt.so")
-  libwvqt.so-LIBS+=-lqt-mt
-else 
-  # RedHat has a pkgconfig file we can use to sort out this mess..
-  ifeq ("$(wildcard /usr/lib/pkgconfig/qt-mt.pc)", "/usr/lib/pkgconfig/qt-mt.pc")
-    libwvqt.so-LIBS+=`pkg-config --libs qt-mt`
-  else
-    libwvqt.so-LIBS+=-lqt
-  endif
-endif
-libwvqt.a libwvqt.so: $(call objects,qt)
-libwvqt.so: libwvutils.so libwvstreams.so libwvbase.so
-
-ifneq (${_WIN32},)
-  $(error "Use 'make -f Makefile-win32' instead!")
-endif
 
 export WVSTREAMS
 
-XPATH=include
-
-SUBDIRS =
-
-all: runconfigure $(TARGETS)
+all: $(TARGETS)
 
 .PHONY: clean depend dust kdoc doxygen install install-shared install-dev uninstall tests dishes dist distclean realclean test
-
-runconfigure: config.mk include/wvautoconf.h
-
-ifndef CONFIGURING
-configure=$(error Please run the "configure" script)
-else
-configure:=
-endif
-
-config.mk: configure config.mk.in
-	$(call configure)
-
-include/wvautoconf.h: include/wvautoconf.h.in
-	$(call configure)
-
-configure: configure.ac include/wvautoconf.h.in
-	autoconf
-	@rm -f config.mk include/wvautoconf.h
-	@touch $@
-
-include/wvautoconf.h.in: configure.ac
-	autoheader
-	@touch $@
 
 distclean: clean
 	@rm -rfv .junk $(DISTCLEAN)
@@ -208,13 +162,13 @@ clean:
 	@rm -rfv .junk $(TARGETS) uniconf/daemon/uniconfd \
 		$(GARBAGE) $(TESTS) tmp.ini \
 		$(shell find . -name '*.o' -o -name '*.moc'))
+		
+clean-targets:
+	rm -fv $(TARGETS)
 
 kdoc:
 	kdoc -f html -d Docs/kdoc-html --name wvstreams --strip-h-path */*.h
 
 doxygen:
 	doxygen
-
-uniconfd: uniconf/daemon/uniconfd uniconf/daemon/uniconfd.ini \
-          uniconf/daemon/uniconfd.8
 
