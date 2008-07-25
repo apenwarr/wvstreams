@@ -164,7 +164,7 @@ else
   endif
 endif
 libwvqt.a libwvqt.so: $(call objects,qt)
-libwvqt.so: libwvutils.so libwvstreams.so
+libwvqt.so: libwvutils.so libwvstreams.so libwvbase.so
 
 libwvgtk.a libwvgtk.so: $(call objects,gtk)
-libwvgtk.so: -lgtk -lgdk libwvstreams.so libwvutils.so
+libwvgtk.so: -lgtk -lgdk libwvstreams.so libwvutils.so libwvbase.so
