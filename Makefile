@@ -189,16 +189,12 @@ config.mk: configure config.mk.in
 include/wvautoconf.h: include/wvautoconf.h.in
 	$(call configure)
 
-aclocal.m4: acinclude.m4
-	aclocal
-	@touch $@
-
-configure: configure.ac include/wvautoconf.h.in aclocal.m4
+configure: configure.ac include/wvautoconf.h.in
 	autoconf
 	@rm -f config.mk include/wvautoconf.h
 	@touch $@
 
-include/wvautoconf.h.in: configure.ac aclocal.m4
+include/wvautoconf.h.in: configure.ac
 	autoheader
 	@touch $@
 
