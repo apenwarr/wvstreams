@@ -94,11 +94,6 @@ CPPFLAGS += -Iinclude
 ARFLAGS = rs
 RELEASE?=$(PACKAGE_VERSION)
 
-# Add a line like -DDEBUG_whatever for each 'whatever' in the DEBUG string.
-DEBUG:=$(filter-out no,$(enable_debug))
-CPPFLAGS+=$(if $(filter-out yes,$(DEBUG)), \
-	      $(patsubst %,-DDEBUG_%,$(DEBUG)))
-
 ifeq ("$(enable_testgui)", "no")
 WVTESTRUN=env
 endif
