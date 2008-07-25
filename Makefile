@@ -6,7 +6,6 @@ libwvqt.so-LIBS: $(LIBS_QT)
 qt/wvqtstreamclone.o: include/wvqtstreamclone.moc
 qt/wvqthook.o: include/wvqthook.moc
 
-
 ifneq ("$(with_qt)", "no")
 TESTS+=$(patsubst %.cc,%,$(wildcard qt/tests/*.cc))
 endif
@@ -15,9 +14,6 @@ qt/tests/qtstringtest: libwvqt.a
 qt/tests/%: LDLIBS+=libwvqt.a
 qt/tests/%: LDLIBS+=$(LIBS_QT)
 
-
-CXXFLAGS+=-DWVSTREAMS_RELEASE=\"$(PACKAGE_VERSION)\"
-DISTCLEAN+=uniconf/daemon/uniconfd.8
 
 libuniconf.so libuniconf.a: \
 	$(filter-out uniconf/daemon/uniconfd.o, \
@@ -32,30 +28,14 @@ endif
 %: %.in
 	@sed -e 's/#VERSION#/$(PACKAGE_VERSION)/g' < $< > $@
 
-DISTCLEAN+=uniconf/tests/uni
-
-CPPFLAGS += -Iinclude
-ARFLAGS = rs
-
-# for O_LARGEFILE
-CXXFLAGS+=${CXXOPTS}
-CFLAGS+=${COPTS}
-CXXFLAGS+=-D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
-CFLAGS+=-D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 
 ifeq ("$(enable_testgui)", "no")
 WVTESTRUN=env
 endif
 
-libwvbase.so-LIBS+=-lxplc-cxx -lm
-libwvbase.so:
-
 ifneq ("$(with_pam)", "no")
   libwvstreams.so: -lpam
 endif
-
-NO_CONFIGURE_TARGETS+=clean depend dust configure dist \
-		distclean realclean
 
 TARGETS += libwvbase.so libwvbase.a
 TARGETS += libwvutils.so libwvutils.a
@@ -86,13 +66,11 @@ TARGETS_A := $(filter %.a,$(TARGETS))
 
 GARBAGE += $(wildcard lib*.so.*)
 
+DISTCLEAN += uniconf/daemon/uniconfd.8
+DISTCLEAN += uniconf/tests/uni
 DISTCLEAN += autom4te.cache config.mk config.log config.status \
 		include/wvautoconf.h config.cache reconfigure \
 		stamp-h.in configure include/wvautoconf.h.in
-
-CPPFLAGS += -Iinclude
-ARFLAGS = rs
-RELEASE?=$(PACKAGE_VERSION)
 
 ifeq ("$(enable_testgui)", "no")
 WVTESTRUN=env
@@ -142,14 +120,7 @@ BASEOBJS= \
 	streams/wvconstream.o \
 	utils/wvcrashbase.o
 
-TESTOBJS = utils/wvtest.o 
-
-# print the sizes of all object files making up libwvbase, to help find
-# optimization targets.
-basesize:
-	size --total $(BASEOBJS)
-
-micro: micro.o libwvbase.so
+TESTOBJS = utils/wvtest.o
 
 libwvbase.a libwvbase.so: $(filter-out uniconf/unigenhack.o,$(BASEOBJS))
 libwvbase.a: uniconf/unigenhack_s.o

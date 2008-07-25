@@ -6,6 +6,7 @@ LIBUNICONF=$(WVSTREAMS_LIB)/libuniconf.so $(LIBWVSTREAMS)
 LIBWVDBUS=$(WVSTREAMS_LIB)/libwvdbus.so $(LIBWVSTREAMS)
 LIBWVQT=$(WVSTREAMS_LIB)/libwvqt.so $(LIBWVSTREAMS)
 LIBWVTEST=$(WVSTREAMS_LIB)/libwvtest.a $(LIBWVUTILS)
+LIBWVSTATIC=$(WVSTREAMS_LIB)/libwv.a
 
 #
 # Initial C compilation flags
@@ -22,7 +23,6 @@ WVLINK_CC = $(CXX)
 
 ifneq ("$(enable_optimization)", "no")
   CXXFLAGS+=-O2
-  #CXXFLAGS+=-felide-constructors
   CFLAGS+=-O2
 endif
 
@@ -38,15 +38,6 @@ ifdef DEBUG
 else
   CPPFLAGS += -DDEBUG=0
   LDFLAGS += 
-endif
-
-ifeq ($(PROFILE),1)
-  CFLAGS += -pg
-  LDFLAGS += -pg
-endif
-
-ifeq ($(STATIC),1)
-  LDFLAGS += -static
 endif
 
 define wvlink_ar
@@ -82,20 +73,6 @@ define wvcc_base
                         } \
                     } \
                 }' >$(DEPFILE)
-endef
-
-define wvlink_ar
-	$(LINK_MSG)set -e; rm -f $1 $(patsubst %.a,%.libs,$1); \
-	echo $2 >$(patsubst %.a,%.libs,$1); \
-	$(AR) q $1 $(filter %.o,$2); \
-	for d in "" $(filter %.libs,$2); do \
-	    if [ "$$d" != "" ]; then \
-			cd $$(dirname "$$d"); \
-			$(AR) q $(shell pwd)/$1 $$(cat $$(basename $$d)); \
-			cd $(shell pwd); \
-		fi; \
-	done; \
-	$(AR) s $1
 endef
 
 wvlink=$(LINK_MSG)$(CC) $(LDFLAGS) $($1-LDFLAGS) -o $1 $(filter %.o %.a %.so, $2) $($1-LIBS) $(LIBS) $(XX_LIBS) $(LDLIBS)
