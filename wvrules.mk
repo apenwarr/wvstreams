@@ -51,6 +51,7 @@ endif
 objects=$(sort $(foreach type,c cc,$(call objects_$(type),$1)))
 objects_c=$(patsubst %.c,%.o,$(wildcard $(addsuffix /*.c,$1)))
 objects_cc=$(patsubst %.cc,%.o,$(wildcard $(addsuffix /*.cc,$1)))
+tests_cc=$(patsubst %.cc,%,$(wildcard $(addsuffix /*.cc,$1)))
 
 # default "test" rule does nothing...
 .PHONY: test runtests
@@ -149,10 +150,7 @@ $(addsuffix .o,$(basename $(wildcard *.c) $(wildcard *.cc) $(wildcard *.cpp))):
 # dependencies are stored in the file ".filename.d", and we include them
 # automatically here if they exist.
 #
-depfiles_sf = $(wildcard .*.d t/.*.d)
-ifneq ($(depfiles_sf),)
-  -include $(depfiles_sf)
-endif
+-include $(shell find . -name '.*.d') /dev/null
 
 
 #
@@ -205,6 +203,7 @@ _wvclean:
 	@echo '--> Cleaning $(shell pwd)...'
 	@rm -f *~ *.tmp *.o *.a *.so *.so.* *.libs *.dll *.lib *.moc *.d .*.d .depend \
 		 .\#* .tcl_paths pkgIndex.tcl gmon.out core build-stamp \
+		 CC CXX \
 		 wvtestmain
 	@rm -f $(patsubst %.t.cc,%.t,$(wildcard *.t.cc) $(wildcard t/*.t.cc)) \
 		t/*.o t/*~ t/.*.d t/.\#*
