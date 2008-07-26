@@ -2,21 +2,6 @@
 AC_INIT(WvStreams, 4.4.1, wvstreams-devel@googlegroups.com, wvstreams)
 SO_VERSION=4.4
 
-save_args() {
-    ARGS=""
-
-    while test $# -gt 0; do
-        ARGS="$ARGS \"$1\""
-        shift
-    done
-
-    rm -f reconfigure
-    echo $0 $ARGS '"$@"' >reconfigure
-    chmod +x reconfigure
-}
-
-save_args "$@"
-
 # append to a variable without introducing superfluous white space
 AC_DEFUN([WV_APPEND],[
     if test -z "$$1"; then

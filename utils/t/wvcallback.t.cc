@@ -79,19 +79,19 @@ WVTEST_MAIN("callbacktest.cc")
     
         result = (c0(a, (void *)5));
         if (!WVPASS(result.y == 2 * result.x))
-            printf("   because [%d] != 2 * [%d]\n", result.y, result.x);
+            printf("   because [%ld] != 2 * [%ld]\n", result.y, result.x);
         
         result = (c1(a));
         if (!WVPASS(result.y == 2 * result.x))
-            printf("   because [%d] != 2 * [%d]\n", result.y, result.x);
+            printf("   because [%ld] != 2 * [%ld]\n", result.y, result.x);
         
         result = (c2((void *)2));
         if (!WVPASS(result.y == 2 * result.x))
-            printf("   because [%d] != 2 * [%d]\n", result.y, result.x);        
+            printf("   because [%ld] != 2 * [%ld]\n", result.y, result.x);        
         
         result = (c3(a));
         if (!WVPASS(result.y == 2 * result.x))
-            printf("   because [%d] != 2 * [%d]\n", result.y, result.x);
+            printf("   because [%ld] != 2 * [%ld]\n", result.y, result.x);
     }
 }
 
