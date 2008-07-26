@@ -2,6 +2,10 @@ WVSTREAMS=.
 
 include wvrules.mk
 
+ifdef _WIN32
+    include win32.mk
+endif
+
 %: %.subst
 	sed -e 's/#VERSION#/$(PACKAGE_VERSION)/g' < $< > $@
 
@@ -52,7 +56,7 @@ BASEOBJS = \
 	streams/wvconstream.o \
 	utils/wvcrashbase.o
 TARGETS += libwvbase.so
-libwvbase_OBJS += $(filter-out uniconf/unigenhack.o,$(BASEOBJS))
+libwvbase_OBJS += $(filter-out uniconf/unigenhack.o $(WV_EXCLUDES),$(BASEOBJS))
 libwvbase.so: $(libwvbase_OBJS) uniconf/unigenhack.o
 libwvbase.so-LIBS += $(LIBXPLC)
 
@@ -64,7 +68,7 @@ TESTS += $(call tests_cc,utils/tests)
 libwvutils_OBJS += $(filter-out $(BASEOBJS) $(TESTOBJS),$(call objects,utils))
 libwvutils.so: $(libwvutils_OBJS) $(LIBWVBASE)
 libwvutils.so-LIBS += -lz -lcrypt $(LIBS_PAM)
-utils/tests/%: LIBS+=$(LIBWVSTREAMS)
+utils/tests/%: PRELIBS+=$(LIBWVSTREAMS)
 
 #
 # libwvstreams: stream/event handling library
@@ -88,7 +92,7 @@ libwvstreams.so: $(libwvstreams_OBJS) $(LIBWVUTILS)
 libwvstreams.so-LIBS += -lz -lssl -lcrypto $(LIBS_PAM)
 ipstreams/tests/wsd: LIBS+=-lreadline
 configfile/tests/% streams/tests/% ipstreams/tests/% crypto/tests/% \
-  urlget/tests/% linuxstreams/tests/%: LIBS+=$(LIBWVSTREAMS)
+  urlget/tests/% linuxstreams/tests/%: PRELIBS+=$(LIBWVSTREAMS)
 
 #
 # libuniconf: unified configuration system
@@ -103,7 +107,7 @@ uniconf/daemon/uniconfd uniconf/tests/uni: $(LIBUNICONF)
 uniconf/daemon/uniconfd: uniconf/daemon/uniconfd.o $(LIBUNICONF)
 uniconf/daemon/uniconfd: uniconf/daemon/uniconfd.ini \
           uniconf/daemon/uniconfd.8
-uniconf/tests/%: LIBS+=$(LIBUNICONF)
+uniconf/tests/%: PRELIBS+=$(LIBUNICONF)
 
 #
 # libwvdbus: C++ DBus library based on wvstreams
@@ -115,7 +119,7 @@ ifneq ("$(with_dbus)", "no")
   libwvdbus_OBJS += $(call objects,dbus)
   libwvdbus.so: $(libwvdbus_OBJS) $(LIBWVSTREAMS)
   libwvdbus.so-LIBS += $(LIBS_DBUS)
-  dbus/tests/%: LIBS+=$(LIBWVDBUS)
+  dbus/tests/%: PRELIBS+=$(LIBWVDBUS)
 endif
 
 #
@@ -127,7 +131,7 @@ ifneq ("$(with_qt)", "no")
   libwvqt_OBJS += $(call objects,qt)
   libwvqt.so: $(libwvqt_OBJS) $(LIBWVSTREAMS)
   libwvqt.so-LIBS += $(LIBS_QT)
-  qt/tests/%: LIBS+=$(LIBWVQT)
+  qt/tests/%: PRELIBS+=$(LIBWVQT)
 
   qt/wvqtstreamclone.o: include/wvqtstreamclone.moc
   qt/wvqthook.o: include/wvqthook.moc
@@ -166,7 +170,7 @@ examples/wvgrep/wvegrep: examples/wvgrep/wvgrep
 TARGETS_SO = $(filter %.so,$(TARGETS))
 TARGETS_A = $(filter %.a,$(TARGETS))
 
-all: $(TARGETS)
+all: $(filter-out $(WV_EXCLUDES), $(TARGETS))
 
 TESTS += wvtestmain
 $(addsuffix .o,$(TESTS)):
@@ -185,8 +189,8 @@ ifeq ("$(TESTNAME)", "unitest")
 endif
 
 wvtestmain: \
-	$(call objects, $(filter-out ./win32/%, \
-		$(shell find . -type d -name t))) \
+	$(call objects, $(filter-out win32/%, \
+		$(shell find . -type d -name t -printf "%P\n"))) \
 	$(LIBWVDBUS) $(LIBUNICONF) $(LIBWVSTREAMS) $(LIBWVTEST)
 
 distclean: clean

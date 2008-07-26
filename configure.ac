@@ -71,8 +71,8 @@ AC_ARG_VAR(MOC, [Qt meta object compiler])
 AC_ARG_VAR(WEAVER_BUILD_INFO, [Extra version info])
 
 # avoid autoconf's default values, but keep those the user might have given
-CFLAGS="-fPIC $CFLAGS"
-CXXFLAGS="-fPIC $CXXFLAGS"
+CFLAGS="$CFLAGS"
+CXXFLAGS="$CXXFLAGS"
 
 AC_PROG_CC
 AC_PROG_CXX

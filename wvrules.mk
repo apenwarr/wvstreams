@@ -39,11 +39,18 @@ ifeq ($(wildcard $(WVSTREAMS_SRC)/config.mk),)
   __junk:=$(shell echo "Warning: $(WVSTREAMS_SRC)/config.mk doesn't exist" >&2)
 endif
 
-include $(WVSTREAMS_SRC)/wvrules-$(COMPILER_STANDARD).mk
-
 ifeq (${EXEEXT},.exe)
-  include $(WVSTREAMS_SRC)/wvrules-win32.mk
+  _WIN32=_WIN32
+  XPATH += $(WVSTREAMS)/win32 $(WVSTREAMS)/win32/cominclude
+  AR=i586-mingw32msvc-ar
+  LIBS += -lssl -lcrypto -lz -lole32 -lrpcrt4 -lwsock32 -lgdi32 -limagehlp \
+  	  -lxplc-cxx -lxplc -lstdc++ -largp
+else
+  CFLAGS += -fPIC
+  CXXFLAGS += -fPIC
 endif
+
+include $(WVSTREAMS_SRC)/wvrules-$(COMPILER_STANDARD).mk
 
 ifeq (${WVTESTRUN},)
   WVTESTRUN=$(WVSTREAMS_BIN)/wvtesthelper
@@ -51,9 +58,12 @@ endif
 
 # macros that expand to the object files in the given directories
 objects=$(sort $(foreach type,c cc,$(call objects_$(type),$1)))
-objects_c=$(patsubst %.c,%.o,$(wildcard $(addsuffix /*.c,$1)))
-objects_cc=$(patsubst %.cc,%.o,$(wildcard $(addsuffix /*.cc,$1)))
-tests_cc=$(patsubst %.cc,%,$(wildcard $(addsuffix /*.cc,$1)))
+objects_c=$(filter-out $(WV_EXCLUDES), \
+		$(patsubst %.c,%.o,$(wildcard $(addsuffix /*.c,$1))))
+objects_cc=$(filter-out $(WV_EXCLUDES), \
+		$(patsubst %.cc,%.o,$(wildcard $(addsuffix /*.cc,$1))))
+tests_cc=$(filter-out $(WV_EXCLUDES), \
+		$(patsubst %.cc,%,$(wildcard $(addsuffix /*.cc,$1))))
 
 # default "test" rule does nothing...
 .PHONY: test runtests
@@ -114,10 +124,16 @@ endef
 %.so: SONAME=$@$(if $(SO_VERSION),.$(SO_VERSION))
 
 wvsoname=$(if $($1-SONAME),$($1-SONAME),$(if $(SONAME),$(SONAME),$1))
-define wvlink_so
+ifdef _WIN32
+  define wvlink_so
+	@echo "Skipping $@ on win32 (can't build shared libraries)"
+  endef
+else
+  define wvlink_so
 	$(LINK_MSG)$(WVLINK_CC) $(LDFLAGS) $($1-LDFLAGS) -Wl,-z,defs -Wl,-soname,$(call wvsoname,$1) -shared -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
 	$(if $(filter-out $(call wvsoname,$1),$1),$(call wvlns,$1,$(call wvsoname,$1)))
-endef
+  endef
+endif
 
 ../%.so:;	@echo "Shared library $@ does not exist!"; exit 1
 ../%.a:;	@echo "Library $@ does not exist!"; exit 1
