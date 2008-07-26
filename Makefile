@@ -1,210 +1,184 @@
 WVSTREAMS=.
-WVSTREAMS_SRC= # Clear WVSTREAMS_SRC so wvrules.mk uses its WVSTREAMS_foo
-VPATH=$(libdir)
+
 include wvrules.mk
-override enable_efence=no
 
-ifneq (${_WIN32},)
-  $(error "Use 'make -f Makefile-win32' instead!")
+ifdef _WIN32
+    include win32.mk
 endif
 
-export WVSTREAMS
+%: %.subst
+	sed -e 's/#VERSION#/$(PACKAGE_VERSION)/g' < $< > $@
 
-XPATH=include
-
-include vars.mk
-
-SUBDIRS =
-
-all: runconfigure xplc $(TARGETS)
-
-.PHONY: xplc xplc/clean install-xplc
-xplc:
-xplc/clean:
-install-xplc:
-
-ifeq ("$(build_xplc)", "yes")
-
-xplc:
-	$(MAKE) -C xplc
-
-xplc/clean:
-	$(MAKE) -C xplc clean
-
-install-xplc: xplc
-	$(INSTALL) -d $(DESTDIR)$(includedir)/wvstreams/xplc
-	$(INSTALL_DATA) $(wildcard xplc/include/xplc/*.h) $(DESTDIR)$(includedir)/wvstreams/xplc
-	$(INSTALL) -d $(DESTDIR)$(libdir)
-	$(INSTALL_DATA) xplc/libxplc-cxx.a $(DESTDIR)$(libdir)
-
+ifeq ("$(enable_testgui)", "no")
+  WVTESTRUN=env
 endif
 
-.PHONY: clean depend dust kdoc doxygen install install-shared install-dev install-xplc uninstall tests dishes dist distclean realclean test
+LIBS += $(LIBS_XPLC) -lm
 
-# FIXME: little trick to ensure that the wvautoconf.h.in file is there
-.PHONY: dist-hack-clean
-dist-hack-clean:
-	@rm -f stamp-h.in
+#
+# libwvbase: a the minimal code needed to link a wvstreams program.
+#
+BASEOBJS = \
+	utils/wvbuffer.o utils/wvbufferstore.o \
+	utils/wvcont.o \
+	utils/wverror.o \
+	streams/wvfdstream.o \
+	utils/wvfork.o \
+	utils/wvhash.o \
+	utils/wvhashtable.o \
+	utils/wvlinklist.o \
+	utils/wvmoniker.o \
+	utils/wvregex.o \
+	utils/wvscatterhash.o utils/wvsorter.o \
+	utils/wvstring.o utils/wvstringlist.o \
+	utils/wvstringmask.o \
+	utils/strutils.o \
+	utils/wvtask.o \
+	utils/wvtimeutils.o \
+	streams/wvistreamlist.o \
+	utils/wvstreamsdebugger.o \
+	streams/wvlog.o \
+	streams/wvstream.o \
+	uniconf/uniconf.o \
+	uniconf/uniconfgen.o uniconf/uniconfkey.o uniconf/uniconfroot.o \
+	uniconf/unihashtree.o \
+	uniconf/unimountgen.o \
+	uniconf/unitempgen.o \
+	utils/wvbackslash.o \
+	utils/wvencoder.o \
+	utils/wvtclstring.o \
+	utils/wvstringcache.o \
+	uniconf/uniinigen.o \
+	uniconf/unigenhack.o \
+	uniconf/unilistiter.o \
+	streams/wvfile.o \
+	streams/wvstreamclone.o  \
+	streams/wvconstream.o \
+	utils/wvcrashbase.o
+TARGETS += libwvbase.so
+libwvbase_OBJS += $(filter-out uniconf/unigenhack.o $(WV_EXCLUDES),$(BASEOBJS))
+libwvbase.so: $(libwvbase_OBJS) uniconf/unigenhack.o
+libwvbase.so-LIBS += $(LIBXPLC)
 
-export AM_CFLAGS
-AM_CFLAGS=-fPIC
+#
+# libwvutils: handy utility library for C++
+#
+TARGETS += libwvutils.so
+TESTS += $(call tests_cc,utils/tests)
+libwvutils_OBJS += $(filter-out $(BASEOBJS) $(TESTOBJS),$(call objects,utils))
+libwvutils.so: $(libwvutils_OBJS) $(LIBWVBASE)
+libwvutils.so-LIBS += -lz -lcrypt $(LIBS_PAM)
+utils/tests/%: PRELIBS+=$(LIBWVSTREAMS)
 
-# Comment this assignment out for a release.
-ifdef PKGSNAPSHOT
-SNAPDATE=+$(shell date +%Y%m%d)
+#
+# libwvstreams: stream/event handling library
+#
+TARGETS += libwvstreams.so
+TARGETS += crypto/tests/ssltest ipstreams/tests/unixtest
+TARGETS += crypto/tests/printcert
+ifneq ("$(with_readline)", "no")
+  TARGETS += ipstreams/tests/wsd
 endif
+TESTS += $(call tests_cc,configfile/tests)
+TESTS += $(call tests_cc,streams/tests)
+TESTS += $(filter-out ipstreams/tests/wsd, $(call tests_cc,ipstreams/tests))
+TESTS += $(call tests_cc,crypto/tests)
+TESTS += $(call tests_cc,urlget/tests)
+TESTS += $(call tests_cc,linuxstreams/tests)
+libwvstreams_OBJS += $(filter-out $(BASEOBJS), \
+	$(call objects,configfile crypto ipstreams \
+		$(ARCH_SUBDIRS) streams urlget))
+libwvstreams.so: $(libwvstreams_OBJS) $(LIBWVUTILS)
+libwvstreams.so-LIBS += -lz -lssl -lcrypto $(LIBS_PAM)
+ipstreams/tests/wsd: LIBS+=-lreadline
+configfile/tests/% streams/tests/% ipstreams/tests/% crypto/tests/% \
+  urlget/tests/% linuxstreams/tests/%: PRELIBS+=$(LIBWVSTREAMS)
 
-dist-hook: dist-hack-clean configure
-	@rm -rf autom4te.cache
-	@if test -d .xplc; then \
-	    echo '--> Preparing XPLC for dist...'; \
-	    $(MAKE) -C .xplc clean patch && \
-	    cp -Lpr .xplc/build/xplc .; \
-	fi
-
-runconfigure: config.mk include/wvautoconf.h
-
-ifndef CONFIGURING
-configure=$(error Please run the "configure" script)
-else
-configure:=
-endif
-
-config.mk: configure config.mk.in
-	$(call configure)
-
-include/wvautoconf.h: include/wvautoconf.h.in
-	$(call configure)
-
-# FIXME: there is some confusion here
-ifdef WE_ARE_DIST
-aclocal.m4: acinclude.m4
-	$(warning "$@" is old, please run "aclocal")
-
-configure: configure.ac config.mk.in include/wvautoconf.h.in aclocal.m4
-	$(warning "$@" is old, please run "autoconf")
-
-include/wvautoconf.h.in: configure.ac aclocal.m4
-	$(warning "$@" is old, please run "autoheader")
-else
-aclocal.m4: acinclude.m4
-	aclocal
-	@touch $@
-
-configure: configure.ac include/wvautoconf.h.in aclocal.m4
-	autoconf
-	@rm -f config.mk include/wvautoconf.h
-	@touch $@
-
-include/wvautoconf.h.in: configure.ac aclocal.m4
-	autoheader
-	@touch $@
-endif
-
-ifeq ($(VERBOSE),)
-define wild_clean
-	@list=`echo $(wildcard $(1))`; \
-		test -z "$${list}" || sh -c "rm -rf $${list}"
-endef
-else
-define wild_clean
-	@list=`echo $(wildcard $(1))`; \
-		test -z "$${list}" || sh -cx "rm -rf $${list}"
-endef
-endif
-
-realclean: distclean
-	$(call wild_clean,$(REALCLEAN))
-
-
-distclean: clean
-	$(call wild_clean,$(DISTCLEAN))
-	@rm -rf autom4te.cache
-	@rm -f pkgconfig/*.pc
-	@rm -f .xplc
-
-clean: depend dust xplc/clean
-	$(subdirs)
-	$(call wild_clean,$(TARGETS) uniconf/daemon/uniconfd \
-		$(GARBAGE) $(TESTS) tmp.ini \
-		$(shell find . -name '*.o' -o -name '*.moc'))
-
-depend:
-	$(call wild_clean,$(shell find . -name '.*.d'))
-
-dust:
-	$(call wild_clean,$(shell find . -name 'core' -o -name '*~' -o -name '.#*') $(wildcard *.d))
-
-kdoc:
-	kdoc -f html -d Docs/kdoc-html --name wvstreams --strip-h-path */*.h
-
-doxygen:
-	doxygen
-
-ifeq ("$(with_readline)", "no")
-install: install-shared install-dev install-xplc install-uniconfd
-else
-install: install-shared install-dev install-xplc install-uniconfd install-wsd
-endif
-
-install-shared: $(TARGETS_SO)
-	$(INSTALL) -d $(DESTDIR)$(libdir)
-	for i in $(TARGETS_SO); do \
-	    $(INSTALL_PROGRAM) $$i.$(SO_VERSION) $(DESTDIR)$(libdir)/ ; \
-	done
-	$(INSTALL) -d $(DESTDIR)$(sysconfdir)
-	$(INSTALL_DATA) uniconf/daemon/uniconf.conf $(DESTDIR)$(sysconfdir)/
-
-install-dev: $(TARGETS_SO) $(TARGETS_A)
-	$(INSTALL) -d $(DESTDIR)$(includedir)/wvstreams
-	$(INSTALL_DATA) $(wildcard include/*.h) $(DESTDIR)$(includedir)/wvstreams
-	$(INSTALL) -d $(DESTDIR)$(libdir)
-	for i in $(TARGETS_A); do \
-	    $(INSTALL_DATA) $$i $(DESTDIR)$(libdir); \
-	done
-	cd $(DESTDIR)$(libdir) && for i in $(TARGETS_SO); do \
-	    rm -f $$i; \
-	    $(LN_S) $$i.$(SO_VERSION) $$i; \
-	done
-	$(INSTALL) -d $(DESTDIR)$(libdir)/pkgconfig
-	$(INSTALL_DATA) $(filter-out %-uninstalled.pc, $(wildcard pkgconfig/*.pc)) $(DESTDIR)$(libdir)/pkgconfig
-	$(INSTALL) -d $(DESTDIR)$(bindir)
-	$(INSTALL) wvtesthelper wvtestmeter $(DESTDIR)$(bindir)
-	$(INSTALL) -d $(DESTDIR)$(libdir)/valgrind
-	$(INSTALL) wvstreams.supp $(DESTDIR)$(libdir)/valgrind
-
-uniconfd: uniconf/daemon/uniconfd uniconf/daemon/uniconfd.ini \
+#
+# libuniconf: unified configuration system
+#
+TARGETS += libuniconf.so
+TARGETS += uniconf/daemon/uniconfd uniconf/tests/uni
+TESTS += $(call tests_cc,uniconf/tests) uniconf/tests/uni
+libuniconf_OBJS += $(filter-out $(BASEOBJS) uniconf/daemon/uniconfd.o, \
+	$(call objects,uniconf uniconf/daemon))
+libuniconf.so: $(libuniconf_OBJS) $(LIBWVSTREAMS)
+uniconf/daemon/uniconfd uniconf/tests/uni: $(LIBUNICONF)
+uniconf/daemon/uniconfd: uniconf/daemon/uniconfd.o $(LIBUNICONF)
+uniconf/daemon/uniconfd: uniconf/daemon/uniconfd.ini \
           uniconf/daemon/uniconfd.8
+uniconf/tests/%: PRELIBS+=$(LIBUNICONF)
 
-install-uniconfd: uniconfd uniconf/tests/uni uniconf/tests/uni.8
-	$(INSTALL) -d $(DESTDIR)$(bindir)
-	$(INSTALL_PROGRAM) uniconf/tests/uni $(DESTDIR)$(bindir)/
-	$(INSTALL) -d $(DESTDIR)$(sbindir)
-	$(INSTALL_PROGRAM) uniconf/daemon/uniconfd $(DESTDIR)$(sbindir)/
-	$(INSTALL) -d $(DESTDIR)$(localstatedir)/lib/uniconf
-	touch $(DESTDIR)$(localstatedir)/lib/uniconf/uniconfd.ini
-	$(INSTALL) -d $(DESTDIR)$(mandir)/man8
-	$(INSTALL_DATA) uniconf/daemon/uniconfd.8 $(DESTDIR)$(mandir)/man8
-	$(INSTALL_DATA) uniconf/tests/uni.8 $(DESTDIR)$(mandir)/man8
+#
+# libwvdbus: C++ DBus library based on wvstreams
+#
+ifneq ("$(with_dbus)", "no")
+  TARGETS += dbus/tests/wvdbus dbus/tests/wvdbusd
+  TARGETS += libwvdbus.so
+  TESTS += $(call tests_cc,dbus/tests)
+  libwvdbus_OBJS += $(call objects,dbus)
+  libwvdbus.so: $(libwvdbus_OBJS) $(LIBWVSTREAMS)
+  libwvdbus.so-LIBS += $(LIBS_DBUS)
+  dbus/tests/%: PRELIBS+=$(LIBWVDBUS)
+endif
 
-install-wsd: ipstreams/tests/wsd
-	$(INSTALL) -d $(DESTDIR)$(bindir)
-	$(INSTALL_PROGRAM) ipstreams/tests/wsd $(DESTDIR)$(bindir)/
+#
+# libwvqt: helper library to make WvStreams work better in Qt event loops
+#
+ifneq ("$(with_qt)", "no")
+  TARGETS += libwvqt.so
+  TESTS += $(patsubst %.cc,%,$(wildcard qt/tests/*.cc))
+  libwvqt_OBJS += $(call objects,qt)
+  libwvqt.so: $(libwvqt_OBJS) $(LIBWVSTREAMS)
+  libwvqt.so-LIBS += $(LIBS_QT)
+  qt/tests/%: PRELIBS+=$(LIBWVQT)
 
-uninstall:
-	$(tbd)
+  qt/wvqtstreamclone.o: include/wvqtstreamclone.moc
+  qt/wvqthook.o: include/wvqthook.moc
+endif
 
-$(TESTS): $(LIBUNICONF) $(LIBWVTEST) $(LIBWVDBUS)
+#
+# libwvstatic.a: all the wvstreams libraries in one static .a file, to make
+# it easy to link your programs statically to wvstreams.
+#
+TARGETS += libwvstatic.a
+libwvstatic.a: \
+	$(libwvbase_OBJS) \
+	$(libwvutils_OBJS) \
+	$(libwvstreams_OBJS) \
+	$(libuniconf_OBJS) \
+	$(libwvdbus_OBJS) \
+	$(libwvqt_OBJS) \
+	uniconf/unigenhack_s.o
+
+#
+# libwvtest: the WvTest tools for writing C++ unit tests
+#
+TARGETS += wvtestmain.o libwvtest.a
+TESTOBJS = utils/wvtest.o
+libwvtest.a: wvtestmain.o $(TESTOBJS)
+
+#
+# Some example programs
+#
+TARGETS += examples/wvgrep/wvgrep examples/wvgrep/wvegrep
+examples/wvgrep/wvgrep: examples/wvgrep/wvgrep.o $(LIBWVSTREAMS)
+examples/wvgrep/wvegrep: examples/wvgrep/wvgrep
+	ln -f $< $@
+
+
+TARGETS_SO = $(filter %.so,$(TARGETS))
+TARGETS_A = $(filter %.a,$(TARGETS))
+
+all: $(filter-out $(WV_EXCLUDES), $(TARGETS))
+
+TESTS += wvtestmain
 $(addsuffix .o,$(TESTS)):
 tests: $(TESTS)
 
-include $(filter-out xplc%,$(wildcard */rules.mk */*/rules.mk)) /dev/null
+test: all tests qtest
 
--include $(shell find . -name '.*.d') /dev/null
-
-test: runconfigure all tests qtest
-
-qtest: runconfigure all wvtestmain
+qtest: all wvtestmain
 	LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(WVSTREAMS_LIB)" $(WVTESTRUN) $(MAKE) runtests
 
 runtests:
@@ -215,7 +189,40 @@ ifeq ("$(TESTNAME)", "unitest")
 endif
 
 wvtestmain: \
-	$(call objects, $(filter-out ./Win32WvStreams/%, \
-		$(shell find . -type d -name t))) \
+	$(call objects, $(filter-out win32/%, \
+		$(shell find . -type d -name t -printf "%P\n"))) \
 	$(LIBWVDBUS) $(LIBUNICONF) $(LIBWVSTREAMS) $(LIBWVTEST)
 
+distclean: clean
+	rm -f uniconf/daemon/uniconfd.8 uniconf/tests/uni
+	rm -f config.mk config.log config.status \
+		include/wvautoconf.h config.cache reconfigure \
+		stamp-h.in configure include/wvautoconf.h.in
+	rm -rf autom4te.cache
+	rm -f pkgconfig/*.pc
+
+clean:
+	$(subdirs)
+	@rm -fv .junk $(TARGETS) uniconf/daemon/uniconfd \
+		$(TESTS) tmp*.ini uniconf/daemon/uniconfd.ini \
+		.wvtest-total \
+		$(shell find . -name '*.o' -o -name '.*.d' \
+			-o -name '*~' -o -name '*.moc')
+		
+clean-targets:
+	rm -fv $(TARGETS)
+	
+clean-tests:
+	rm -fv $(TESTS)
+
+kdoc:
+	kdoc -f html -d Docs/kdoc-html --name wvstreams --strip-h-path */*.h
+
+doxygen:
+	doxygen
+
+.PHONY: \
+	clean distclean \
+	kdoc doxygen \
+	install install-shared install-dev uninstall \
+	tests test

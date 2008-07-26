@@ -1,6 +1,7 @@
-# wvrules.mk:  2007 08 15
+# wvrules.mk
 #
-# Copyright (C) 1998-2007 by Avery Pennarun <apenwarr@alumnit.ca>.
+# Copyright (C) 1998-2007 by Avery Pennarun <apenwarr@alumnit.ca>
+#   and contributors.
 #   Use, distribute, modify, and redistribute freely.  (But if you're nice,
 #   you'll send all your changes back to me.)
 #
@@ -10,6 +11,12 @@
 #
 # It will only work with GNU make.
 #
+
+# we need a default rule, since the 'includes' below can cause trouble
+.PHONY: default all
+default: all
+
+all: CC CXX
 
 # if WVSTREAMS_SRC is set assume everything else is set.
 # For packages that use WvStreams use WVSTREAMS_SRC=. for distribution.
@@ -23,53 +30,48 @@ export WVSTREAMS WVSTREAMS_SRC WVSTREAMS_LIB WVSTREAMS_INC WVSTREAMS_BIN
 
 SHELL=/bin/bash
 
-ifneq ($(wildcard $(WVSTREAMS_SRC)/config.mk),)
-  include $(WVSTREAMS_SRC)/config.mk
-  __junk:=$(shell echo "Using compiler type '$(COMPILER_STANDARD)'" >&2)
-  include $(WVSTREAMS_SRC)/wvrules-$(COMPILER_STANDARD).mk
-else
+include $(WVSTREAMS_SRC)/config.defaults.mk
+-include $(WVSTREAMS_SRC)/config.mk
+-include $(WVSTREAMS_SRC)/config.overrides.mk
+-include $(WVSTREAMS_SRC)/local.mk
+
+ifeq ($(wildcard $(WVSTREAMS_SRC)/config.mk),)
   __junk:=$(shell echo "Warning: $(WVSTREAMS_SRC)/config.mk doesn't exist" >&2)
-  COMPILER_STANDARD=posix
 endif
 
 ifeq (${EXEEXT},.exe)
-  include $(WVSTREAMS_SRC)/wvrules-win32.mk
+  _WIN32=_WIN32
+  XPATH += $(WVSTREAMS)/win32 $(WVSTREAMS)/win32/cominclude
+  AR=i586-mingw32msvc-ar
+  LIBS += -lssl -lcrypto -lz -lole32 -lrpcrt4 -lwsock32 -lgdi32 -limagehlp \
+  	  -lxplc-cxx -lxplc -lstdc++ -largp
+else
+  CFLAGS += -fPIC
+  CXXFLAGS += -fPIC
 endif
+
+include $(WVSTREAMS_SRC)/wvrules-$(COMPILER_STANDARD).mk
 
 ifeq (${WVTESTRUN},)
   WVTESTRUN=$(WVSTREAMS_BIN)/wvtesthelper
 endif
 
-STRIP=strip --remove-section=.note --remove-section=.comment
-#STRIP=echo
-
 # macros that expand to the object files in the given directories
 objects=$(sort $(foreach type,c cc,$(call objects_$(type),$1)))
-objects_c=$(patsubst %.c,%.o,$(wildcard $(addsuffix /*.c,$1)))
-objects_cc=$(patsubst %.cc,%.o,$(wildcard $(addsuffix /*.cc,$1)))
-
-# macro that expands to the subdir.mk files to include
-xsubdirs=$(sort $(wildcard $1/*/subdir.mk)) /dev/null
-
-# we need a default rule, since the 'includes' below causes trouble
-.PHONY: default all
-default: all
+objects_c=$(filter-out $(WV_EXCLUDES), \
+		$(patsubst %.c,%.o,$(wildcard $(addsuffix /*.c,$1))))
+objects_cc=$(filter-out $(WV_EXCLUDES), \
+		$(patsubst %.cc,%.o,$(wildcard $(addsuffix /*.cc,$1))))
+tests_cc=$(filter-out $(WV_EXCLUDES), \
+		$(patsubst %.cc,%,$(wildcard $(addsuffix /*.cc,$1))))
 
 # default "test" rule does nothing...
-.PHONY: test runtests clean-valgrind
+.PHONY: test runtests
 test:
-runtests: clean-valgrind
-
-clean-valgrind:
-	@rm -f valgrind.log.pid*
+runtests:
 
 %/test:
 	$(MAKE) -C $(dir $@) test
-
-$(WVSTREAMS_SRC)/rules.local.mk:
-	@true
-
--include $(WVSTREAMS_SRC)/rules.local.mk
 
 INCFLAGS=$(addprefix -I,$(WVSTREAMS_INC) $(XPATH))
 CPPFLAGS+=$(INCFLAGS) \
@@ -94,10 +96,10 @@ endif
 FORCE:
 
 ifeq ($(LN_S),)
-LN_S := ln -s
+  LN_S := ln -s
 endif
 ifeq ($(LN),)
-LN := ln
+  LN := ln
 endif
 
 # Create symbolic links
@@ -108,19 +110,30 @@ wvlns=$(SYMLINK_MSG)$(LN_S) -f $1 $2
 # usage: $(wvln,source,dest)
 wvln=$(SYMLINK_MSG)$(LN) -f $1 $2
 
-# usage: $(wvcc_base,outfile,infile,stem,compiler cflags,mode)
-#    eg: $(wvcc,foo.o,foo.cc,foo,$(CC) $(CFLAGS) -fPIC,-c)
-DEPFILE = $(if $(filter %.o,$1),$(dir $1).$(notdir $(1:.o=.d)),/dev/null)
-wvcc=$(call wvcc_base,$1,$2,$3,$(CC) $(CFLAGS) $($1-CFLAGS) $(CPPFLAGS) $($1-CPPFLAGS) $4,$(if $5,$5,-c))
-wvcxx=$(call wvcc_base,$1,$2,$3,$(CXX) $(CXXFLAGS) $($1-CFLAGS) $(CPPFLAGS) $($1-CPPFLAGS) $($1-CXXFLAGS) $4,$(if $5,$5,-c))
+# usage: $(wvcc,outfile,infile,stem,extra_cflags,mode)
+#    eg: $(wvcc,foo.o,foo.cc,foo,-fPIC,-c)
+
+define wvcc
+	./CC $(if $5,$5,-c) $3 $($1-CFLAGS) $($1-CPPFLAGS) $4
+endef
+
+define wvcxx
+	./CXX $(if $5,$5,-c) $3 $($1-CXXFLAGS) $($1-CPPFLAGS) $4
+endef
 
 %.so: SONAME=$@$(if $(SO_VERSION),.$(SO_VERSION))
 
 wvsoname=$(if $($1-SONAME),$($1-SONAME),$(if $(SONAME),$(SONAME),$1))
-define wvlink_so
+ifdef _WIN32
+  define wvlink_so
+	@echo "Skipping $@ on win32 (can't build shared libraries)"
+  endef
+else
+  define wvlink_so
 	$(LINK_MSG)$(WVLINK_CC) $(LDFLAGS) $($1-LDFLAGS) -Wl,-z,defs -Wl,-soname,$(call wvsoname,$1) -shared -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
 	$(if $(filter-out $(call wvsoname,$1),$1),$(call wvlns,$1,$(call wvsoname,$1)))
-endef
+  endef
+endif
 
 ../%.so:;	@echo "Shared library $@ does not exist!"; exit 1
 ../%.a:;	@echo "Library $@ does not exist!"; exit 1
@@ -156,31 +169,11 @@ $(addsuffix .o,$(basename $(wildcard *.c) $(wildcard *.cc) $(wildcard *.cpp))):
 	@ls -l $@
 
 #
-# Header files for tcl/tk packages
-#
-pkgIndex.tcl: $(filter-out pkgIndex.tcl,$(wildcard *.tcl))
-	@echo Generating pkgIndex.tcl...
-	@rm -f $@
-	@echo pkg_mkIndex . \
-		$$(echo $^ | sed 's,\.tcl_paths,,') | tclsh
-
-pkgIndex.tcl $(wildcard *.tcl): .tcl_paths
-.tcl_paths:
-	@echo Generating .tcl_paths...
-	@rm -f $@
-	@find . $(TOPDIR) -name '*.tcl' -printf '%h\n' | sort | uniq | \
-		(echo lappend auto_path \\; sed 's/^.*$$/	& \\/'; echo) >$@.tmp
-	@mv $@.tmp $@
-
-#
 # We automatically generate header dependencies for .c and .cc files.  The
-# dependencies are stored in the file ".filename.d"
+# dependencies are stored in the file ".filename.d", and we include them
+# automatically here if they exist.
 #
-depfiles_sf = $(wildcard .*.d t/.*.d)
-
-ifneq ($(depfiles_sf),)
--include $(depfiles_sf)
-endif
+-include $(shell find . -name '.*.d') /dev/null
 
 
 #
@@ -204,10 +197,6 @@ endef
 
 subdirs = $(call subdirs_func,$(subst subdirs,all,$(if $1,$1,$@)),$(if $2,$2,$(SUBDIRS)))
 
-# # $(call reverse,$(SUBDIRS)) works since GNU make 3.80 only
-# reverse = \
-# 	$(if $(1),$(call reverse,$(wordlist 2, 999, $(1))) $(firstword $(1)))
-
 define shell_reverse
 	revlist="" ; \
 	for word in $(1) ; do \
@@ -215,7 +204,6 @@ define shell_reverse
 	done ; \
 	echo "$${revlist}"
 endef
-
 reverse = $(shell $(call shell_reverse,$(1)))
 
 clean_subdirs = $(call subdirs,clean,$(call reverse,$(SUBDIRS)),keep)
@@ -228,7 +216,7 @@ subdirs: ${SUBDIRS}
 
 #
 # Auto-clean rule.  Feel free to append to this in your own directory, by
-# defining your own "clean" rule.
+# defining your own "clean" and/or "distclean" rules.
 #
 .PHONY: clean _wvclean
 
@@ -238,6 +226,7 @@ _wvclean:
 	@echo '--> Cleaning $(shell pwd)...'
 	@rm -f *~ *.tmp *.o *.a *.so *.so.* *.libs *.dll *.lib *.moc *.d .*.d .depend \
 		 .\#* .tcl_paths pkgIndex.tcl gmon.out core build-stamp \
+		 CC CXX \
 		 wvtestmain
 	@rm -f $(patsubst %.t.cc,%.t,$(wildcard *.t.cc) $(wildcard t/*.t.cc)) \
 		t/*.o t/*~ t/.*.d t/.\#*
@@ -245,28 +234,11 @@ _wvclean:
 	@rm -f semantic.cache tags
 	@rm -rf debian/tmp
 
-#
-# default dist rules.
 distclean: clean
-
-PKGNAME := $(notdir $(shell pwd))
-PPKGNAME := $(shell echo $(PKGNAME) | tr a-z A-Z | tr - _)
-PKGVER := $(shell test -f wvver.h \
-	    && cat wvver.h | sed -ne "s/\#define $(PPKGNAME)_VER_STRING.*\"\([^ ]*\).*\".*/\1/p")
-ifneq ($(PKGVER),)
-PKGDIR := $(PKGNAME)-$(PKGVER)
-else
-PKGDIR := $(PKGNAME)
-endif
-ifneq ($(PKGSNAPSHOT),)
-PKGDIR := $(PKGDIR)+$(shell date +%Y%m%d)
-endif
-dist-dir:
-	@echo $(PKGDIR)
 
 dist-hook:
 
-dist: dist-hook ChangeLog
+dist: dist-hook
 	@echo '--> Making dist in ../build/$(PKGDIR)...'
 	@test -d ../build || mkdir ../build
 	@rsync -a --delete --force '$(shell pwd)/' '../build/$(PKGDIR)'
@@ -276,24 +248,3 @@ dist: dist-hook ChangeLog
 	@rm -f '../build/$(PKGDIR).tar.gz'
 	@cd ../build; tar -zcf '$(PKGDIR).tar.gz' '$(PKGDIR)'
 	@echo '--> Created tarball in ../build/$(PKGDIR).tar.gz.'
-
-ChangeLog: FORCE
-	@echo '--> Generating ChangeLog from Subversion...'
-	@rm -f ChangeLog ChangeLog.bak
-	@svn log --xml --verbose | xsltproc svn2cl.xsl - > ChangeLog
-
-#
-# Make 'tags' file using the ctags program - useful for editing
-#
-#tags: $(shell find -name '*.cc' -o -name '*.[ch]')
-#	@echo '(creating "tags")'
-#	@if [ -x /usr/bin/ctags ]; then /usr/bin/ctags $^; fi
-
-print_vars:
-	@echo "CPPOPTS:  $(CPPOPTS)"
-	@echo "COPTS:    $(COPTS)"
-	@echo "CACXX:    $(C_AND_CXX_FLAGS)"
-	@echo "CPPFLAGS: $(CPPFLAGS)"
-	@echo "CFLAGS:   $(CFLAGS)"
-	@echo "CXXFLAGS: $(CXXFLAGS)"
-

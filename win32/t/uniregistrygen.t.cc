@@ -1,10 +1,9 @@
 #include "uniconfroot.h"
 #include "wvtest.h"
 
-UniConfRoot uni("registry:HKEY_CURRENT_USER");
-
 WVTEST_MAIN("uniregistry")
 {
+    UniConfRoot uni("registry:HKEY_CURRENT_USER");
     WVPASS(!!uni.xget("/AppEvents/EventLabels/Close"));
     
     UniConf::RecursiveIter i(uni["Software/Microsoft/Windows"]);

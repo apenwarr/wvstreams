@@ -1,11 +1,22 @@
-LIBWVBASE=$(WVSTREAMS_LIB)/libwvbase.so $(LIBXPLC)
-LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBWVBASE)
-LIBWVSTREAMS=$(WVSTREAMS_LIB)/libwvstreams.so $(LIBWVUTILS)
-LIBWVOGG=$(WVSTREAMS_LIB)/libwvoggvorbis.so $(LIBWVSTREAMS)
-LIBUNICONF=$(WVSTREAMS_LIB)/libuniconf.so $(LIBWVSTREAMS)
-LIBWVDBUS=$(WVSTREAMS_LIB)/libwvdbus.so $(LIBWVSTREAMS)
-LIBWVQT=$(WVSTREAMS_LIB)/libwvqt.so $(LIBWVSTREAMS)
-LIBWVTEST=$(WVSTREAMS_LIB)/libwvtest.a $(LIBWVUTILS)
+ifdef _WIN32
+  LIBWVSTATIC=$(WVSTREAMS_LIB)/libwvstatic.a
+  LIBWVBASE=$(LIBWVSTATIC)
+  LIBWVUTILS=$(LIBWVSTATIC)
+  LIBWVSTREAMS=$(LIBWVSTATIC)
+  LIBUNICONF=$(LIBWVSTATIC)
+  LIBWVDBUS=$(LIBWVSTATIC) $(LIBS_DBUS)
+  LIBWVQT=$(LIBWVSTATIC)
+  LIBWVTEST=$(WVSTREAMS_LIB)/libwvtest.a $(LIBWVUTILS)
+else
+  LIBWVSTATIC=$(WVSTREAMS_LIB)/libwvstatic.a
+  LIBWVBASE=$(WVSTREAMS_LIB)/libwvbase.so $(LIBXPLC)
+  LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBWVBASE)
+  LIBWVSTREAMS=$(WVSTREAMS_LIB)/libwvstreams.so $(LIBWVUTILS)
+  LIBUNICONF=$(WVSTREAMS_LIB)/libuniconf.so $(LIBWVSTREAMS)
+  LIBWVDBUS=$(WVSTREAMS_LIB)/libwvdbus.so $(LIBWVSTREAMS)
+  LIBWVQT=$(WVSTREAMS_LIB)/libwvqt.so $(LIBWVSTREAMS)
+  LIBWVTEST=$(WVSTREAMS_LIB)/libwvtest.a $(LIBWVUTILS)
+endif
 
 #
 # Initial C compilation flags
@@ -20,93 +31,25 @@ LDFLAGS += $(LDOPTS) -L$(WVSTREAMS_LIB)
 # Default compiler we use for linking
 WVLINK_CC = $(CXX)
 
-ifeq ("$(enable_debug)", "yes")
-  DEBUG:=1
-else
-  DEBUG:=0
-endif
-
-ifeq ("$(enable_fatal_warnings)", "yes")
-  CXXFLAGS+=-Werror
-  # FIXME: not for C, because our only C file, crypto/wvsslhack.c, has
-  #        a few warnings on purpose.
-  #CFLAGS+=-Werror
-endif
-
 ifneq ("$(enable_optimization)", "no")
   CXXFLAGS+=-O2
-  #CXXFLAGS+=-felide-constructors
   CFLAGS+=-O2
 endif
 
 ifneq ("$(enable_warnings)", "no")
-#WLACH:FIXME: Conditional on using MSVC
-#  CXXFLAGS+=-Wall -Woverloaded-virtual
-#  CFLAGS+=-Wall
+  CXXFLAGS+=-Wall -Woverloaded-virtual
+  CFLAGS+=-Wall
 endif
 
-ifeq ("$(enable_efence)", "yes")
-  EFENCE:=-lefence
-  USE_EFENCE:=1
-endif
-
-ifeq (USE_EFENCE,1)
-  LDLIBS+=$(EFENCE)
-endif
-
-ifeq ("$(enable_verbose)", "yes")
-  VERBOSE:=1
-endif
-
-ifdef DONT_LIE
-  VERBOSE:=1 $(warning DONT_LIE is deprecated, use VERBOSE instead)
-endif
-
-#
-# Figure out which OS we're running (for now, only picks out Linux or BSD)
-#
-OS:=$(shell uname -a | awk '{print $$1}' | sed -e 's/^.*BSD/BSD/g' )
-
-#
-# (Just BSD and LINUX clash with other symbols, so use ISLINUX and ISBSD)
-# This sucks.  Use autoconf for most things!
-#
-ifeq ($(OS),Linux)
-  OSDEFINE:=-DISLINUX
-endif
-
-ifeq ($(OS),BSD)
-  OSDEFINE:=-DISBSD
-endif
-
-ifeq ($(CCMALLOC),1)
- ifeq ($(DEBUG),1)
-   XX_LIBS += -lccmalloc -ldl
- endif
-endif
-
-ifeq ($(DEBUG),1)
-  CFLAGS += -ggdb -DDEBUG=1
-  CXXFLAGS += -ggdb -DDEBUG=1
+DEBUG:=$(filter-out no 0,$(enable_debug))
+ifdef DEBUG
+  CPPFLAGS += -ggdb -DDEBUG=1 $(patsubst %,-DDEBUG_%,$(DEBUG))
   LDFLAGS += -ggdb
 else
-  CFLAGS += -DDEBUG=0
-  CXXFLAGS += -DDEBUG=0
-  #CFLAGS += -DNDEBUG    # I don't like disabling assertions...
-  #CFLAGS += -fomit-frame-pointer  # really evil
-  #CXXFLAGS += -fno-implement-inlines  # causes trouble with egcs 1.0
+  CPPFLAGS += -DDEBUG=0
   LDFLAGS += 
 endif
 
-ifeq ($(PROFILE),1)
-  CFLAGS += -pg
-  LDFLAGS += -pg
-endif
-
-ifeq ($(STATIC),1)
-  LDFLAGS += -static
-endif
-
 define wvlink_ar
 	$(LINK_MSG)set -e; rm -f $1 $(patsubst %.a,%.libs,$1); \
 	echo $2 >$(patsubst %.a,%.libs,$1); \
@@ -121,39 +64,12 @@ define wvlink_ar
 	$(AR) s $1
 endef
 
-define wvcc_base
-	@rm -f "$1"
-	$(COMPILE_MSG)$4 $5 $2 -o $1
-	@# The Perl script here generates the proper dependencies, including
-	@# null dependencies so Make doesn't complain
-	$(DEPEND_MSG)$4 -M -E $< \
-                | perl -we \
-                '$$a = '"'"'$1'"'"'; \
-                $$\ = $$/; \
-                local $$/; \
-                while (<>) { \
-                    for (split(/(?<!\\)$$/m)) { \
-                        s/^[^:]+:\s*/$$a: /; \
-                        print; \
-                        if (s/^$$a: //) { \
-			    map {print "$$_:" unless m/^\\$$/} (split(/\s+/));\
-                        } \
-                    } \
-                }' >$(DEPFILE)
-endef
+CC: FORCE
+	@CC="$(CC)" CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" \
+	  $(WVSTREAMS)/gen-cc CC c
 
-define wvlink_ar
-	$(LINK_MSG)set -e; rm -f $1 $(patsubst %.a,%.libs,$1); \
-	echo $2 >$(patsubst %.a,%.libs,$1); \
-	$(AR) q $1 $(filter %.o,$2); \
-	for d in "" $(filter %.libs,$2); do \
-	    if [ "$$d" != "" ]; then \
-			cd $$(dirname "$$d"); \
-			$(AR) q $(shell pwd)/$1 $$(cat $$(basename $$d)); \
-			cd $(shell pwd); \
-		fi; \
-	done; \
-	$(AR) s $1
-endef
+CXX: FORCE
+	@CC="$(CXX)" CFLAGS="$(CXXFLAGS)" CPPFLAGS="$(CPPFLAGS)" \
+	  $(WVSTREAMS)/gen-cc CXX cc
 
-wvlink=$(LINK_MSG)$(CC) $(LDFLAGS) $($1-LDFLAGS) -o $1 $(filter %.o %.a %.so, $2) $($1-LIBS) $(LIBS) $(XX_LIBS) $(LDLIBS)
+wvlink=$(LINK_MSG)$(WVLINK_CC) $(LDFLAGS) $($1-LDFLAGS) -o $1 $(filter %.o %.a %.so, $2) $($1-LIBS) $(XX_LIBS) $(LDLIBS) $(PRELIBS) $(LIBS)

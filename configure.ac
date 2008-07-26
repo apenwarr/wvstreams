@@ -33,14 +33,6 @@ AC_ARG_ENABLE(debug,
               AC_HELP_STRING([--disable-debug],
                              [strip debug information]))
 
-AC_ARG_ENABLE(devel,
-              AC_HELP_STRING([--enable-devel],
-                             [developer options]))
-
-AC_ARG_ENABLE(efence,
-              AC_HELP_STRING([--enable-efence],
-                             [link against Electric Fence]))
-
 AC_ARG_ENABLE(fatal-warnings,
               AC_HELP_STRING([--enable-fatal-warnings],
                              [turn warnings into errors]))
@@ -56,10 +48,6 @@ AC_ARG_ENABLE(resolver-fork,
 AC_ARG_ENABLE(delete-detector,
               AC_HELP_STRING([--enable-delete-detector],
                              [Delete detector (reference counting)]))
-
-AC_ARG_ENABLE(verbose,
-              AC_HELP_STRING([--enable-verbose],
-                             [verbose compilation output]))
 
 AC_ARG_ENABLE(warnings,
               AC_HELP_STRING([--disable-warnings],
@@ -83,8 +71,8 @@ AC_ARG_VAR(MOC, [Qt meta object compiler])
 AC_ARG_VAR(WEAVER_BUILD_INFO, [Extra version info])
 
 # avoid autoconf's default values, but keep those the user might have given
-CFLAGS="-fPIC $CFLAGS"
-CXXFLAGS="-fPIC $CXXFLAGS"
+CFLAGS="$CFLAGS"
+CXXFLAGS="$CXXFLAGS"
 
 AC_PROG_CC
 AC_PROG_CXX
@@ -335,13 +323,6 @@ if test "$PKGCONFIG" = "no"; then
     fi
 fi
 
-# devel
-if test "$enable_devel" = "yes"; then
-    enable_debug=yes
-    enable_fatal_warnings=yes
-    enable_warnings=yes
-fi
-
 if test "$enable_debug" != "no"; then
     AC_DEFINE_UNQUOTED(VER_STRING_EXTRA, [" (`whoami`@`hostname`$VER_STRING_EXTRA)"], [Extra version string.])
 fi
@@ -389,16 +370,6 @@ if test "$with_dbus" != "no"; then
         LIBS_DBUS=$DBUS_LIBDIR/libdbus-1.a
     fi
 fi
-
-# gtk
-#if test "$with_gtk" != "no"; then
-#    CPPFLAGS_save="$CPPFLAGS"
-#    WV_APPEND(CPPFLAGS,`pkg-config --cflags gtk+ 2>/dev/null`)
-#    AC_CHECK_HEADERS(gtk/gtk.h,, [with_gtk=no])
-#    AC_CHECK_LIB(gdk, gdk_init,, [with_gtk=no])
-#    AC_CHECK_LIB(gtk, gtk_main,, [with_gtk=no])
-#    test "$with_gtk" = no && CPPFLAGS="$CPPFLAGS_save"
-#fi
 
 # BSD sockets, if you're on Solaris
 AC_CHECK_LIB(socket, bind)
@@ -542,16 +513,6 @@ if test "$with_xplc" != "no"; then
 	LIBS="$LIBS_save"
 	xplc_pc="xplc-${xplc_version}"
     fi
-    # Not already on the system?  Try building our own.
-    if test "$with_xplc" = "no" && test -d xplc; then
-        WV_APPEND(CPPFLAGS, [-I\$(WVSTREAMS)/xplc/include])
-        WV_APPEND(LDFLAGS, [-L\$(WVSTREAMS)/xplc])
-        AC_CONFIG_SUBDIRS(xplc)
-        build_xplc=yes
-        with_xplc='$(WVSTREAMS)/xplc'
-	xplc_pc='wvxplc'
-	LIBS_XPLC="-lxplc-cxx -lxplc"
-    fi
 fi
 
 # zlib
@@ -607,12 +568,6 @@ if test -n "$missing_required"; then
     AC_MSG_ERROR([Required dependencies missing:$missing_required])
 fi
 
-if test "$enable_devel" = "yes"; then
-    if test -n "$missing_devel"; then
-        AC_MSG_ERROR([Some packages required in developer mode are missing.])
-    fi
-fi
-
 if test "$VALGRIND" != ""; then
     VALGRIND="valgrind --tool=memcheck --leak-check=yes --num-callers=10 --suppressions=\$(WVSTREAMS_SRC)/wvstreams.supp"
     if valgrind --help | grep log-file >/dev/null; then
@@ -637,18 +592,13 @@ COMPILER_STANDARD=posix
 AC_SUBST(SO_VERSION)
 
 AC_SUBST(enable_debug)
-AC_SUBST(enable_devel)
-AC_SUBST(enable_efence)
-AC_SUBST(enable_fatal_warnings)
 AC_SUBST(enable_optimization)
 AC_SUBST(enable_resolver_fork)
 AC_SUBST(enable_delete_detector)
-AC_SUBST(enable_verbose)
 AC_SUBST(enable_warnings)
 AC_SUBST(enable_testgui)
 
 AC_SUBST(with_dbus)
-AC_SUBST(with_gtk)
 AC_SUBST(with_openssl)
 AC_SUBST(with_pam)
 AC_SUBST(with_readline)
@@ -664,7 +614,6 @@ AC_SUBST(LIBS_QT)
 AC_SUBST(LIBS_PAM)
 AC_SUBST(LIBS_TCL)
 
-AC_SUBST(build_xplc)
 AC_SUBST(xplc_pc)
 
 AC_SUBST(ac_libs)
