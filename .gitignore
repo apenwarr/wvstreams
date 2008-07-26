@@ -15,3 +15,5 @@ include/wvautoconf.h.in
 /wvtestmain
 /tmp*.ini
 /wvfdstream.t.tmp
+/CC
+/CXX

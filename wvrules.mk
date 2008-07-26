@@ -16,6 +16,8 @@
 .PHONY: default all
 default: all
 
+all: CC CXX
+
 # if WVSTREAMS_SRC is set assume everything else is set.
 # For packages that use WvStreams use WVSTREAMS_SRC=. for distribution.
 ifneq ($(WVSTREAMS),)
@@ -98,11 +100,16 @@ wvlns=$(SYMLINK_MSG)$(LN_S) -f $1 $2
 # usage: $(wvln,source,dest)
 wvln=$(SYMLINK_MSG)$(LN) -f $1 $2
 
-# usage: $(wvcc_base,outfile,infile,stem,compiler cflags,mode)
-#    eg: $(wvcc,foo.o,foo.cc,foo,$(CC) $(CFLAGS) -fPIC,-c)
-DEPFILE = $(if $(filter %.o,$1),$(dir $1).$(notdir $(1:.o=.d)),/dev/null)
-wvcc=$(call wvcc_base,$1,$2,$3,$(CC) $(CFLAGS) $($1-CFLAGS) $(CPPFLAGS) $($1-CPPFLAGS) $4,$(if $5,$5,-c))
-wvcxx=$(call wvcc_base,$1,$2,$3,$(CXX) $(CXXFLAGS) $($1-CFLAGS) $(CPPFLAGS) $($1-CPPFLAGS) $($1-CXXFLAGS) $4,$(if $5,$5,-c))
+# usage: $(wvcc,outfile,infile,stem,extra_cflags,mode)
+#    eg: $(wvcc,foo.o,foo.cc,foo,-fPIC,-c)
+
+define wvcc
+	./CC $(if $5,$5,-c) $3 $($1-CFLAGS) $($1-CPPFLAGS) $4
+endef
+
+define wvcxx
+	./CXX $(if $5,$5,-c) $3 $($1-CXXFLAGS) $($1-CPPFLAGS) $4
+endef
 
 %.so: SONAME=$@$(if $(SO_VERSION),.$(SO_VERSION))
 

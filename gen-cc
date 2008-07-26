@@ -1,0 +1,32 @@
+#!/bin/sh -e
+OUTFILE=$1
+EXT=$2
+echo "* Generating $OUTFILE" >&2
+rm -f $OUTFILE
+
+cat >$OUTFILE <<-EOF 
+	#!/bin/sh
+	set -e
+	
+	MODE=\$1
+	BASE=\$2
+	DIR=\$(dirname \$BASE)
+	shift
+	shift
+	
+	$CC \$MODE -o \$BASE.o \$BASE.$EXT \\
+	        $CPPFLAGS \\
+	        $CFLAGS \\
+	        "\$@"
+
+	# The Perl script here generates the proper dependencies,
+	# including null dependencies so Make doesn't complain
+	$CC -M -E \$BASE.$EXT \\
+	        $CPPFLAGS \\
+	        $CFLAGS \\
+	        "\$@" \\
+	    | ./fixdep.pl \$BASE.o \\
+	    >\$(dirname \$BASE)/.\$(basename \$BASE .o).d
+EOF
+
+chmod a+x $OUTFILE
