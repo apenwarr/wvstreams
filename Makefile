@@ -2,8 +2,8 @@ WVSTREAMS=.
 
 include wvrules.mk
 
-%: %.in
-	@sed -e 's/#VERSION#/$(PACKAGE_VERSION)/g' < $< > $@
+%: %.subst
+	sed -e 's/#VERSION#/$(PACKAGE_VERSION)/g' < $< > $@
 
 ifeq ("$(enable_testgui)", "no")
   WVTESTRUN=env
