@@ -113,8 +113,8 @@ uniconf/tests/%: PRELIBS+=$(LIBUNICONF)
 # libwvdbus: C++ DBus library based on wvstreams
 #
 ifneq ("$(with_dbus)", "no")
-  TARGETS += dbus/tests/wvdbus dbus/tests/wvdbusd
   TARGETS += libwvdbus.so
+  TARGETS += dbus/tests/wvdbus dbus/tests/wvdbusd
   TESTS += $(call tests_cc,dbus/tests)
   libwvdbus_OBJS += $(call objects,dbus)
   libwvdbus.so: $(libwvdbus_OBJS) $(LIBWVSTREAMS)
