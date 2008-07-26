@@ -11,22 +11,15 @@ cat >$OUTFILE <<-EOF
 	MODE=\$1
 	BASE=\$2
 	DIR=\$(dirname \$BASE)
+	DEPFILE=\$(dirname \$BASE)/.\$(basename \$BASE .o).d
 	shift
 	shift
 	
 	$CC \$MODE -o \$BASE.o \$BASE.$EXT \\
+	        -MMD -MF \$DEPFILE -MP \
 	        $CPPFLAGS \\
 	        $CFLAGS \\
 	        "\$@"
-
-	# The Perl script here generates the proper dependencies,
-	# including null dependencies so Make doesn't complain
-	$CC -M -E \$BASE.$EXT \\
-	        $CPPFLAGS \\
-	        $CFLAGS \\
-	        "\$@" \\
-	    | ./fixdep.pl \$BASE.o \\
-	    >\$(dirname \$BASE)/.\$(basename \$BASE .o).d
 EOF
 
 chmod a+x $OUTFILE
