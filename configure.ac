@@ -641,13 +641,3 @@ fi
 AC_CONFIG_HEADERS(include/wvautoconf.h)
 
 AC_OUTPUT
-
-# Now remove PACKAGE_* macros from include/wvautoconf.h
-sed 's,^#.*define.*PACKAGE_.*$,/* & */,' include/wvautoconf.h > include/wvautoconf.h.new
-if test "x$?" = "x0"; then
-    if ! diff include/wvautoconf.h include/wvautoconf.h >/dev/null; then
-	mv include/wvautoconf.h.new include/wvautoconf.h
-    else
-	rm include/wvautoconf.h.new
-    fi
-fi
