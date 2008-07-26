@@ -78,10 +78,11 @@ TARGETS += crypto/tests/ssltest ipstreams/tests/unixtest
 TARGETS += crypto/tests/printcert
 ifneq ("$(with_readline)", "no")
   TARGETS += ipstreams/tests/wsd
+  ipstreams/tests/wsd-LIBS += -lreadline
 endif
 TESTS += $(call tests_cc,configfile/tests)
 TESTS += $(call tests_cc,streams/tests)
-TESTS += $(filter-out ipstreams/tests/wsd, $(call tests_cc,ipstreams/tests))
+TESTS += $(call tests_cc,ipstreams/tests)
 TESTS += $(call tests_cc,crypto/tests)
 TESTS += $(call tests_cc,urlget/tests)
 TESTS += $(call tests_cc,linuxstreams/tests)
@@ -90,7 +91,6 @@ libwvstreams_OBJS += $(filter-out $(BASEOBJS), \
 		$(ARCH_SUBDIRS) streams urlget))
 libwvstreams.so: $(libwvstreams_OBJS) $(LIBWVUTILS)
 libwvstreams.so-LIBS += -lz -lssl -lcrypto $(LIBS_PAM)
-ipstreams/tests/wsd: LIBS+=-lreadline
 configfile/tests/% streams/tests/% ipstreams/tests/% crypto/tests/% \
   urlget/tests/% linuxstreams/tests/%: PRELIBS+=$(LIBWVSTREAMS)
 
