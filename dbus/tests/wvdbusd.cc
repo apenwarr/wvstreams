@@ -1,11 +1,12 @@
 #include "wvdbusserver.h"
 #include "wvstreamsdaemon.h"
+#include "wvautoconf.h"
 
 class WvDBusDaemon : public WvStreamsDaemon
 {
 public:
     WvDBusDaemon() :
-        WvStreamsDaemon("WvDBusDaemon", WVSTREAMS_RELEASE,
+        WvStreamsDaemon("WvDBusDaemon", PACKAGE_VERSION,
 			wv::bind(&WvDBusDaemon::cb, this)),
         log("WvDBusDaemon", WvLog::Debug)
     {
