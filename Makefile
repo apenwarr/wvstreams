@@ -30,6 +30,7 @@ BASEOBJS = \
 	utils/wvmoniker.o \
 	utils/wvregex.o \
 	utils/wvscatterhash.o utils/wvsorter.o \
+	utils/wvattrs.o \
 	utils/wvstring.o utils/wvstringlist.o \
 	utils/wvstringmask.o \
 	utils/strutils.o \
