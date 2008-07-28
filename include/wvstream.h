@@ -24,6 +24,10 @@
 class WvStream: public IWvStream
 {
     IMPLEMENT_IOBJECT(WvStream);
+
+    WvString my_wsname;
+    WSID my_wsid;
+    WvAttrs attrs;
 public:
     /**
      * If this is set, select() doesn't return true for read unless the
@@ -544,6 +548,34 @@ public:
     size_t operator() (WVSTRING_FORMAT_DECL)
         { return write(WvString(WVSTRING_FORMAT_CALL)); }
 
+    const char *wsname() const
+        { return my_wsname; }
+    void set_wsname(WvStringParm wsname)
+        { my_wsname = wsname; }
+    void set_wsname(WVSTRING_FORMAT_DECL)
+        { set_wsname(WvString(WVSTRING_FORMAT_CALL)); }
+        
+    const char *wstype() const { return "WvStream"; }
+    
+    WSID wsid() const { return my_wsid; }
+    static IWvStream *find_by_wsid(WSID wsid);
+
+    virtual WvString getattr(WvStringParm name) const
+	{ return attrs.get(name); }
+
+    // ridiculous hackery for now so that the wvstream unit test can poke
+    // around in the insides of WvStream.  Eventually, inbuf will go away
+    // from the base WvStream class, so nothing like this will be needed.
+#ifdef __WVSTREAM_UNIT_TEST
+public:
+    size_t outbuf_used() 
+        { return outbuf.used(); }
+    size_t inbuf_used()
+        { return inbuf.used(); }
+    void inbuf_putstr(WvStringParm t)
+        { inbuf.putstr(t); }
+#endif
+
 protected:
     // builds the SelectInfo data structure (runs pre_select)
     // returns true if there are callbacks to be dispatched
@@ -579,15 +611,6 @@ protected:
     virtual int getrfd() const;
     virtual int getwfd() const;
     
-private:
-    /** The function that does the actual work of select(). */
-    bool _select(time_t msec_timeout,
-		 bool readable, bool writable, bool isexcept,
-		 bool forceable);
-
-    void legacy_callback();
-
-protected:
     // FIXME: this one is so bad, I'm not touching it. Quick hack to
     // make it work anyway.
     friend class WvHTTPClientProxyStream;
@@ -629,47 +652,7 @@ protected:
     
     // every call to select() selects on the globalstream.
     static WvStream *globalstream;
-    
-    // ridiculous hackery for now so that the wvstream unit test can poke
-    // around in the insides of WvStream.  Eventually, inbuf will go away
-    // from the base WvStream class, so nothing like this will be needed.
-#ifdef __WVSTREAM_UNIT_TEST
-public:
-    size_t outbuf_used() 
-        { return outbuf.used(); }
-    size_t inbuf_used()
-        { return inbuf.used(); }
-    void inbuf_putstr(WvStringParm t)
-        { inbuf.putstr(t); }
-#endif
-    
-private:
-    /** Prevent accidental copying of WvStream.  These don't actually exist. */
-    WvStream(const WvStream &s);
-    WvStream& operator= (const WvStream &s);
 
-private:
-    WvString my_wsname;
-public:
-    const char *wsname() const
-        { return my_wsname; }
-    void set_wsname(WvStringParm wsname)
-        { my_wsname = wsname; }
-    void set_wsname(WVSTRING_FORMAT_DECL)
-        { set_wsname(WvString(WVSTRING_FORMAT_CALL)); }
-        
-public:
-    const char *wstype() const { return "WvStream"; }
-    
-private:
-    WSID my_wsid;
-public:
-    WSID wsid() const { return my_wsid; }
-    static IWvStream *find_by_wsid(WSID wsid);
-    
-private:
-    static void add_debugger_commands();
-protected:
     static void debugger_streams_display_header(WvStringParm cmd,
             WvStreamsDebugger::ResultCallback result_cb);
     static void debugger_streams_display_one_stream(WvStream *s,
@@ -679,18 +662,26 @@ protected:
             WvStringParm cmd,
             const WvStringList &args,
             WvStreamsDebugger::ResultCallback result_cb);
+ 
 private:
+    /** The function that does the actual work of select(). */
+    bool _select(time_t msec_timeout,
+		 bool readable, bool writable, bool isexcept,
+		 bool forceable);
+
+    void legacy_callback();
+
+    /** Prevent accidental copying of WvStream.  These don't actually exist. */
+    WvStream(const WvStream &s);
+    WvStream& operator= (const WvStream &s);
+    static void add_debugger_commands();
+
     static WvString debugger_streams_run_cb(WvStringParm cmd,
         WvStringList &args,
         WvStreamsDebugger::ResultCallback result_cb, void *);
     static WvString debugger_close_run_cb(WvStringParm cmd,
         WvStringList &args,
         WvStreamsDebugger::ResultCallback result_cb, void *);
-
-    WvAttrs attrs;
-public:
-    virtual WvString getattr(WvStringParm name) const
-	{ return attrs.get(name); }
 };
 
 /**
