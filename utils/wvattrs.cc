@@ -17,7 +17,7 @@ WvAttrs::~WvAttrs()
     free(attrlist);
 }
 
-char *WvAttrs::_getattr(WvStringParm name) const
+char *WvAttrs::_get(WvStringParm name) const
 {
     if (!attrlist)
 	return NULL;
@@ -35,13 +35,13 @@ char *WvAttrs::_getattr(WvStringParm name) const
     return NULL;
 }
 
-void WvAttrs::setattr(WvStringParm name, WvStringParm value)
+void WvAttrs::set(WvStringParm name, WvStringParm value)
 {
     if (!name)
 	return;
 
     const int namelen = name.len();
-    char *exists = _getattr(name);
+    char *exists = _get(name);
     if (exists)
     {
 	//We're trying to readd a key.  Sigh.  Oh well, delete and readd!
@@ -70,8 +70,8 @@ void WvAttrs::setattr(WvStringParm name, WvStringParm value)
     attrlist[attrlen] = 0;
 }
 
-WvString WvAttrs::getattr(WvStringParm name) const
+WvString WvAttrs::get(WvStringParm name) const
 {
-    const char *const ret = _getattr(name);
+    const char *const ret = _get(name);
     return ret ? ret : "";
 }

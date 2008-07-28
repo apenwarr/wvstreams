@@ -1,31 +1,31 @@
 #include "wvattrs.h"
 #include "wvtest.h"
 
-WVTEST_MAIN("getattr/setattr")
+WVTEST_MAIN("get/set")
 {
     WvAttrs *one = new WvAttrs;
     WvAttrs &s = *one;
 
-    WVPASSEQ(s.getattr("not set!"), "");
-    s.setattr("set1", "val1");
-    WVPASSEQ(s.getattr("set1"), "val1");
-    s.setattr("set2", "val2");
-    WVPASSEQ(s.getattr("set2"), "val2");
-    s.setattr("set3", "value3");
-    s.setattr("set2", "value2");
-    WVPASSEQ(s.getattr("set2"), "value2");
-    WVPASSEQ(s.getattr("set3"), "value3");
-    s.setattr("set1", "");
-    WVPASSEQ(s.getattr("set1"), "");
-    s.setattr("", "this should not be set");
-    s.setattr("seter4", "some value");
-    s.setattr("seter5", "some other value");
-    s.setattr("setter6", "OK, last one");
-    WVPASSEQ(s.getattr("seter5"), "some other value");
+    WVPASSEQ(s.get("not set!"), "");
+    s.set("set1", "val1");
+    WVPASSEQ(s.get("set1"), "val1");
+    s.set("set2", "val2");
+    WVPASSEQ(s.get("set2"), "val2");
+    s.set("set3", "value3");
+    s.set("set2", "value2");
+    WVPASSEQ(s.get("set2"), "value2");
+    WVPASSEQ(s.get("set3"), "value3");
+    s.set("set1", "");
+    WVPASSEQ(s.get("set1"), "");
+    s.set("", "this should not be set");
+    s.set("seter4", "some value");
+    s.set("seter5", "some other value");
+    s.set("setter6", "OK, last one");
+    WVPASSEQ(s.get("seter5"), "some other value");
 
     //test copy constructor
     WvAttrs copy(s);
     delete one;
 
-    WVPASSEQ(copy.getattr("seter4"), "some value");
+    WVPASSEQ(copy.get("seter4"), "some value");
 }

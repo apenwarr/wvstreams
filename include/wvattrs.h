@@ -8,14 +8,14 @@ class WvAttrs
     char *attrlist;
     unsigned int attrlen;
 
-    char *_getattr(WvStringParm name) const;
+    char *_get(WvStringParm name) const;
 public:
     WvAttrs();
     WvAttrs(const WvAttrs &copy);
     virtual ~WvAttrs();
 
-    void setattr(WvStringParm name, WvStringParm value);
-    WvString getattr(WvStringParm name) const;
+    void set(WvStringParm name, WvStringParm value);
+    WvString get(WvStringParm name) const;
 };
 
 #endif
