@@ -69,9 +69,3 @@ void WvAttrs::set(WvStringParm name, WvStringParm value)
     attrlen += totallen;
     attrlist[attrlen] = 0;
 }
-
-WvString WvAttrs::get(WvStringParm name) const
-{
-    const char *const ret = _get(name);
-    return ret ? ret : "";
-}

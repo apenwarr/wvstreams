@@ -15,7 +15,8 @@ public:
     virtual ~WvAttrs();
 
     void set(WvStringParm name, WvStringParm value);
-    WvString get(WvStringParm name) const;
+    inline WvString get(WvStringParm name) const
+    	{ return _get(name); }
 };
 
 #endif
