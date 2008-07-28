@@ -641,3 +641,13 @@ fi
 AC_CONFIG_HEADERS(include/wvautoconf.h)
 
 AC_OUTPUT
+
+# Now convert PACKAGE_* macros into WVPACKAGE_* in include/wvautoconf.h
+sed 's,\(\#define.*\)PACKAGE,\1WVPACKAGE,' include/wvautoconf.h > include/wvautoconf.h.new
+if test "x$?" = "x0"; then
+    if ! diff include/wvautoconf.h include/wvautoconf.h.new >/dev/null; then
+	mv include/wvautoconf.h.new include/wvautoconf.h
+    else
+	rm include/wvautoconf.h.new
+    fi
+fi

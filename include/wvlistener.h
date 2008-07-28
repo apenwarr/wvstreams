@@ -10,10 +10,12 @@
 
 #include "iwvlistener.h"
 #include "wvstreamclone.h"  // FIXME needed *only* for CompatCallback
+#include "wvattrs.h"
 
 class WvListener : public IWvListener
 {
     IMPLEMENT_IOBJECT(WvListener);
+    WvAttrs attrs;
 public:
     IWvStream *cloned;
     IWvListenerCallback acceptor;
@@ -95,6 +97,7 @@ public:
         { return 0; }
     virtual void outbuf_limit(size_t size)
         { }
+    virtual WvString getattr(WvStringParm name) const;
 };
 
 /**

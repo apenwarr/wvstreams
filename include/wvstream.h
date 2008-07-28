@@ -12,7 +12,7 @@
 #include "wvstreamsdebugger.h"
 #include <errno.h>
 #include <limits.h>
-
+#include "wvattrs.h"
 
 /**
  * Unified support for streams, that is, sequences of bytes that may or
@@ -687,6 +687,10 @@ private:
         WvStringList &args,
         WvStreamsDebugger::ResultCallback result_cb, void *);
 
+    WvAttrs attrs;
+public:
+    virtual WvString getattr(WvStringParm name) const
+	{ return attrs.get(name); }
 };
 
 /**

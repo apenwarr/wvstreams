@@ -7,7 +7,7 @@ ifdef _WIN32
 endif
 
 %: %.subst
-	sed -e 's/#VERSION#/$(PACKAGE_VERSION)/g' < $< > $@
+	sed -e 's/#VERSION#/$(WVPACKAGE_VERSION)/g' < $< > $@
 
 ifeq ("$(enable_testgui)", "no")
   WVTESTRUN=env

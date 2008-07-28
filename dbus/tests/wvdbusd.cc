@@ -6,7 +6,7 @@ class WvDBusDaemon : public WvStreamsDaemon
 {
 public:
     WvDBusDaemon() :
-        WvStreamsDaemon("WvDBusDaemon", PACKAGE_VERSION,
+        WvStreamsDaemon("WvDBusDaemon", WVPACKAGE_VERSION,
 			wv::bind(&WvDBusDaemon::cb, this)),
         log("WvDBusDaemon", WvLog::Debug)
     {

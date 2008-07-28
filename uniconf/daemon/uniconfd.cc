@@ -167,7 +167,7 @@ class UniConfd : public WvStreamsDaemon
 public:
 
     UniConfd():
-	WvStreamsDaemon("uniconfd", VERBOSE_PACKAGE_VERSION,
+	WvStreamsDaemon("uniconfd", VERBOSE_WVPACKAGE_VERSION,
 			wv::bind(&UniConfd::startup, this)),
 	needauth(false),
 	commit_interval(5*60),
@@ -190,7 +190,7 @@ public:
 			"name=moniker",
 			wv::bind(&UniConfd::namedgen_cb, this, _1, _2), NULL);
 	args.add_optional_arg("MONIKERS", true);
-	args.set_email("<" PACKAGE_BUGREPORT ">");
+	args.set_email("<" WVPACKAGE_BUGREPORT ">");
     }
     
     

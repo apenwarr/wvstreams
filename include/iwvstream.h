@@ -171,6 +171,7 @@ public:
      **/
 
      virtual void outbuf_limit(size_t size) = 0;
+     virtual WvString getattr(WvStringParm name) const = 0;
 };
 
 DEFINE_IID(IWvStream, {0x7ca76e98, 0xb653, 0x43d7,

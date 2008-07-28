@@ -104,4 +104,11 @@ const WvAddr *WvNullListener::src() const
     return &nulladdr;
 }
 
+WvString WvListener::getattr(WvStringParm name) const
+{
+    WvString ret = attrs.get(name);
+    if (ret.isnull() && cloned)
+	return cloned->getattr(name);
 
+    return ret;
+}

@@ -31,7 +31,7 @@ void usage()
 	    "You must set the UNICONF environment variable to a valid "
 	    "UniConf moniker.\n"
 	    "\n"
-	    "Report bugs to <" PACKAGE_BUGREPORT ">.\n");
+	    "Report bugs to <" WVPACKAGE_BUGREPORT ">.\n");
 }
 
 int main(int argc, char **argv)
