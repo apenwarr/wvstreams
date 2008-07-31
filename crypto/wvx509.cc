@@ -1339,6 +1339,36 @@ WvString WvX509::get_aki() const
 }
 
 
+WvString WvX509::get_fingerprint(const FprintMode mode) const
+{
+    CHECK_CERT_EXISTS_GET("fingerprint", WvString::null);
+   
+    /* Default to SHA-1 because OpenSSL does too */
+    const EVP_MD *digest = EVP_sha1();
+    if (mode == FingerMD5)
+	digest = EVP_md5();
+
+    unsigned char md[EVP_MAX_MD_SIZE];
+    unsigned int n;
+    if (!X509_digest(cert, digest, md, &n))
+    {
+	errno = -ENOMEM;
+	debug("get_fingerprint:  Out of memory\n");
+	return WvString::null;
+    }
+
+    WvDynBuf store;
+    char buf[3];
+    unsigned int i = 0;
+    do {
+	sprintf(buf, "%02X", md[i]);
+	store.putstr(buf);
+    } while (++i < n && (store.putch(':'), 1));
+
+    return store.getstr();
+}
+
+
 void WvX509::set_ski()
 {
     CHECK_CERT_EXISTS_SET("ski");

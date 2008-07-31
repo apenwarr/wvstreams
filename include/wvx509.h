@@ -53,6 +53,7 @@ public:
     */
     enum DumpMode { CertPEM = 0, CertDER, CertHex, CertFilePEM, CertFileDER };
 
+    enum FprintMode { FingerMD5 = 0, FingerSHA1 };
     /**
      * Initialize a completely empty X509 Object with an X509 certificate
      * that doesn't have anything it it... good for building custom 
@@ -332,6 +333,11 @@ public:
      * Get the Authority key Info
      */
     WvString get_aki() const;
+
+    /**
+     * Get the certHash (fingerprint) of the certificate
+     */
+    WvString get_fingerprint(const FprintMode mode = FingerSHA1) const;
 
     /**
      * Is the certificate object valid?
