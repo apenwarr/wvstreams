@@ -604,6 +604,11 @@ UniConfChangeTree *UniTransactionGen::create_change(UniConfChangeTree *parent,
 						    int seg,
 						    WvStringParm value)
 {
+    // if the key has a trailing slash, this should be a no-op: we don't
+    // want this to have any effect
+    if ((key.hastrailingslash()) && !value.isnull())
+        return parent;
+
     UniConfChangeTree *tree = 0;
     for (; seg != key.numsegments(); seg++)
     {

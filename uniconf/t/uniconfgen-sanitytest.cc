@@ -352,6 +352,16 @@ void UniConfGenSanityTester::test_trailing_slashes(IUniConfGen *g,
         WVFAIL(cfg[""]["simon"]["/"].haschildren());
 
         WVPASSEQ(cfg[""].getme(), "xyzzy");
+
+        // ensure keys with trailing slashes don't get created as blank
+        // keys
+        cfg["foo"]["bar"][""].setme("value");
+        WVFAIL(cfg["foo"]["bar"].haschildren());
+        WVPASSEQ(cfg["foo"]["bar"][""].getme(), WvString::null);
+        WVPASSEQ(cfg["foo"]["bar"].getme(), WvString::null);
+        WVPASSEQ(cfg["foo"].getme(), WvString::null);
+    }
+
     }
 
     clear_generator(g);
