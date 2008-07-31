@@ -210,8 +210,7 @@ UniTransactionGen::~UniTransactionGen()
 {
     base->del_callback(this);
     WVRELEASE(base);
-    if (root)
-	delete root;
+    WVDELETE(root);
 }
 
 WvString UniTransactionGen::get(const UniConfKey &key)
