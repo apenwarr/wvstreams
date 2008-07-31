@@ -1,10 +1,9 @@
 /* -*- Mode: C++ -*-
  * Worldvisions Weaver Software:
  *   Copyright (C) 2004-2006 Net Integration Technologies, Inc.
- *
- * Test program which sends a simple signal with one argument (int32: 132). 
- * Best used in conjunction with the dbus-sig-listen program.
  * 
+ * Really basic D-Bus test program.
+ *
  */ 
 #include "wvargs.h"
 #include "wvdbusconn.h"
