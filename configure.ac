@@ -635,9 +635,6 @@ AC_CONFIG_FILES([pkgconfig/libuniconf.pc
 		 pkgconfig/libwvtest.pc
                  pkgconfig/libwvtest-uninstalled.pc])
 
-if test "$xplc_pc" = "wvxplc"; then
-    AC_CONFIG_FILES([pkgconfig/wvxplc.pc])
-fi
 AC_CONFIG_HEADERS(include/wvautoconf.h)
 
 AC_OUTPUT
