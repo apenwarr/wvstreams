@@ -362,8 +362,6 @@ void UniConfGenSanityTester::test_trailing_slashes(IUniConfGen *g,
         WVPASSEQ(cfg["foo"].getme(), WvString::null);
     }
 
-    }
-
     clear_generator(g);
 }
 
