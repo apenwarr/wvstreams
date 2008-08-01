@@ -16,6 +16,7 @@ static WvX509Mgr *x509 = NULL;
 static WvSSLStream *singleconn = NULL;
 static size_t tlen = 0;
 
+
 static void run(WvStream &list, WvStream *s1, WvStream *s2)
 {
     for (int i = 0; i < 100; i++)
@@ -331,4 +332,24 @@ WVTEST_MAIN("x509 refcounting")
     s2->write("Yellow\n");
     run(list, s1, s2);
     WVPASSEQ(s1->getline(-1), "Yellow");
+}
+
+
+WVTEST_MAIN("sslcert moniker creation")
+{
+    WvX509Mgr foo("cn=random_stupid_dn,dn=foo", 1024, false);
+    WvList<WvString> l;
+    
+    WvString certpem = foo.encode(WvX509::CertPEM);
+    WvString rsapem = foo.encode(WvRSAKey::RsaPEM);
+    WvString connmoniker("tcp:127.0.0.1:2222");
+
+    l.append(&certpem, false);
+    l.append(&rsapem, false);
+    l.append(&connmoniker, false);
+
+    IWvStream *dumb = IWvStream::create(wvtcl_encode(l));
+    WVPASS(dumb != NULL);
+
+    WVRELEASE(dumb);
 }
