@@ -161,6 +161,7 @@ WvString WvDBusServer::get_addr()
     for (i.rewind(); i.next(); )
 	if (i->isok())
 	    return WvString("tcp:%s", *i->src());
+    return WvString();
 }
 
 

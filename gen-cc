@@ -2,9 +2,9 @@
 OUTFILE=$1
 EXT=$2
 echo "* Generating $OUTFILE" >&2
-rm -f $OUTFILE
+TEMPFILE=`tempfile --directory=. --prefix=gencc`
 
-cat >$OUTFILE <<-EOF 
+cat >$TEMPFILE <<-EOF 
 	#!/bin/sh
 	set -e
 	
@@ -22,4 +22,5 @@ cat >$OUTFILE <<-EOF
 	        "\$@"
 EOF
 
-chmod a+x $OUTFILE
+chmod a+x $TEMPFILE
+mv $TEMPFILE $OUTFILE

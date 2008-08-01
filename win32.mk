@@ -120,6 +120,7 @@ PROGSKIP=\
 	ipstreams/tests/ulistentest \
 	ipstreams/tests/unixdgtest \
 	ipstreams/tests/xplctest \
+	ipstreams/tests/wsd \
 	crypto/tests/cryptotest \
 	linuxstreams/tests/aliastest \
 	linuxstreams/tests/dspechotest \
