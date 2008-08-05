@@ -5,7 +5,6 @@
 #include "wvx509.h"
 #include "wvx509mgr.h"
 
-
 // default keylen for where we're not using pre-existing certs
 const static int DEFAULT_KEYLEN = 512; 
 
@@ -572,3 +571,37 @@ WVTEST_MAIN("pkcs12")
 }
 
 
+const char random_cert[] = "-----BEGIN CERTIFICATE-----\n"
+"MIIDvzCCAqegAwIBAgIEShc7yDANBgkqhkiG9w0BAQUFADBWMR0wGwYDVQQDExRj\n"
+"b250aW5nZW5jeXdvcmtzLmNvbTEgMB4GCgmSJomT8ixkARkTEGNvbnRpbmdlbmN5\n"
+"d29ya3MxEzARBgoJkiaJk/IsZAEZEwNjb20wHhcNMDgwNzMxMjAyMzE4WhcNMTgw\n"
+"NzI5MjAyMzE4WjBWMR0wGwYDVQQDExRjb250aW5nZW5jeXdvcmtzLmNvbTEgMB4G\n"
+"CgmSJomT8ixkARkTEGNvbnRpbmdlbmN5d29ya3MxEzARBgoJkiaJk/IsZAEZEwNj\n"
+"b20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCrFneQgdQSoVfzCDNu\n"
+"IAXhFpaCJvxDzWPCCZXWPf1/OlncskrRs4FirMnrPUyvw74krPh4lVILKZxIp+Io\n"
+"s7DX8oPHct1ZjQoi7eK7r6iva38ghI3YFPtZSXC3z1DllKzUTezBzNJDkhg/SqUX\n"
+"ne4NNw1mZ90Q07Y8KgREyjJ8/A0+jUNoQ3TydXPWsdNevP6jcczyULbzhlZrCj5J\n"
+"7c21sSWkrm7HUegvJNPPv7vX67onYCMhj0f8Fsiw7TqacmmrJksrW3ifpCf5smIZ\n"
+"/W8F9RwSefnVLn1TA2UoNAFTPDxwPVWFuOEkP8ObDnZXzfWc5WHRbXeVLnTAKbab\n"
+"T6slAgMBAAGjgZQwgZEwHQYDVR0OBBYEFGryLpBlzbGgYCcpX/MbiAQj8nb8MBEG\n"
+"CWCGSAGG+EIBAQQEAwIGQDAjBglghkgBhvhCAQwEFhYUY29udGluZ2VuY3l3b3Jr\n"
+"cy5jb20wDgYDVR0PAQH/BAQDAgOoMAkGA1UdEwQCMAAwHQYDVR0lBBYwFAYIKwYB\n"
+"BQUHAwEGCCsGAQUFBwMCMA0GCSqGSIb3DQEBBQUAA4IBAQBkWsSLHPmDajwg12AT\n"
+"2QW3pxJKVu46nfdgLLTo6bQekAF+kYRERjbC9E/T5Eia5+6yTUbWR8xxDZoftkSK\n"
+"/m3h7/Y+mqb13XiOowTkiJWzL5kwdv3Pb4O5X7YYMcNC4Rnax806b5pplXmzDY9Z\n"
+"rqq/uP6wsRFiu5S7UcfA+KjoTrjMYsSLERAEus5RaP9J6uDvdBn0PwdfTT5rr2yb\n"
+"et8AuJcBLFfFuLXPKfUlbnMe29BUr9s1A01OfHDCmzVN8hAhndBs2xDI1FOy9xDt\n"
+"QXj9z/yvsK0AYwxknkHKqRboW//DVk6tcsL9dCiGSlZta5ob5yt6KK+R5X+rtQ0W\n"
+"InR4\n"
+"-----END CERTIFICATE-----";
+
+WVTEST_MAIN("get_fingerprint")
+{
+    WvX509 foo;
+    foo.decode(WvX509::CertPEM, random_cert);
+
+    WVPASSEQ(foo.get_fingerprint(WvX509::FingerSHA1),
+		"CA:49:50:D4:44:51:0B:AD:46:4F:E8:6C:3B:B2:3E:3F:61:31:27:ED");
+    WVPASSEQ(foo.get_fingerprint(WvX509::FingerMD5),
+		"53:FD:C7:D4:8F:45:AE:1D:90:14:45:B4:0C:1B:02:BD");
+}

@@ -44,8 +44,34 @@ static IWvStream *screator(WvStringParm s, IObject *_obj)
 	   0, true);
 }
 
+static IWvStream *sslcertcreator(WvStringParm s, IObject *_obj)
+{
+    /* The idea here is that we've got s, which is a TclStyle string of the
+     * format (without the quotes, of course, but escaped):
+     * "PEM-encoded SSL cert" "PEM-encoded private RSA key" "connection moniker"
+     */
+    WvList<WvString> l;
+    wvtcl_decode(l, s);
+    if (l.count() != 3) {
+	WVRELEASE(_obj);
+	return NULL; /* we fscked up, no clue how to recover */
+    }
+
+    WvX509Mgr *m = new WvX509Mgr;
+    m->decode(WvX509::CertPEM, *l.first());
+    l.unlink_first();
+    m->decode(WvRSAKey::RsaPEM, *l.first());
+    l.unlink_first();
+    if (!m->test()) { /* RSA key and certificate don't match up?? */
+	WVRELEASE(_obj);
+	return NULL;
+    }
+    return new WvSSLStream(IWvStream::create(*l.first(), _obj), m, 0, false);
+}
+
 static WvMoniker<IWvStream> reg("ssl", creator);
 static WvMoniker<IWvStream> sreg("sslserv", screator);
+static WvMoniker<IWvStream> sslcertreg("sslcert", sslcertcreator);
 
 static IWvListener *listener(WvStringParm s, IObject *obj)
 {
