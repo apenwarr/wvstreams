@@ -44,7 +44,21 @@ static IWvStream *screator(WvStringParm s, IObject *_obj)
 	   0, true);
 }
 
-static IWvStream *sslcertcreator(WvStringParm s, IObject *_obj)
+struct WvTclParseValues
+{
+    WvX509Mgr *m;
+    WvString s;
+
+    /* Kind of necessary; the WvX509Mgr object here is meant to be passed into
+     * a WvSSLStream, which will addRef() the object.  Thus, once the stream
+     * has been created, we need to release() it here, so that once the stream
+     * itself falls into oblivion, we have no hanging references.
+     */
+    ~WvTclParseValues()
+	{ WVRELEASE(m); }
+};
+
+static WvTclParseValues *parse_wvtcl_sslcert(WvStringParm s)
 {
     /* The idea here is that we've got s, which is a TclStyle string of the
      * format (without the quotes, of course, but escaped):
@@ -52,26 +66,59 @@ static IWvStream *sslcertcreator(WvStringParm s, IObject *_obj)
      */
     WvList<WvString> l;
     wvtcl_decode(l, s);
-    if (l.count() != 3) {
-	WVRELEASE(_obj);
+    if (l.count() > 3 || l.count() < 2)
 	return NULL; /* we fscked up, no clue how to recover */
+    // in the case of '2', 'obj' had better be set to the calling function
+
+    WvTclParseValues *p = new WvTclParseValues;
+    p->m = new WvX509Mgr;
+    p->m->decode(WvX509::CertPEM, *l.first());
+    l.unlink_first();
+    p->m->decode(WvRSAKey::RsaPEM, *l.first());
+    l.unlink_first();
+    if (!p->m->test()) { /* RSA key and certificate don't match up?? */
+	delete p;
+	return NULL;
     }
 
-    WvX509Mgr *m = new WvX509Mgr;
-    m->decode(WvX509::CertPEM, *l.first());
-    l.unlink_first();
-    m->decode(WvRSAKey::RsaPEM, *l.first());
-    l.unlink_first();
-    if (!m->test()) { /* RSA key and certificate don't match up?? */
+    if (l.count())
+	p->s = *l.first();
+
+    return p;
+}
+
+static IWvStream *sslcertcreator(WvStringParm s, IObject *_obj)
+{
+    WvTclParseValues *p = parse_wvtcl_sslcert(s);
+    if (!p) {
 	WVRELEASE(_obj);
 	return NULL;
     }
-    return new WvSSLStream(IWvStream::create(*l.first(), _obj), m, 0, false);
+
+    WvSSLStream *ret = new WvSSLStream(IWvStream::create(p->s, _obj), p->m,
+					0, false);
+    delete p;
+    return ret;
+}
+
+static IWvStream *sslcertscreator(WvStringParm s, IObject *_obj)
+{
+    WvTclParseValues *p = parse_wvtcl_sslcert(s);
+    if (!p) {
+	WVRELEASE(_obj);
+	return NULL;
+    }
+
+    WvSSLStream *ret = new WvSSLStream(IWvStream::create(p->s, _obj), p->m,
+					0, true);
+    delete p;
+    return ret;
 }
 
 static WvMoniker<IWvStream> reg("ssl", creator);
 static WvMoniker<IWvStream> sreg("sslserv", screator);
 static WvMoniker<IWvStream> sslcertreg("sslcert", sslcertcreator);
+static WvMoniker<IWvStream> sslcertsreg("sslcertserv", sslcertscreator);
 
 static IWvListener *listener(WvStringParm s, IObject *obj)
 {
@@ -81,7 +128,31 @@ static IWvListener *listener(WvStringParm s, IObject *obj)
     return l;
 }
 
+static IWvListener *sslcertlistener(WvStringParm s, IObject *obj)
+{
+    WvList<WvString> li;
+    wvtcl_decode(li, s);
+    WvString connmoniker;
+    
+    if (li.count() == 3) {
+	// We have a connection moniker as well as SSL information
+	connmoniker = *li.last();
+	li.unlink(li.last());
+    } else if (li.count() != 2) {
+	// something went very wrong
+	WVRELEASE(obj);
+	return NULL;
+    }
+
+    IWvListener *l = IWvListener::create(connmoniker, obj);
+    if (l)
+	l->addwrap(wv::bind(&IWvStream::create, 
+			    WvString("sslcertserv:%s", wvtcl_encode(li)), _1));
+    return l;
+}
+
 static WvMoniker<IWvListener> lreg("ssl", listener);
+static WvMoniker<IWvListener> lsslcertreg("sslcert", sslcertlistener);
 
 
 #define MAX_BOUNCE_AMOUNT (16384) // 1 SSLv3/TLSv1 record
