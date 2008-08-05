@@ -432,6 +432,15 @@ void WvDBusServer::new_connection_cb(IWvStream *s)
     this->addRef();
     all_conns.append(c, true);
     register_name(c->uniquename(), c);
+
+    /* The delayed callback here should be explained.  The
+     * 'do_broadcast_msg' function sends out data along all connections.
+     * Unfortunately, this is a prime time to figure out a connection died.
+     * A dying connection is removed from the all_conns list... but we are
+     * still in do_broadcast_msg, and using an iterator to go over this list.
+     * The consequences of this were not pleasant, at best.  Wrapping cb in a
+     * delayedcallback will always safely remove a connection.
+     */
     IWvStreamCallback mycb = wv::bind(&WvDBusServer::conn_closed, this,
 				 wv::ref(*c));
     c->setclosecallback(wv::delayed(mycb));
