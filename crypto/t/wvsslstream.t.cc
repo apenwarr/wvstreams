@@ -348,8 +348,10 @@ WVTEST_MAIN("sslcert moniker creation")
     l.append(&rsapem, false);
     l.append(&connmoniker, false);
 
-    IWvStream *dumb = IWvStream::create(wvtcl_encode(l));
+    IWvStream *dumb = IWvStream::create(WvString("%s%s", "sslcert:", wvtcl_encode(l)));
     WVPASS(dumb != NULL);
+    if (dumb)
+	WVPASSEQ(dumb->wstype(), "WvSSLStream");
 
     WVRELEASE(dumb);
 }
