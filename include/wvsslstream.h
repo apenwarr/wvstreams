@@ -33,6 +33,17 @@ typedef wv::function<bool(WvX509*)> WvSSLValidateCallback;
 class WvSSLStream : public WvStreamClone
 {
 public:
+    /* This ValidateCallback is purely more convenient to set (not passed in
+     * via constructor) than its local cousin.  It is used when you want an
+     * easy way to assign a validation function to any WvSSLStream you might
+     * be using.  NOTE:  It should be assigned before you instantiate a stream,
+     * and should never be changed while WvSSLStreams still linger.
+     *
+     * NOTE:  Using wv::bind can effectively bind an object with a particular
+     * function for this callback, so you can do all sorts of interesting stuff
+     * with it.
+     */
+    static WvSSLValidateCallback global_vcb;
     /**  
      * Start an SSL connection on the stream _slave.  The x509 structure
      * is optional for a client, and mandatory for a server.  You need to

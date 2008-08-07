@@ -154,7 +154,6 @@ static IWvListener *sslcertlistener(WvStringParm s, IObject *obj)
 static WvMoniker<IWvListener> lreg("ssl", listener);
 static WvMoniker<IWvListener> lsslcertreg("sslcert", sslcertlistener);
 
-
 #define MAX_BOUNCE_AMOUNT (16384) // 1 SSLv3/TLSv1 record
 
 static int ssl_stream_count = 0;
@@ -165,6 +164,8 @@ static int wv_verify_cb(int preverify_ok, X509_STORE_CTX *ctx)
    // is for the WvSSLValidateCallback to do this work
    return 1;
 }
+
+WvSSLValidateCallback WvSSLStream::global_vcb = 0;
 
 WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *_x509,
     WvSSLValidateCallback _vcb, bool _is_server) :
@@ -178,6 +179,9 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *_x509,
 	x509->addRef(); // openssl may keep a pointer to this object
     
     vcb = _vcb;
+    if (!vcb)
+	vcb = global_vcb;
+
     is_server = _is_server;
     ctx = NULL;
     ssl = NULL;
