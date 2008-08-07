@@ -54,9 +54,15 @@ WvMonikerRegistry::~WvMonikerRegistry()
 }
 
 
-void WvMonikerRegistry::add(WvStringParm id, WvMonikerCreateFunc *func)
+void WvMonikerRegistry::add(WvStringParm id, WvMonikerCreateFunc *func,
+			    const bool override)
 {
     DEBUGLOG("WvMonikerRegistry register(%s).\n", id.cstr());
+    if (!override) {
+	RegistrationList::Iter i(list);
+	for (i.rewind(); i.next(); )
+	    assert(i.ptr()->id != id); //no duplicates without override
+    }
     list.prepend(new Registration(id, func), true);
 }
 
@@ -175,13 +181,13 @@ unsigned int WvMonikerRegistry::release()
 
 
 WvMonikerBase::WvMonikerBase(const UUID &iid, WvStringParm _id, 
-			     WvMonikerCreateFunc *func)
+			     WvMonikerCreateFunc *func, const bool override)
     : id(_id)
 {
     DEBUGLOG("WvMoniker creating(%s).\n", id.cstr());
     reg = WvMonikerRegistry::find_reg(iid);
     if (reg)
-	reg->add(id, func);
+	reg->add(id, func, override);
 }
 
 

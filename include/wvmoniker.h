@@ -32,7 +32,7 @@ class WvMonikerBase
 {
 protected:
     WvMonikerBase(const UUID &iid, WvStringParm _id,
-		  WvMonikerCreateFunc *func);
+		  WvMonikerCreateFunc *func, const bool override = false);
     ~WvMonikerBase();
     
 public:
@@ -63,8 +63,9 @@ class WvMoniker : public WvMonikerBase
 public:
     typedef T *CreateFunc(WvStringParm parms, IObject *obj);
     
-    WvMoniker(WvStringParm _id, CreateFunc *_func)
-	: WvMonikerBase(XPLC_IID<T>::get(), _id, (WvMonikerCreateFunc *)_func)
+    WvMoniker(WvStringParm _id, CreateFunc *_func, const bool override = false)
+	: WvMonikerBase(XPLC_IID<T>::get(), _id, (WvMonikerCreateFunc *)_func,
+			override)
     { 
 	// this looks pointless, but it ensures that T* can be safely,
 	// automatically downcast to IObject*.  That means T is really derived

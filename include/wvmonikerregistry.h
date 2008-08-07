@@ -38,7 +38,8 @@ public:
     WvMonikerRegistry(const UUID &iid);
     virtual ~WvMonikerRegistry();
     
-    virtual void add(WvStringParm id, WvMonikerCreateFunc *func);
+    virtual void add(WvStringParm id, WvMonikerCreateFunc *func,
+			const bool override = false);
     virtual void del(WvStringParm id);
     
     virtual void *create(WvStringParm _s, IObject *_obj);
