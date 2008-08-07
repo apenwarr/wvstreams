@@ -185,7 +185,7 @@ public:
  * 
  * List type construction is facilitated by the following macros:
  * 
- *  - DeclareWvList(Type): creates a subclass named WvListType
+ *  - DeclareWvList(Type): creates a subclass named TypeList
  *     that contains pointers to Type.
  *  - DeclareWvList2(name, Type): as the above, but calls the
  *     resulting class by the specified name. 
