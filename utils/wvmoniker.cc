@@ -9,6 +9,7 @@
 #include "strutils.h"
 #include <wvassert.h>
 #include <stdio.h>
+#include "wvscatterhash.h"
 
 #if 0
 # define DEBUGLOG(fmt, args...) fprintf(stderr, fmt, ## args)
@@ -40,7 +41,7 @@ static WvMonikerRegistryDict *regs;
 
 
 WvMonikerRegistry::WvMonikerRegistry(const UUID &iid) 
-    : reg_iid(iid), dict(10)
+    : reg_iid(iid)
 {
     DEBUGLOG("WvMonikerRegistry creating.\n");
     refcount = 0;
@@ -56,16 +57,24 @@ WvMonikerRegistry::~WvMonikerRegistry()
 void WvMonikerRegistry::add(WvStringParm id, WvMonikerCreateFunc *func)
 {
     DEBUGLOG("WvMonikerRegistry register(%s).\n", id.cstr());
-    wvassert(!dict[id], id);
-    dict.add(new Registration(id, func), true);
+    list.prepend(new Registration(id, func), true);
 }
 
 
 void WvMonikerRegistry::del(WvStringParm id)
 {
     DEBUGLOG("WvMonikerRegistry unregister(%s).\n", id.cstr());
-    assert(dict[id]);
-    dict.remove(dict[id]);
+    RegistrationList::Iter i(list);
+    for (i.rewind(); i.next(); )
+    {
+	if (i.ptr()->id == id) {
+	    i.unlink();
+	    return;
+	}
+    }
+
+    //We should never get here, as we should never be removing elements which don't exist
+    assert(1);
 }
 
 
@@ -82,11 +91,14 @@ void *WvMonikerRegistry::create(WvStringParm _s, IObject *obj)
     
     DEBUGLOG("WvMonikerRegistry create object ('%s' '%s').\n", s.cstr(), cptr);
     
-    Registration *r = dict[s];
-    if (r)
-	return r->func(cptr, obj);
-    else
-	return NULL;
+    RegistrationList::Iter i(list);
+    for (i.rewind(); i.next(); )
+    {
+	if (i.ptr()->id == s)
+	    return i.ptr()->func(cptr, obj);
+    }
+
+    return NULL;
 }
 
 

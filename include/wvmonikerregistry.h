@@ -8,10 +8,10 @@
 #define __WVMONIKERREGISTRY_H
 
 #include "wvmoniker.h"
-#include "wvscatterhash.h"
+#include "wvlinklist.h"
 
 /**
- * A dictionary for holding moniker-prefix to factory-function mappings.
+ * A list for holding moniker-prefix to factory-function mappings.
  * 
  * This is used by WvMoniker and wvcreate().  See those for details.
  */
@@ -23,17 +23,17 @@ class WvMonikerRegistry //: public GenericComponent<IObject>
 	WvMonikerCreateFunc *func;
 	
 	Registration(WvStringParm _id, WvMonikerCreateFunc *_func) 
-	    : id(_id)
-	    { func = _func; }
+	    : id(_id), func(_func)
+	    { }
     };
     
-    DeclareWvScatterDict(Registration, WvString, id);
+    DeclareWvList(Registration);
 
     unsigned refcount;
     
 public:
     UUID reg_iid;
-    RegistrationDict dict;
+    RegistrationList list;
     
     WvMonikerRegistry(const UUID &iid);
     virtual ~WvMonikerRegistry();
