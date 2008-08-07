@@ -74,7 +74,7 @@ void WvMonikerRegistry::del(WvStringParm id)
     }
 
     //We should never get here, as we should never be removing elements which don't exist
-    assert(1);
+    assert(true);
 }
 
 
