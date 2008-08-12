@@ -165,7 +165,7 @@ static int wv_verify_cb(int preverify_ok, X509_STORE_CTX *ctx)
    return 1;
 }
 
-WvSSLValidateCallback WvSSLStream::global_vcb = 0;
+WvSSLGlobalValidateCallback WvSSLStream::global_vcb = 0;
 
 WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *_x509,
     WvSSLValidateCallback _vcb, bool _is_server) :
@@ -179,8 +179,8 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *_x509,
 	x509->addRef(); // openssl may keep a pointer to this object
     
     vcb = _vcb;
-    if (!vcb)
-	vcb = global_vcb;
+    if (!vcb && global_vcb)
+	vcb = wv::bind(global_vcb, _1, this);;
 
     is_server = _is_server;
     ctx = NULL;

@@ -22,8 +22,10 @@ typedef struct ssl_method_st SSL_METHOD;
 
 class WvX509;
 class WvX509Mgr;
+class WvSSLStream;
 
 typedef wv::function<bool(WvX509*)> WvSSLValidateCallback;
+typedef wv::function<bool(WvX509*, WvSSLStream *)> WvSSLGlobalValidateCallback;
 
 /**
  * SSL Stream, handles SSLv2, SSLv3, and TLS
@@ -43,7 +45,7 @@ public:
      * function for this callback, so you can do all sorts of interesting stuff
      * with it.
      */
-    static WvSSLValidateCallback global_vcb;
+    static WvSSLGlobalValidateCallback global_vcb;
     /**  
      * Start an SSL connection on the stream _slave.  The x509 structure
      * is optional for a client, and mandatory for a server.  You need to
