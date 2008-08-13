@@ -207,7 +207,7 @@ void WvDBusServer::unregister_conn(WvDBusConn *conn)
 		++i;
 	}
     }
-    
+
     all_conns.unlink(conn);
 }
 
