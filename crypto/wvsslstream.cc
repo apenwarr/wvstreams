@@ -233,8 +233,7 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *_x509,
 	    return;
 	}
 	
-	if (!!vcb)
-            SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE, 
+        SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE, 
                                wv_verify_cb);
 	
 	debug("Server mode ready.\n");
@@ -266,7 +265,12 @@ WvSSLStream::WvSSLStream(IWvStream *_slave, WvX509Mgr *_x509,
 	return;
     }
 
-    if (!!vcb)
+    // If we set this, it seems we always verify the client... security hole,
+    // no?  Well, if we don't set it, the server doesn't even ask the client
+    // for a certificate, so, ya know, it's not actually any more secure.
+    // Client doesn't need this (unless vcb is set), since it always asks the
+    // server for a cert anyway
+    if (!!vcb || is_server)
 	SSL_set_verify(ssl, SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE, 
                        wv_verify_cb);
 
@@ -700,9 +704,13 @@ bool WvSSLStream::post_select(SelectInfo &si)
 	else  // We're connected, so let's do some checks ;)
 	{
 	    debug("SSL connection using cipher %s.\n", SSL_get_cipher(ssl));
+
+	    WvX509 *peercert = new WvX509(SSL_get_peer_certificate(ssl));
+	    //Should we try to validate before storing, or not?
+	    if (peercert->isok() && peercert->validate())
+		setattr("peercert", peercert->encode(WvX509::CertPEM));
 	    if (!!vcb)
 	    {
-	    	WvX509 *peercert = new WvX509(SSL_get_peer_certificate(ssl));
 		debug("SSL Peer is: %s\n", peercert->get_subject());
 	    	if (peercert->isok() && peercert->validate() && vcb(peercert))
 	    	{
@@ -716,7 +724,6 @@ bool WvSSLStream::post_select(SelectInfo &si)
 		    else
 			seterr("Peer certificate is invalid!");
 	    	}
-		WVRELEASE(peercert);
 	    }
 	    else
 	    {
@@ -724,6 +731,7 @@ bool WvSSLStream::post_select(SelectInfo &si)
 		debug("SSL finished negotiating "
 		      "- certificate validation disabled.\n");
 	    }	
+	    WVRELEASE(peercert);
 	} 
 	
 	return false;
