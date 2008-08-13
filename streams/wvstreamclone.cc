@@ -274,3 +274,12 @@ void WvStreamClone::execute()
     WvStream::execute();
     if (cloned) cloned->callback();
 }
+
+WvString WvStreamClone::getattr(WvStringParm name) const
+{
+    WvString ret = WvStream::getattr(name);
+    if (ret.isnull() && cloned)
+	return cloned->getattr(name);
+
+    return ret;
+}

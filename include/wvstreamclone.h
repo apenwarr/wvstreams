@@ -85,6 +85,7 @@ public:
     virtual void execute();
     virtual void noread();
     virtual void nowrite();
+    virtual WvString getattr(WvStringParm name) const;
 
 private:
     void close_callback();

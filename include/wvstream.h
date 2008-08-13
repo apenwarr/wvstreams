@@ -577,6 +577,8 @@ public:
 #endif
 
 protected:
+    void setattr(WvStringParm name, WvStringParm value)
+	{  attrs.set(name, value); }
     // builds the SelectInfo data structure (runs pre_select)
     // returns true if there are callbacks to be dispatched
     //
