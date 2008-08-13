@@ -422,6 +422,7 @@ void WvDBusServer::conn_closed(WvStream &s)
 {
     WvDBusConn *c = (WvDBusConn *)&s;
     unregister_conn(c);
+    this->release();
 }
 
 
