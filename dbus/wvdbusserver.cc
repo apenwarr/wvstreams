@@ -329,6 +329,23 @@ bool WvDBusServer::do_server_msg(WvDBusConn &conn, WvDBusMsg &msg)
             
         assert(false);
     }
+    else if (method == "GetConnectionCert")
+    {
+	WvDBusMsg::Iter args(msg);
+	WvString connid = args.getnext();
+
+	WvDBusConn *c = name_to_conn[connid];
+
+	WvString certpem = c ? c->getattr("peercert") : WvString::null;
+	if (certpem.isnull())
+	    WvDBusError(msg, "org.freedesktop.DBus.Error.Failed",
+			    "Connection %s did not present a certificate",
+			    connid).send(conn);
+	else
+	    msg.reply().append(certpem).send(conn);
+
+	return true;
+    }
     else
     {
 	WvDBusError(msg, "org.freedesktop.DBus.Error.UnknownMethod", 
