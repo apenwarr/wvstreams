@@ -27,7 +27,6 @@
 #define errno GetLastError()
 #undef EAGAIN
 #define EAGAIN WSAEWOULDBLOCK
-#define error_t long
 #endif
 
 WV_LINK(WvSSLStream);
