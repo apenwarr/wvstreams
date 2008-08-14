@@ -9,6 +9,9 @@
 #include "wvlog.h"
 #include "wvstringcache.h"
 #include "unilistiter.h"
+#include "wvlinkerhack.h"
+
+WV_LINK(UniTempGen);
 
 static IUniConfGen *creator(WvStringParm, IObject*)
 {
