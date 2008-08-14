@@ -136,3 +136,18 @@ WVTEST_MAIN("numerics double")
 {
     numeric_test<double>();
 }
+
+WVTEST_MAIN("string")
+{
+    WvString sval = "default";
+   
+    WvArgs args;
+
+    args.add_option('c', "config", "Config file", "FILENAME", sval);
+
+    args.set_flag(WvArgs::NO_EXIT_ON_ERRORS, true);
+
+    const char *av0[] = { "somefile", "-c", "testfilename" };
+    WVPASS(args.process(3, (char **)av0));
+    WVPASSEQ(sval, "testfilename");
+}
