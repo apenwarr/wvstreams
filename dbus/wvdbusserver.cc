@@ -16,6 +16,7 @@
 #include "wvdelayedcallback.h"
 #undef interface // windows
 #include <dbus/dbus.h>
+#include "wvx509.h"
 
 
 class WvDBusServerAuth : public IWvDBusAuth
@@ -329,20 +330,30 @@ bool WvDBusServer::do_server_msg(WvDBusConn &conn, WvDBusMsg &msg)
             
         assert(false);
     }
-    else if (method == "GetConnectionCert")
+    else if (method == "GetConnectionCert" ||
+	    method == "GetConnectionCertFingerprint")
     {
 	WvDBusMsg::Iter args(msg);
 	WvString connid = args.getnext();
 
 	WvDBusConn *c = name_to_conn[connid];
 
-	WvString certpem = c ? c->getattr("peercert") : WvString::null;
-	if (certpem.isnull())
+	WvString ret = c ? c->getattr("peercert") : WvString::null;
+	if (ret.isnull())
 	    WvDBusError(msg, "org.freedesktop.DBus.Error.Failed",
 			    "Connection %s did not present a certificate",
 			    connid).send(conn);
 	else
-	    msg.reply().append(certpem).send(conn);
+	{
+	    if (method == "GetConnectionCertFingerprint") 
+	    {
+		WvX509 tempcert;
+		// We can assume it's valid because our SSL conn authenticated
+		tempcert.decode(WvX509::CertPEM, ret);
+		ret = tempcert.get_fingerprint();
+	    }
+	    msg.reply().append(ret).send(conn);
+	}
 
 	return true;
     }
