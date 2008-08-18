@@ -1203,3 +1203,22 @@ WVTEST_MAIN("intl_datetime")
     WVPASS(checkdatetimeformat(intl_datetime(dt)));
 }
 
+#ifdef _WIN32
+#include "wvbase64.h"
+
+WVTEST_MAIN("wvprotectdata/wvunprotectdata")
+{
+    WvString foo("My data to be protected!");
+
+    const WvString crypted = wvprotectdata(foo, "Some of my data");
+    WvBase64Decoder decoder64;
+
+    /* This string should be total garbage */
+    WvString teststr = decoder64.strflushstr(crypted, true);
+    WVFAILEQ(teststr, "My data to be protected!");
+
+    WvString decrypted = wvunprotectdata(crypted);
+
+    WVPASSEQ(decrypted, "My data to be protected!");
+}
+#endif
