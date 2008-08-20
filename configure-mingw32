@@ -18,4 +18,5 @@ PORTS=$PWD/../wvports
 		-L$PORTS/openssl/build/openssl \
 		-L$PORTS/argp/build/argp \
 		-L$PORTS/win32api/build/w32api/lib" \
+	LIBS="-lxplc-cxx -lwsock32 -lgdi32" \
 	$@
