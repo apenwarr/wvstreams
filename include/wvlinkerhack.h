@@ -24,7 +24,6 @@
  */
 #define WV_LINK_TO(name) \
 	extern int *__wv_link_##name; \
-	static int **__wv_link_func_##name () __attribute((unused)); \
-	static int **__wv_link_func_##name () { return &__wv_link_##name; }
+        namespace { int **__wv_local_a_##name = &__wv_link_##name; }
 
 #endif // __WVLINKERHACK_H
