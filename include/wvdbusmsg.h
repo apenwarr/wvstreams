@@ -91,6 +91,7 @@ public:
     WvString get_path() const;
     WvString get_interface() const;
     WvString get_member() const;
+    WvString get_error() const;
     uint32_t get_serial() const;
     uint32_t get_replyserial() const;
     bool is_reply() const;

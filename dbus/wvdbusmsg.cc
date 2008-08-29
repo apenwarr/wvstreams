@@ -384,6 +384,14 @@ WvString WvDBusMsg::get_member() const
 }
 
 
+WvString WvDBusMsg::get_error() const
+{
+    if (iserror())
+	return dbus_message_get_error_name(msg);
+
+    return WvString::null;
+}
+
 bool WvDBusMsg::is_reply() const
 {
     // This used to have a hack to deal with replies to message #0.
