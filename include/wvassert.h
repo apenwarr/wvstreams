@@ -36,7 +36,7 @@ private:
     WvString old_will;
 };
 
-#if defined(_WIN32)
+#if !defined(__GLIBC__)
 
 # define wvassert(expr, args...)            assert(expr)
 # define wvassert_perror(errnum)            perror(errnum)
