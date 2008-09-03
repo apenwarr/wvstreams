@@ -11,6 +11,7 @@
 #include "wvstringlist.h"
 #include "wvbase64.h"
 #include "wvstrutils.h"
+#include "wvautoconf.h"
 
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
@@ -808,6 +809,12 @@ void WvX509::set_basic_constraints(bool ca, int pathlen)
 }
 
 
+/*
+ * These functions are optional to the API.  If OpenSSL doesn't support them,
+ * we simply won't include them here, and apps that need them won't compile.
+ */
+#ifdef HAVE_OPENSSL_POLICY_MAPPING
+
 bool WvX509::get_policy_constraints(int &require_explicit_policy, 
                                     int &inhibit_policy_mapping) const
 {
@@ -914,6 +921,8 @@ void WvX509::set_policy_mapping(PolicyMapList &list)
     X509_EXTENSION_free(ex);
     sk_POLICY_MAPPING_pop_free(maps, POLICY_MAPPING_free);
 }
+
+#endif // HAVE_OPENSSL_POLICY_MAPPING
 
 
 static void add_aia(WvStringParm type, WvString identifier, AUTHORITY_INFO_ACCESS *ainfo)

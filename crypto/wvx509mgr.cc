@@ -1,6 +1,7 @@
 #include "wvbase64.h"
 #include "wvsslhacks.h"
 #include "wvx509mgr.h"
+#include "wvautoconf.h"
 
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
@@ -348,12 +349,14 @@ bool WvX509Mgr::signcert(WvX509 &unsignedcert) const
     {
 	debug("Self Signing!\n");
     }
+#ifdef HAVE_OPENSSL_POLICY_MAPPING
     else if (!X509_check_ca(cert))
     {
         debug("This certificate is not a CA, and is thus not allowed to sign "
               "certificates!\n");
         return false;
     }
+#endif
     else if (!((cert->ex_flags & EXFLAG_KUSAGE) && 
                (cert->ex_kusage & KU_KEY_CERT_SIGN)))
     {
@@ -388,12 +391,14 @@ bool WvX509Mgr::signcrl(WvCRL &crl) const
               "both) not ok! Aborting.\n");
         return false;
     }
+#ifdef HAVE_OPENSSL_POLICY_MAPPING
     else if (!X509_check_ca(cert))
     {
         debug("This certificate is not a CA, and is thus not allowed to sign "
               "CRLs!\n");
         return false;
     }
+#endif
     else if (!((cert->ex_flags & EXFLAG_KUSAGE) && 
 	  (cert->ex_kusage & KU_CRL_SIGN)))
     {

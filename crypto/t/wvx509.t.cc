@@ -4,6 +4,7 @@
 #include "wvtest.h"
 #include "wvx509.h"
 #include "wvx509mgr.h"
+#include "wvautoconf.h"
 
 // default keylen for where we're not using pre-existing certs
 const static int DEFAULT_KEYLEN = 512; 
@@ -420,6 +421,7 @@ WVTEST_MAIN("basic constraints")
 }
 
 
+#ifdef HAVE_OPENSSL_POLICY_MAPPING
 WVTEST_MAIN("get/set certificate policy extensions")
 {
     WvRSAKey rsakey(DEFAULT_KEYLEN);
@@ -481,7 +483,7 @@ WVTEST_MAIN("ski / aki")
     WVFAIL(!!cacert.get_aki());
     WVPASSEQ(cert.get_aki(), cacert.get_ski());
 }
-
+#endif // HAVE_OPENSSL_POLICY_MAPPING
 
 bool test_encode_decode_str(WvX509::DumpMode mode)
 {

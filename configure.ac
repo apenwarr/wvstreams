@@ -388,6 +388,11 @@ if test "$with_openssl" != "no"; then
     LIBS_save="$LIBS"
     AC_CHECK_LIB(crypto, X509_free)
     AC_CHECK_LIB(ssl, SSL_has_matching_session_id,, [with_openssl=no])
+    AC_CHECK_LIB(ssl, POLICY_MAPPING_new,, [with_openssl_policy_mapping=no])
+    if test "$with_openssl_policy_mapping" != "no"; then
+        AC_DEFINE([HAVE_OPENSSL_POLICY_MAPPING], [1],
+	    [Whether libssl has the POLICY_MAPPING features (0.9.8 and up)])
+    fi
     LIBS="$LIBS_save"
     if test "$with_openssl" != "no"; then
         LIBS_SSL="-lcrypto -lssl"
@@ -608,6 +613,7 @@ AC_SUBST(enable_testgui)
 
 AC_SUBST(with_dbus)
 AC_SUBST(with_openssl)
+AC_SUBST(with_openssl_policy_mapping)
 AC_SUBST(with_pam)
 AC_SUBST(with_readline)
 AC_SUBST(with_qt)

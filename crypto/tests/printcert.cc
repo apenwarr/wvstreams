@@ -3,7 +3,8 @@
 #include "wvfile.h"
 #include "wvlog.h"   
 #include "wvstrutils.h"
-#include "wvx509.h"                        
+#include "wvx509.h"
+#include "wvautoconf.h"
 
 void print_details(WvX509 *x509)
 {
@@ -31,6 +32,7 @@ void print_details(WvX509 *x509)
     x509->get_policies(list);
     wvcon->print("Certificate Policy OIDs:\n%s\n", list.join("\n"));
 
+#ifdef HAVE_OPENSSL_POLICY_MAPPING
     int requireExplicitPolicy, inhibitPolicyMapping;
     x509->get_policy_constraints(requireExplicitPolicy, inhibitPolicyMapping);
     wvcon->print("Certificate Policy Constraints: requireExplicitPolicy: %s "
@@ -43,6 +45,7 @@ void print_details(WvX509 *x509)
     WvX509::PolicyMapList::Iter i(maplist);
     for (i.rewind(); i.next();)
         wvcon->print("%s -> %s\n", i().issuer_domain, i().subject_domain);
+#endif
 }
 
 
