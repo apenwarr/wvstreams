@@ -80,6 +80,8 @@ TARGETS += crypto/tests/printcert
 ifneq ("$(with_readline)", "no")
   TARGETS += ipstreams/tests/wsd
   ipstreams/tests/wsd-LIBS += -lreadline
+else
+  TEST_SKIP_OBJS += ipstreams/tests/wsd
 endif
 TESTS += $(call tests_cc,configfile/tests)
 TESTS += $(call tests_cc,streams/tests)
@@ -176,8 +178,10 @@ TARGETS_A = $(filter %.a,$(TARGETS))
 all: $(filter-out $(WV_EXCLUDES), $(TARGETS))
 
 TESTS += wvtestmain
-$(addsuffix .o,$(TESTS)):
-tests: $(TESTS)
+
+REAL_TESTS = $(filter-out $(TEST_SKIP_OBJS), $(TESTS))
+$(addsuffix .o,$(REAL_TESTS)):
+tests: $(REAL_TESTS)
 
 test: all tests qtest
 
