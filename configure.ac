@@ -63,6 +63,9 @@ AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
 AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
 AC_ARG_WITH(qt, AC_HELP_STRING([--with-qt], [Qt]))
 xplc_version='0.3.13'
+if ! pkg-config --modversion xplc-${xplc_version}; then
+    xplc_version='0.3.11'
+fi
 AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC ${xplc_version} (required)]))
 AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib (required)]))
 AC_ARG_WITH(argp, AC_HELP_STRING([--with-argp], [argp (required)]))
