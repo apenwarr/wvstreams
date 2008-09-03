@@ -529,6 +529,14 @@ if test "$with_argp" != "no"; then
     AC_CHECK_HEADERS(argp.h,, [with_argp=no])
 fi
 
+# Find out whether TR1 or Boost are available.
+AC_CHECK_HEADERS(tr1/functional)
+AC_CHECK_HEADERS(boost/function.hpp)
+
+# When compiling with exceptions disabled and Boost, applications need
+# to provide an "exception handler", declared here.
+AC_CHECK_HEADERS(boost/throw_exception.hpp)
+
 # check for missing packages
 missing_required=
 missing_devel=
@@ -566,6 +574,11 @@ if test "$with_argp" = "no"; then
     AC_MSG_WARN([argp is missing.])
     missing_required="$missing_required argp"
 fi
+if test "$ac_cv_header_tr1_functional" != "yes" \
+     -a "$ac_cv_header_boost_function_hpp" != "yes"; then
+    AC_MSG_WARN([both tr1/functional and boost/function.hpp are missing.])
+    missing_required="$missing_required boost/function.hpp"
+fi
 
 if test -n "$missing_required"; then
     AC_MSG_ERROR([Required dependencies missing:$missing_required])
@@ -580,14 +593,6 @@ if test "$VALGRIND" != ""; then
     fi
 fi
 
-
-# Find out whether TR1 or Boost are available.
-AC_CHECK_HEADERS(tr1/functional)
-AC_CHECK_HEADERS(boost/function.hpp)
-
-# When compiling with exceptions disabled and Boost, applications need
-# to provide an "exception handler", declared here.
-AC_CHECK_HEADERS(boost/throw_exception.hpp)
 
 # Compiler is always posix if invoking this configure script
 COMPILER_STANDARD=posix
