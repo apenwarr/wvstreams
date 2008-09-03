@@ -121,6 +121,8 @@ ifneq ("$(with_dbus)", "no")
   libwvdbus.so: $(libwvdbus_OBJS) $(LIBWVSTREAMS)
   libwvdbus.so-LIBS += $(LIBS_DBUS)
   dbus/tests/%: PRELIBS+=$(LIBWVDBUS)
+else
+  TEST_SKIP_OBJS += dbus/t/%
 endif
 
 #
@@ -190,8 +192,8 @@ ifeq ("$(TESTNAME)", "unitest")
 endif
 
 wvtestmain: \
-	$(call objects, $(filter-out win32/%, \
-		$(shell find . -type d -name t -printf "%P\n"))) \
+	$(filter-out $(TEST_SKIP_OBJS), $(call objects, $(filter-out win32/%, \
+		$(shell find . -type d -name t -printf "%P\n")))) \
 	$(LIBWVDBUS) $(LIBUNICONF) $(LIBWVSTREAMS) $(LIBWVTEST)
 
 distclean: clean

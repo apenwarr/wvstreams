@@ -13,8 +13,12 @@ else
   LIBWVUTILS=$(WVSTREAMS_LIB)/libwvutils.so $(LIBWVBASE)
   LIBWVSTREAMS=$(WVSTREAMS_LIB)/libwvstreams.so $(LIBWVUTILS)
   LIBUNICONF=$(WVSTREAMS_LIB)/libuniconf.so $(LIBWVSTREAMS)
+ifneq ("$(with_dbus)", "no")
   LIBWVDBUS=$(WVSTREAMS_LIB)/libwvdbus.so $(LIBWVSTREAMS)
+endif
+ifneq ("$(with_qt)", "no")
   LIBWVQT=$(WVSTREAMS_LIB)/libwvqt.so $(LIBWVSTREAMS)
+endif
   LIBWVTEST=$(WVSTREAMS_LIB)/libwvtest.a $(LIBWVUTILS)
 endif
 
