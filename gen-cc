@@ -16,7 +16,7 @@ cat >$TEMPFILE <<-EOF
 	shift
 	
 	$CC \$MODE -o \$BASE.o \$BASE.$EXT \\
-	        -MMD -MF \$DEPFILE -MP \
+	        -MMD -MF \$DEPFILE -MP -MQ \$BASE.o \\
 	        $CPPFLAGS \\
 	        $CFLAGS \\
 	        "\$@"
