@@ -14,6 +14,10 @@
 WvProcIter::WvProcIter() :
     dir_iter("/proc", false, true)
 {
+    if (!dir_iter.isok())
+	fprintf(stderr, "WARNING: Can't open /proc: is it mounted?\n");
+    if (access("/proc/1/.", F_OK) != 0)
+	fprintf(stderr, "WARNING: Can't find /proc/1: is /proc mounted?\n");
 }
 
 WvProcIter::~WvProcIter()

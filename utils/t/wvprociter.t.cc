@@ -30,7 +30,8 @@ WVTEST_MAIN("wvkillall")
             }
             sleep(1);
         }
-        WVPASS(killed_child);
+        if (!WVPASS(killed_child))
+	    kill(child, 15); // make sure we don't get stuck
         pid_t rv;
         while ((rv = waitpid(child, NULL, 0)) != child)
         {
