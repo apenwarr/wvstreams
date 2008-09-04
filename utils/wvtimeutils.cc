@@ -4,9 +4,8 @@
  *
  * Various little time functions...
  */
-#include <limits.h>
-
 #include "wvtimeutils.h"
+#include <limits.h>
 
 time_t msecdiff(const WvTime &a, const WvTime &b)
 {

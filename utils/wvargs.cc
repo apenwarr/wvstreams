@@ -16,6 +16,7 @@
 #undef __argv
 
 #include <argp.h>
+#include <limits.h>
 
 
 class WvArgsOption
