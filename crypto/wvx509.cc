@@ -53,6 +53,30 @@ UUID_MAP_BEGIN(WvX509)
 
 static int ssl_init_count = 0;
 
+#if !HAVE_OPENSSL_POLICY_MAPPING
+
+// HACK: old versions of OpenSSL can't handle ERR_free_strings() being called
+// more than once in the same process; the next wvssl_init won't work.  So
+// let's make sure to make a global variable that holds the refcount at 1
+// even when all the objects go away, then clean it up at exit.
+class WvSSL_Stupid_Refcount
+{
+public:
+   WvSSL_Stupid_Refcount()
+   {
+       wvssl_init();
+   }
+   
+   ~WvSSL_Stupid_Refcount()
+   {
+       wvssl_free();
+   }
+};
+
+WvSSL_Stupid_Refcount wvssl_stupid_refcount;
+
+#endif // !HAVE_OPENSSL_POLICY_MAPPING
+
 
 void wvssl_init()
 {
