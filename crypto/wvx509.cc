@@ -1307,7 +1307,7 @@ bool WvX509::verify(WvBuf &original, WvStringParm signature) const
 }
 
 
-time_t ASN1_TIME_to_time_t(ASN1_TIME *t)
+static time_t ASN1_TIME_to_time_t(ASN1_TIME *t)
 {
     struct tm newtime;
     char *p = NULL;
@@ -1395,7 +1395,7 @@ WvString WvX509::get_fingerprint(const FprintMode mode) const
     if (!X509_digest(cert, digest, md, &n))
     {
 	errno = -ENOMEM;
-	debug("get_fingerprint:  Out of memory\n");
+	debug("get_fingerprint: Out of memory\n");
 	return WvString::null;
     }
 

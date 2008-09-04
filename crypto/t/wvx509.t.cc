@@ -335,13 +335,18 @@ WVTEST_MAIN("certreq / signreq / signcert")
     WvRSAKey rsakey(DEFAULT_KEYLEN);
     WvString certreq 
 	= WvX509Mgr::certreq("cn=test.signed.com,dc=signed,dc=com", rsakey);
+
     WvX509Mgr cacert("CN=test.foo.com,DC=foo,DC=com", DEFAULT_KEYLEN, true);
-    WvString certpem = cacert.signreq(certreq);
+    WVPASS(cacert.isok());
+    WVPASS(cacert.validate());
     
     WvX509 cert;
+    WvString certpem = cacert.signreq(certreq);
     cert.decode(WvX509Mgr::CertPEM, certpem);
 
     // test that it initially checks out
+    WVPASS(cert.isok());
+    WVPASS(cert.validate());
     WVPASS(cert.issuedbyca(cacert));
     WVPASS(cert.signedbyca(cacert));
     
