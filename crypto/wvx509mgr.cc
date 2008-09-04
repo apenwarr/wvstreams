@@ -400,7 +400,6 @@ bool WvX509Mgr::signcrl(WvCRL &crl) const
               "CRLs!\n");
         return false;
     }
-#endif
     else if (!((cert->ex_flags & EXFLAG_KUSAGE) && 
 	  (cert->ex_kusage & KU_CRL_SIGN)))
     {
@@ -409,6 +408,7 @@ bool WvX509Mgr::signcrl(WvCRL &crl) const
 	      (cert->ex_kusage & KU_CRL_SIGN));
 	return false;
     }
+#endif
     
     EVP_PKEY *certkey = EVP_PKEY_new();
     bool cakeyok = EVP_PKEY_set1_RSA(certkey, rsa->rsa);

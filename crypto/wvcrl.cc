@@ -244,13 +244,14 @@ void WvCRL::decode(const DumpMode mode, WvStringParm str)
         {
 	    int errnum = errno;
             debug(WvLog::Warning,
-		  "Import CRL from '%s': %s\n", 
+		  "open '%s': %s\n", 
                   str, strerror(errnum));
             return;
         }
 
         if (!(crl = PEM_read_X509_CRL(fp, NULL, NULL, NULL)))
-            debug(WvLog::Warning, "Can't read CRL from file");
+            debug(WvLog::Warning, "Import CRL from '%s': %s\n",
+		  str, wvssl_errstr());
         
         fclose(fp);
         return;
