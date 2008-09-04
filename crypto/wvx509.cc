@@ -73,6 +73,7 @@ void wvssl_init()
 
 void wvssl_free()
 {
+    assert(ssl_init_count >= 1);
     if (ssl_init_count >= 1)
 	ssl_init_count--;
 

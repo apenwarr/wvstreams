@@ -149,7 +149,6 @@ WvX509Mgr::~WvX509Mgr()
 {
     debug("Deleting.\n");
     WVDELETE(rsa);
-    wvssl_free();
 }
 
 

@@ -298,14 +298,12 @@ void WvSSLStream::printerr(WvStringParm func)
     unsigned long l = ERR_get_error();
     char buf[121];      // man ERR_error_string says must be > 120.
 
-    SSL_load_error_strings();
     while (l)
     {
         ERR_error_string(l, buf);
         debug("%s error: %s\n", func, buf);
         l = ERR_get_error();
     }
-    ERR_free_strings();
 }
 
  
