@@ -122,7 +122,9 @@ WVTEST_MAIN("X509")
     // Setup a new DN entry, like a server would set.
     const WvString dName("cn=test.foo.com,dc=foo,dc=com");
     const WvString dName1("/CN=test.foo.com/DC=foo/DC=com");
-    const WvString dName2("/C=CA/ST=Quebec/L=Montreal/O=Testy One/CN=aria2.weavernet.null/DC=webmaster@weavernet.null");
+    const WvString dName2("/C=CA/ST=Quebec/L=Montreal/O=Testy One"
+			  "/CN=aria2.weavernet.null"
+			  "/DC=webmaster@weavernet.null");
     
     {
 	WvX509Mgr t509;
@@ -157,12 +159,14 @@ WVTEST_MAIN("X509")
 	t509.decode(WvX509::CertPEM, signedcerttext);
 	WVPASS(t509.isok()); 
         WVFAIL(t509.validate()); // this certificate has expired
-	WVPASSEQ(t509.get_subject(), "/C=CA/ST=Quebec/L=Montreal/O=Testy One/CN=aria2.weavernet.null");
+	WVPASSEQ(t509.get_subject(),
+		 "/C=CA/ST=Quebec/L=Montreal/O=Testy One"
+		 "/CN=aria2.weavernet.null");
 	WVPASSEQ(t509.get_issuer(), "/O=NITI-TEST");
         WVPASSEQ(t509.get_ski(), 
-                 "CE:91:F3:C6:00:78:26:21:ED:FC:46:ED:AA:07:C4:6D:2A:6C:4E:15");
+             "CE:91:F3:C6:00:78:26:21:ED:FC:46:ED:AA:07:C4:6D:2A:6C:4E:15");
         WVPASSEQ(t509.get_aki(), 
-                 "C7:51:02:BD:C8:1E:52:FA:70:40:93:50:B3:68:37:AA:AD:02:3F:35");
+             "C7:51:02:BD:C8:1E:52:FA:70:40:93:50:B3:68:37:AA:AD:02:3F:35");
     }    
     {
 	// Now we stress test it to make sure that it fails predictably...
@@ -234,7 +238,9 @@ WVTEST_MAIN("Hexified encoding/decoding")
     "453ec9a3cdbe2fe17e86b32e998fe8713066ed254a60390f7898e4e536dea92af7"
     "743d55a35fad75c14fe1e239251c471e133ca8e85ef3a1d3c5b6b288bfda";
 
-    const WvString dName2("/C=CA/ST=Quebec/L=Montreal/O=Testy One/CN=aria2.weavernet.null/DC=webmaster@weavernet.null");
+    const WvString dName2("/C=CA/ST=Quebec/L=Montreal"
+			  "/O=Testy One/CN=aria2.weavernet.null"
+			  "/DC=webmaster@weavernet.null");
 
     WvX509Mgr t509;
     t509.decode(WvX509Mgr::CertHex, cert_hex);
@@ -269,7 +275,8 @@ WVTEST_MAIN("Get extensions memory corruption")
     t509.decode(WvX509Mgr::CertPEM, carillon_cert);
 
     WVPASS(t509.isok());
-    WVPASSEQ("CA Issuers - URI:http://www.carillon.ca/caops/medium-test-ca.crt", 
+    WVPASSEQ("CA Issuers - "
+	     "URI:http://www.carillon.ca/caops/medium-test-ca.crt", 
              t509.get_aia());
 }
 
@@ -326,8 +333,8 @@ WVTEST_MAIN("certreq / signreq / signcert")
 {
     // certificate request
     WvRSAKey rsakey(DEFAULT_KEYLEN);
-    WvString certreq = WvX509Mgr::certreq("cn=test.signed.com,dc=signed,dc=com", 
-                                       rsakey);
+    WvString certreq 
+	= WvX509Mgr::certreq("cn=test.signed.com,dc=signed,dc=com", rsakey);
     WvX509Mgr cacert("CN=test.foo.com,DC=foo,DC=com", DEFAULT_KEYLEN, true);
     WvString certpem = cacert.signreq(certreq);
     
@@ -426,8 +433,8 @@ WVTEST_MAIN("get/set certificate policy extensions")
 {
     WvRSAKey rsakey(DEFAULT_KEYLEN);
 
-    WvString certreq = WvX509Mgr::certreq("cn=test.signed.com,dc=signed,dc=com", 
-                                       rsakey);
+    WvString certreq 
+	= WvX509Mgr::certreq("cn=test.signed.com,dc=signed,dc=com", rsakey);
     WvX509Mgr cacert("CN=test.foo.com, DC=foo, DC=com", DEFAULT_KEYLEN, true);
     WvString certpem = cacert.signreq(certreq);
     
@@ -469,8 +476,8 @@ WVTEST_MAIN("get/set certificate policy extensions")
 WVTEST_MAIN("ski / aki")
 {
     WvRSAKey rsakey(DEFAULT_KEYLEN);
-    WvString certreq = WvX509Mgr::certreq("cn=test.signed.com,dc=signed,dc=com", 
-                                          rsakey);
+    WvString certreq 
+	= WvX509Mgr::certreq("cn=test.signed.com,dc=signed,dc=com", rsakey);
     WvX509Mgr cacert("CN=test.foo.com, DC=foo, DC=com", DEFAULT_KEYLEN, true);
 
     WvString certpem = cacert.signreq(certreq);

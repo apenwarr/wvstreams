@@ -124,7 +124,8 @@ void WvX509Mgr::create_selfissued(WvStringParm dname, bool is_ca)
 	debug("Setting Basic Constraints.\n");
 	set_extension(NID_basic_constraints, "critical, CA:TRUE");
 	debug("Setting Netscape Certificate Type.\n");
-	set_extension(NID_netscape_cert_type, "SSL CA, S/MIME CA, Object Signing CA");
+	set_extension(NID_netscape_cert_type,
+		      "SSL CA, S/MIME CA, Object Signing CA");
 //	debug("Setting Constraints.\n");
 //	set_constraints("requireExplicitPolicy");
     }
@@ -132,7 +133,8 @@ void WvX509Mgr::create_selfissued(WvStringParm dname, bool is_ca)
     {
 	debug("Setting Key Usage with normal server parameters\n");
 	set_nsserver(dname);
-	set_key_usage("critical, digitalSignature, keyEncipherment, keyAgreement");
+	set_key_usage("critical, digitalSignature, keyEncipherment, "
+		      "keyAgreement");
 	set_extension(NID_basic_constraints, "CA:FALSE");
 	set_ext_key_usage("TLS Web Server Authentication,"
 			  "TLS Web Client Authentication");
@@ -311,9 +313,10 @@ WvString WvX509Mgr::signreq(WvStringParm pkcs10req) const
 	// the usage of this cert to digital signature and key encipherment.
 	newcert.set_key_usage("critical, digitalSignature, keyEncipherment");
     
-	// This could cause Netscape to barf because if we set basicConstraints 
-	// to critical, we break RFC2459 compliance. Why they chose to enforce 
-	// that bit, and not the rest is beyond me... but oh well...
+	// This could cause Netscape to barf because if we set
+	// basicConstraints to critical, we break RFC2459 compliance. Why
+	// they chose to enforce that bit, and not the rest is beyond me...
+	// but oh well...
 	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,
 				 (char*)"CA:FALSE");
 	
@@ -402,7 +405,8 @@ bool WvX509Mgr::signcrl(WvCRL &crl) const
 	  (cert->ex_kusage & KU_CRL_SIGN)))
     {
 	debug("Certificate not allowed to sign CRLs! (%s %s)\n", 
-              (cert->ex_flags & EXFLAG_KUSAGE), (cert->ex_kusage & KU_CRL_SIGN));
+              (cert->ex_flags & EXFLAG_KUSAGE),
+	      (cert->ex_kusage & KU_CRL_SIGN));
 	return false;
     }
     
@@ -495,7 +499,8 @@ bool WvX509Mgr::write_p12(WvStringParm _fname, WvStringParm _pkcs12pass) const
 
     if (!fp)
     {
-        debug(WvLog::Warning, "Unable to open file. Error: %s\n", strerror(errno));
+        debug(WvLog::Warning, "Unable to open file. Error: %s\n",
+	      strerror(errno));
         return false;
     }
 
@@ -515,9 +520,10 @@ bool WvX509Mgr::write_p12(WvStringParm _fname, WvStringParm _pkcs12pass) const
 	    else
 	    {
                 WvString pkcs12pass(_pkcs12pass);
-		PKCS12 *pkg = PKCS12_create(pkcs12pass.edit(), (char*)"foo", pk, 
-					    cert, NULL, 0, 0, 0, 
-                                            0, 0);
+		PKCS12 *pkg
+		    = PKCS12_create(pkcs12pass.edit(), (char*)"foo", pk, 
+				    cert, NULL, 0, 0, 0, 
+				    0, 0);
 		if (pkg)
 		{
 		    debug("Writing the PKCS12 object out...\n");
@@ -535,7 +541,8 @@ bool WvX509Mgr::write_p12(WvStringParm _fname, WvStringParm _pkcs12pass) const
 	}
 	else
 	{
-	    debug(WvLog::Warning, "The RSA key or the certificate is not present.");
+	    debug(WvLog::Warning,
+		  "The RSA key or the certificate is not present.");
 	    return false;
 	}
     }
@@ -551,7 +558,8 @@ bool WvX509Mgr::write_p12(WvStringParm _fname, WvStringParm _pkcs12pass) const
 
 void WvX509Mgr::read_p12(WvStringParm _fname, WvStringParm _pkcs12pass)
 {
-    debug("Reading Certificate and Private Key from PKCS12 file: %s\n", _fname);    
+    debug("Reading Certificate and Private Key from PKCS12 file: %s\n",
+	  _fname);
 
     if (rsa)
         WVDELETE(rsa);

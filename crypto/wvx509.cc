@@ -33,8 +33,10 @@
 
 // helper method to let us return and warn gracefully when getting/setting an 
 // element in a null certificate
-static const char * warning_str_set = "Tried to set %s, but certificate not ok.\n";
-static const char * warning_str_get = "Tried to get %s, but certificate not ok.\n";
+static const char * warning_str_set 
+    = "Tried to set %s, but certificate not ok.\n";
+static const char * warning_str_get 
+    = "Tried to get %s, but certificate not ok.\n";
 #define CHECK_CERT_EXISTS_SET(x)                                        \
     if (!cert) {                                                        \
         debug(WvLog::Warning, warning_str_set, x);                      \
@@ -269,7 +271,8 @@ WvString WvX509::certreq(WvStringParm subject, const WvRSAKey &rsa)
 
     if ((pk=EVP_PKEY_new()) == NULL)
     {
-        debug(WvLog::Warning, "Error creating key handler for new certificate");
+        debug(WvLog::Warning,
+	      "Error creating key handler for new certificate");
         return WvString::null;
     }
     
@@ -774,9 +777,8 @@ bool WvX509::get_basic_constraints(bool &ca, int &pathlen) const
     BASIC_CONSTRAINTS *constraints = NULL;
     int i;
 
-    constraints = static_cast<BASIC_CONSTRAINTS *>(X509_get_ext_d2i(
-                                                       cert, NID_basic_constraints,
-                                                       &i, NULL));
+    constraints = static_cast<BASIC_CONSTRAINTS *>
+	(X509_get_ext_d2i(cert, NID_basic_constraints, &i, NULL));
     if (constraints)
     {
         ca = constraints->ca;
@@ -950,14 +952,16 @@ void WvX509::set_policy_mapping(PolicyMapList &list)
 #endif // HAVE_OPENSSL_POLICY_MAPPING
 
 
-static void add_aia(WvStringParm type, WvString identifier, AUTHORITY_INFO_ACCESS *ainfo)
+static void add_aia(WvStringParm type, WvString identifier,
+		    AUTHORITY_INFO_ACCESS *ainfo)
 {
     ACCESS_DESCRIPTION *acc = ACCESS_DESCRIPTION_new();
     sk_ACCESS_DESCRIPTION_push(ainfo, acc);
     acc->method = OBJ_txt2obj(type.cstr(), 0);
     acc->location->type = GEN_URI;
     acc->location->d.ia5 = M_ASN1_IA5STRING_new();
-    unsigned char *cident = reinterpret_cast<unsigned char *>(identifier.edit());
+    unsigned char *cident 
+	= reinterpret_cast<unsigned char *>(identifier.edit());
     ASN1_STRING_set(acc->location->d.ia5, cident, identifier.len());
 }
 
@@ -990,7 +994,8 @@ WvString WvX509::get_aia() const
 }
 
 
-static void parse_stack(WvStringParm ext, WvStringList &list, WvStringParm prefix)
+static void parse_stack(WvStringParm ext, WvStringList &list,
+			WvStringParm prefix)
 {
     WvStringList stack;
     stack.split(ext, ";\n");
@@ -1040,7 +1045,8 @@ void WvX509::set_crl_urls(WvStringList &urls)
         GENERAL_NAME *uri = GENERAL_NAME_new();
         uri->type = GEN_URI;
         uri->d.ia5 = M_ASN1_IA5STRING_new();
-        unsigned char *cident = reinterpret_cast<unsigned char *>(i().edit());    
+        unsigned char *cident
+	    = reinterpret_cast<unsigned char *>(i().edit());    
         ASN1_STRING_set(uri->d.ia5, cident, i().len());
         sk_GENERAL_NAME_push(uris, uri);
 
@@ -1286,7 +1292,8 @@ bool WvX509::verify(WvBuf &original, WvStringParm signature) const
     /* Verify the signature */
     EVP_MD_CTX sig_ctx;
     EVP_VerifyInit(&sig_ctx, EVP_sha1());
-    EVP_VerifyUpdate(&sig_ctx, original.peek(0, original.used()), original.used());
+    EVP_VerifyUpdate(&sig_ctx, original.peek(0, original.used()),
+		     original.used());
     int sig_err = EVP_VerifyFinal(&sig_ctx, sig_buf, sig_size, pk);
     EVP_PKEY_free(pk);
     EVP_MD_CTX_cleanup(&sig_ctx); // Again, not my fault... 
@@ -1365,7 +1372,8 @@ WvString WvX509::get_aki() const
     CHECK_CERT_EXISTS_GET("aki", WvString::null);
 
     WvStringList aki_list;
-    parse_stack(get_extension(NID_authority_key_identifier), aki_list, "keyid:");
+    parse_stack(get_extension(NID_authority_key_identifier), aki_list,
+		"keyid:");
     if (aki_list.count())
         return aki_list.popstr();
 
