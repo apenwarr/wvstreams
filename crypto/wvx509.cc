@@ -367,8 +367,8 @@ bool WvX509::signedbyca(WvX509 &cacert) const
 
     if (result < 0)
     {
-        debug("There was an error determining whether or not we were signed by "
-              "CA '%s'.\n", cacert.get_subject());
+        debug("Can't determine if we were signed by CA %s: %s\n",
+              cacert.get_subject(), wvssl_errstr());
         return false;
     }
     bool issigned = (result > 0);
