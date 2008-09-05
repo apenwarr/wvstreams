@@ -240,4 +240,8 @@
    fun:_ZN10UniConfKey5StoreC1EiiRK12WvFastString
    fun:_Z41__static_initialization_and_destruction_0ii
 }
-
+{
+   libdl_invalid_read
+   Memcheck:Addr4
+   obj:/lib/ld-2.3.6.so
+}
