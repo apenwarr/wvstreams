@@ -174,8 +174,8 @@ public:
     /**
      * Adds a callback to the connection: all received messages will be
      * sent to all callbacks to look at and possibly process.  This method
-     * is simpler and more flexible than add_listener()/add_method(),
-     * but it can be slow if you have too many callbacks set.
+     * is simple and flexible, but it can be slow if you have too many 
+     * callbacks set.
      *
      * Your application is very unlikely to have "too many" callbacks.  If
      * for some reason you need to register lots of separate callbacks,
