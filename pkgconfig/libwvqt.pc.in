@@ -5,7 +5,7 @@ libdir=@libdir@
 includedir=@includedir@
 
 Name: WvStreams Qt
-Description: WvStreams and Qt event integration lbirary
+Description: WvStreams and Qt event integration library
 Version: ${version}
 Requires: libwvbase = ${version}, libwvstreams = ${version}, libwvutils = ${version}
 Libs: -L${libdir} -lwvqt
