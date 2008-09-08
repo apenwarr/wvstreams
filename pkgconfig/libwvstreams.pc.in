@@ -7,6 +7,6 @@ includedir=@includedir@/wvstreams
 Name: WvStreams
 Description: C++ network libraries for rapid application development
 Version: ${version}
-Requires: libwvbase = ${version}, libwvutils = ${version}, @xplc_pc@
+Requires: libwvbase = ${version}, libwvutils = ${version}
 Libs: -L${libdir} -lwvstreams
 Cflags: -I${includedir}
