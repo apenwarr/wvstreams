@@ -2,7 +2,7 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2007 Net Integration Technologies, Inc. and others.
  *
- * X.509v3 CRL management classes.
+ * X.509v3 CRL management class.
  */ 
 #ifndef __WVCRL_H
 #define __WVCRL_H

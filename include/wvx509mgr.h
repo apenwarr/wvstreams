@@ -1,8 +1,9 @@
 /* -*- Mode: C++ -*-
- * Worldvisions Weaver Software:
- *   Copyright (C) 1997-2004 Net Integration Technologies, Inc.
  *
- * X.509 certificate management classes.
+ * X.509 certificate management class: This class builds upon the 
+ * functionality provided by the WvX509 class, adding operations that are
+ * made possible with the addition of a private key (e.g. signing certificates
+ * and CRLs).
  */ 
 #ifndef __WVX509MGR_H
 #define __WVX509MGR_H
