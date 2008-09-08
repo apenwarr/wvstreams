@@ -640,6 +640,8 @@ AC_CONFIG_FILES([pkgconfig/libuniconf.pc
                  pkgconfig/libuniconf-uninstalled.pc
 		 pkgconfig/libwvbase.pc
 		 pkgconfig/libwvbase-uninstalled.pc
+		 pkgconfig/libwvdbus.pc
+		 pkgconfig/libwvdbus-uninstalled.pc
 		 pkgconfig/libwvqt.pc
 		 pkgconfig/libwvqt-uninstalled.pc
 		 pkgconfig/libwvstreams.pc

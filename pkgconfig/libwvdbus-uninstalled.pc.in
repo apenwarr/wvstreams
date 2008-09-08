@@ -1,0 +1,10 @@
+version=@PACKAGE_VERSION@
+top_builddir=@abs_top_builddir@
+
+Name: WvStreams D-Bus
+Description: WvStreams-style wrapper for D-Bus library
+Version: ${version}
+Requires: libwvbase = ${version}, libwvstreams = ${version}, libwvutils = ${version}
+Libs: -L${top_builddir} -lwvdbus
+Cflags: -I${top_builddir}/include
+

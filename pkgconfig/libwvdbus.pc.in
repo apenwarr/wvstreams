@@ -1,0 +1,13 @@
+version=@PACKAGE_VERSION@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: WvStreams D-Bus
+Description: WvStreams-style wrapper for D-Bus library
+Version: ${version}
+Requires: libwvbase = ${version}, libwvstreams = ${version}, libwvutils = ${version}
+Libs: -L${libdir} -lwvdbus
+Cflags: -I${includedir}/wvstreams
+
