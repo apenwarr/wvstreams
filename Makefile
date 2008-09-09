@@ -190,7 +190,7 @@ qtest: all wvtestmain
 
 runtests:
 	$(VALGRIND) ./wvtestmain '$(TESTNAME)'
-ifeq ("$(TESTNAME)", "unitest")
+ifeq ("$(TESTNAME)", "")
 	cd uniconf/tests && DAEMON=0 ./unitest.sh
 	cd uniconf/tests && DAEMON=1 ./unitest.sh
 endif
