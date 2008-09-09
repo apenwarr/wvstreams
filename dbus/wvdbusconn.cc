@@ -221,12 +221,15 @@ public:
 };
 
 
-WvDBusMsg WvDBusConn::send_and_wait(WvDBusMsg msg, time_t msec_timeout)
+WvDBusMsg WvDBusConn::send_and_wait(WvDBusMsg msg, time_t msec_timeout,
+				wv::function<void(uint32_t)> serial_cb)
 {
     xxReplyWaiter rw;
     
     send(msg, wv::bind(&xxReplyWaiter::reply_wait, &rw, _1),
 	 msec_timeout);
+    if (serial_cb)
+	serial_cb(msg.get_serial());
     while (!rw.reply && isok())
 	runonce();
     if (!rw.reply)
