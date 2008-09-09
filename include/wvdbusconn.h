@@ -148,6 +148,10 @@ public:
      * Send a message on the bus and wait for a reply to come in, returning
      * the message when it does.  There is always a reply, even if it's
      * "message expired" or some other error message.
+     *
+     * The serial_cb parameter allows you to create a callback which is called
+     * after 'send' but before the runonce() loop is initiated, allowing you
+     * to perform some kind of setup based on the serial number of the message.
      * 
      * It waits by doing this->runonce().  Streams on the globallist may run.
      * 
@@ -156,7 +160,8 @@ public:
      * with extreme care.
      */
     WvDBusMsg send_and_wait(WvDBusMsg msg,
-			    time_t msec_timeout = WVDBUS_DEFAULT_TIMEOUT);
+			    time_t msec_timeout = WVDBUS_DEFAULT_TIMEOUT,
+			    wv::function<void(uint32_t)> serial_cb = 0);
 
     /**
      * The priority level of a callback registration.  This defines the order
