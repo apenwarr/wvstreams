@@ -139,6 +139,9 @@ int WvDaemon::run(const char *argv0)
             }
             else if (pid == 0)
             {
+		// FIXME: this happens *before* we do the daemon setup!
+		// We should only fork into the background *after* doing
+		// things like opening our listen sockets.
                 ::chdir("/");
                 ::umask(0);
                 
