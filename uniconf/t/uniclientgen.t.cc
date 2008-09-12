@@ -13,6 +13,7 @@
 #include "wvstrutils.h"
 
 #include <signal.h>
+#include <utime.h>
 
 class WvDebugUnixConn : public WvUnixConn
 {
@@ -164,22 +165,25 @@ WVTEST_MAIN("commit")
     UniClientGen *client_gen = create_client_conn("commit", sockname);
     uniconf.mountgen(client_gen); 
 
-    uniconf.setmeint(time(NULL));
+    uniconf.setmeint(0);
     uniconf.commit();
     time_t old_file_time = file_time(ini_file);
     WVPASS(old_file_time != -1);
     WVPASS(old_file_time <= time(NULL));
 
-    // Wait until ini file is old
-    while (time(NULL) <= old_file_time)
-        sleep(1);
+    // utime the ini file into the past
+    time_t real_old_file_time = old_file_time - 5000;
+    utimbuf buf;
+    buf.actime = real_old_file_time;
+    buf.modtime = real_old_file_time;
+    WVPASSEQ(utime(ini_file, &buf), 0);
 
-    uniconf.setmeint(time(NULL));
+    uniconf.setmeint(1);
     uniconf.commit();
 
     time_t new_file_time = file_time(ini_file);
     WVPASS(new_file_time != -1);
-    WVPASS(new_file_time > old_file_time);
+    WVPASS(new_file_time > real_old_file_time);
 
     unlink(ini_file);
 }
