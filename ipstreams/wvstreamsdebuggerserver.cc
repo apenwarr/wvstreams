@@ -59,7 +59,7 @@ WvStreamsDebuggerServer::WvStreamsDebuggerServer(const WvUnixAddr &unix_addr,
     tcp_listener(NULL),
     auth_cb(_auth_cb)
 {
-    WvIStreamList::globallist.append(&streams, false);
+    WvIStreamList::globallist.append(&streams, false, "debugger streams");
 
 #ifndef _WIN32
     if (true)
@@ -70,7 +70,7 @@ WvStreamsDebuggerServer::WvStreamsDebuggerServer(const WvUnixAddr &unix_addr,
 	    wv::bind(&WvStreamsDebuggerServer::unix_listener_cb, this, _1));
         unix_listener->setclosecallback(
 	    wv::bind(&WvStreamsDebuggerServer::unix_listener_close_cb, this));
-        streams.append(unix_listener, true);
+        streams.append(unix_listener, true, "debugger unix listener");
         log("Listening on %s\n", unix_addr);
     }
 #endif
@@ -83,7 +83,7 @@ WvStreamsDebuggerServer::WvStreamsDebuggerServer(const WvUnixAddr &unix_addr,
 	    wv::bind(&WvStreamsDebuggerServer::tcp_listener_cb, this, _1));
         tcp_listener->setclosecallback(
 	    wv::bind(&WvStreamsDebuggerServer::tcp_listener_close_cb, this));
-        streams.append(tcp_listener, true);
+        streams.append(tcp_listener, true, "debugger tcp listener");
         log("Listening on %s\n", tcp_addr);
     }
 }
@@ -102,7 +102,7 @@ void WvStreamsDebuggerServer::unix_listener_cb(IWvStream *unix_conn)
     Connection *conn = new Connection(unix_conn);
     conn->setcallback(wv::bind(&WvStreamsDebuggerServer::ready_cb, this,
 			       wv::ref(*conn)));
-    streams.append(conn, true);
+    streams.append(conn, true, "debugger unix connection");
 }
 
 
@@ -118,7 +118,7 @@ void WvStreamsDebuggerServer::tcp_listener_cb(IWvStream *tcp_conn)
     Connection *conn = new Connection(tcp_conn);
     conn->setcallback(wv::bind(&WvStreamsDebuggerServer::ready_cb, this,
 			       wv::ref(*conn)));
-    streams.append(conn, true);
+    streams.append(conn, true, "debugger tcp connection");
 }
 
 

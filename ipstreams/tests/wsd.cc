@@ -204,11 +204,12 @@ int main(int argc, char **argv)
     s->print("help\n");
 
     s->setcallback(wv::bind(remote_cb, wv::ref(*s), wv::ref(readlinestream)));
-    WvIStreamList::globallist.append(s, true);
+    WvIStreamList::globallist.append(s, true, "wvstreams debugger client");
 
     readlinestream.setcallback(wv::bind(local_cb, wv::ref(readlinestream),
 					wv::ref(*s)));
-    WvIStreamList::globallist.append(&readlinestream, false);
+    WvIStreamList::globallist.append(&readlinestream, false, 
+                                     "wvstreams debugger readline");
 
     while (s->isok() && readlinestream.isok())
         WvIStreamList::globallist.runonce();

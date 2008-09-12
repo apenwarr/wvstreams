@@ -37,9 +37,9 @@ WVTEST_MAIN("wvlistener")
     
     l.onaccept(acceptor);
     
-    WvIStreamList::globallist.append(&l, false);
+    WvIStreamList::globallist.append(&l, false, "tcp listener");
     WvTCPConn tcp(*listenport);
-    WvIStreamList::globallist.append(&tcp, false);
+    WvIStreamList::globallist.append(&tcp, false, "tcp connection");
     
     while (tcp.isok() && !mystream)
 	WvIStreamList::globallist.runonce(-1);

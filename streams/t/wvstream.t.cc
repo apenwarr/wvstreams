@@ -437,7 +437,7 @@ WVTEST_MAIN("close_and_alarm")
 	WvIStreamList l;
 	WvStream a;
 	a.setcallback(wv::bind(acb));
-	l.append(&a, false);
+	l.append(&a, false, "basic stream");
 	l.runonce(0);
 	WVPASSEQ(acbi, 0);
 	a.alarm(0);

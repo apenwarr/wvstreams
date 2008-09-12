@@ -24,7 +24,7 @@ public:
 	s->listen(smoniker);
 	moniker = s->get_addr();
 	fprintf(stderr, "Server address is '%s'\n", moniker.cstr());
-	WvIStreamList::globallist.append(s, false);
+	WvIStreamList::globallist.append(s, false, "dbus server listener");
     }
     
     ~TestDBusServer()
@@ -58,7 +58,7 @@ WVTEST_MAIN("dbusserver basics")
     int junk;
     TestDBusServer serv;
     WvDBusConn conn1(serv.moniker);
-    WvIStreamList::globallist.append(&conn1, false);
+    WvIStreamList::globallist.append(&conn1, false, "dbus connection");
     
     conn1.request_name("ca.nit.MySender");
     
@@ -126,8 +126,8 @@ WVTEST_MAIN("dbusserver two connections")
     TestDBusServer serv;
     WvDBusConn conn1(serv.moniker);
     WvDBusConn conn2(serv.moniker);
-    WvIStreamList::globallist.append(&conn1, false);
-    WvIStreamList::globallist.append(&conn2, false);
+    WvIStreamList::globallist.append(&conn1, false, "dbus connection 1");
+    WvIStreamList::globallist.append(&conn2, false, "dbus connection 2");
     
     conn2.add_callback(WvDBusConn::PriNormal,
 		       wv::bind(msg_received, wv::ref(conn2), _1));
@@ -158,9 +158,9 @@ WVTEST_MAIN("dbusserver overlapping registrations")
     WvDBusConn *cli = new WvDBusConn(serv.moniker);
     WvDBusConn *l1 = new WvDBusConn(serv.moniker);
     WvDBusConn *l2 = new WvDBusConn(serv.moniker);
-    WvIStreamList::globallist.append(cli, false);
-    WvIStreamList::globallist.append(l1, false);
-    WvIStreamList::globallist.append(l2, false);
+    WvIStreamList::globallist.append(cli, false, "dbus connection 1");
+    WvIStreamList::globallist.append(l1, false, "dbus connection 2");
+    WvIStreamList::globallist.append(l2, false, "dbus connection 3");
     
     reg_count = 0;
     l1->request_name("ca.nit.MySender", name_registered);
@@ -255,7 +255,7 @@ WVTEST_MAIN("GetConnectionUnixUser")
 {
     TestDBusServer serv;
     WvDBusConn conn1(serv.moniker);
-    WvIStreamList::globallist.append(&conn1, false);
+    WvIStreamList::globallist.append(&conn1, false, "dbus connection");
 
     while (!conn1.uniquename())
         WvIStreamList::globallist.runonce();

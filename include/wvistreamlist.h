@@ -68,7 +68,7 @@ private:
 #endif
 
 public:
-    void append(IWvStream *s, bool auto_free, const char *id = NULL)
+    void append(IWvStream *s, bool auto_free, const char *id)
     {
         if (s->wsname() == NULL)
             s->set_wsname(id);
