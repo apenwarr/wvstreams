@@ -95,6 +95,8 @@ static UniClientGen *create_client_conn(WvString name, WvString sockname,
 
 WVTEST_MAIN("UniClientGen Sanity Test")
 {
+    signal(SIGPIPE, SIG_IGN);
+
     WvString sockname = wvtmpfilename("uniclientgen.t-sock");
     UniConfTestDaemon daemon(sockname, "temp:");
 
@@ -107,9 +109,9 @@ WVTEST_MAIN("UniClientGen Sanity Test")
 
 WVTEST_MAIN("deltas")
 {
-    UniConfRoot uniconf;
-
     signal(SIGPIPE, SIG_IGN);
+
+    UniConfRoot uniconf;
 
     WvString sockname = wvtmpfilename("uniclientgen.t-sock");
     unlink(sockname);
@@ -149,12 +151,12 @@ static time_t file_time(WvStringParm filename)
 
 WVTEST_MAIN("commit")
 {
+    signal(SIGPIPE, SIG_IGN);
+
     UniConfRoot uniconf;
     WvString ini_file("/tmp/wvtest-uniclientgen-commit-%s.ini", getpid());
     unlink(ini_file);
     
-    signal(SIGPIPE, SIG_IGN);
-
     WvString sockname = wvtmpfilename("uniclientgen.t-sock");
 
     UniConfTestDaemon daemon(sockname, WvString("ini:%s", ini_file));
@@ -185,12 +187,12 @@ WVTEST_MAIN("commit")
 
 WVTEST_MAIN("refresh")
 {
+    signal(SIGPIPE, SIG_IGN);
+
     UniConfRoot uniconf;
     WvString ini_file("/tmp/wvtest-uniclientgen-refresh-%s.ini", getpid());
     unlink(ini_file);
     
-    signal(SIGPIPE, SIG_IGN);
-
     WvString sockname = wvtmpfilename("uniclientgen.t-sock");
 
     UniConfTestDaemon daemon(sockname, WvString("ini:%s", ini_file));
@@ -213,10 +215,10 @@ WVTEST_MAIN("refresh")
 // Can't run this test -- it takes at least 60 seconds...
 WVTEST_MAIN("dead uniconfd")
 {
-    UniConfRoot uniconf;
-    
     signal(SIGPIPE, SIG_IGN);
 
+    UniConfRoot uniconf;
+    
     WvString sockname = get_sockname();
 
     pid_t child = wvfork();
@@ -277,6 +279,8 @@ static void save_callback()
 
 WVTEST_MAIN("SaveCallback")
 {
+    signal(SIGPIPE, SIG_IGN);
+
     UniConfRoot uniconf;
 
     WvString ini_file("/tmp/wvtest-uniclientgen-refresh-%s.ini", getpid());
