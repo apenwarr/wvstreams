@@ -7,9 +7,9 @@
  *
  * This library is licensed under the LGPL, please read LICENSE for details.
  *
- * WvDBusMsg and WvDBusReplyMsg are intended to be easy-to-use abstractions
- * over the low-level D-Bus DBusMessage structure. They represent messages
- * being passed around on the bus.
+ * WvDBusMsg is intended to be an easy-to-use abstraction over the low-level 
+ * D-Bus DBusMessage structure. It represents a message being passed around on 
+ * the bus.
  */ 
 #ifndef __WVDBUSMSG_H
 #define __WVDBUSMSG_H
