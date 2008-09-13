@@ -192,6 +192,11 @@ int WvTest::run_all(const char * const *prefixes)
 		|| prefix_match(cur->descr, prefixes)))
 	{
 #ifndef _WIN32
+            // set SIGPIPE back to default, helps catch tests which don't set
+            // this signal to SIG_IGN (which is almost always what you want)
+            // on startup
+            signal(SIGPIPE, SIG_DFL);
+
             pid_t child = 0;
             if (run_twice)
             {
