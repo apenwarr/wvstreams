@@ -85,7 +85,7 @@ static UniClientGen *create_client_conn(WvString name, WvString sockname,
         {
             WVRELEASE(client_gen);
             wvout->print("Failed to connect, retrying...\n");
-            sleep(1);
+            usleep(1000);
         }
         else break;
     }
