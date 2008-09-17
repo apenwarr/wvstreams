@@ -124,14 +124,14 @@ bool isnewline(char c);
  * you don't want encoded as spaces, then set no_space to true, and
  * it should "just work" for you.
  */
-WvString web_unescape(const char *str, bool no_space = false);
+WvString url_decode(WvStringParm str, bool no_space = false);
 
 
 /**
- * Converts all those pesky spaces, colons, and other nasties into nice unreadable
- * Quasi-Unicode codes
+ * Converts all those pesky spaces, colons, and other nasties into nice 
+ * unreadable Quasi-Unicode codes
  */
-WvString url_encode(WvStringParm stuff);
+WvString url_encode(WvStringParm str);
  
 
 /**

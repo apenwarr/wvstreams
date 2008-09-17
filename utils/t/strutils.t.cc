@@ -195,16 +195,16 @@ WVTEST_MAIN("is_word")
         WVPASS(is_word(input[i]) == desired[i]);
 }
 
-/** Tests web_unescape().
- * web_unescape() should convert all url-encoded characters in an input
+/** Tests url_decode().
+ * url_decode() should convert all url-encoded characters in an input
  * string (%xx) to their corresponding ASCII characters.
  */
-WVTEST_MAIN("web_unescape")
+WVTEST_MAIN("url_decode")
 {
     const char *input = "%49+%6c%69%6b%65+%70%69%7a%7a%61%21";
     const char* desired = "I like pizza!";
 
-    WVPASS(web_unescape(input) == desired);
+    WVPASS(url_decode(input) == desired);
 }
 
 /** Tests url_encode().
