@@ -209,7 +209,7 @@ void UniRegistryGen::setv(const UniConfPairList &pairs)
 
 bool UniRegistryGen::exists(const UniConfKey &key)
 {
-    return get(key) == WvString::null;
+    return !get(key).isnull();
 }
 
 bool UniRegistryGen::haschildren(const UniConfKey &key)
