@@ -95,9 +95,4 @@ int wvchmod(const char *path, mode_t mode);
 mode_t get_umask();
 #endif
 
-/**
- * Delay for a requested number of milliseconds.
- */
-void wvdelay(int msec_delay);
-
 #endif // __WVFILEUTILS_H

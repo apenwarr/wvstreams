@@ -291,12 +291,3 @@ mode_t get_umask()
     return rv;
 }
 
-
-void wvdelay(int msec_delay)
-{
-#ifdef _WIN32
-    Sleep(msec_delay);
-#else
-    usleep(msec_delay * 1000);
-#endif
-}
