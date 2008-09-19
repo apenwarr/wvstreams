@@ -204,7 +204,7 @@ WVTEST_MAIN("url_decode")
     const char *input = "%49+%6c%69%6b%65+%70%69%7a%7a%61%21";
     const char* desired = "I like pizza!";
 
-    WVPASS(url_decode(input) == desired);
+    WVPASSEQ(url_decode(input), desired);
 }
 
 /** Tests url_encode().
@@ -214,9 +214,9 @@ WVTEST_MAIN("url_decode")
 WVTEST_MAIN("url_encode")
 {
     const char *input = "http://www.free_email-account.com/~ponyman/mail.pl?name=\'to|\\|Y |)4|\\|Z4\'&pass=$!J83*p&folder=1N8()><";
-    const char *desired = "http%3a//www.free_email-account.com/~ponyman/mail.pl%3fname%3d%27to%7c%5c%7cY%20%7c%294%7c%5c%7cZ4%27%26pass%3d%24%21J83%2ap%26folder%3d1N8%28%29%3e%3c";
-    WVPASS(url_encode(input) == desired);
+   const char *desired = "http%3a%2f%2fwww.free_email-account.com%2f~ponyman%2fmail.pl%3fname%3d%27to%7c%5c%7cY%20%7c%294%7c%5c%7cZ4%27%26pass%3d%24%21J83%2ap%26folder%3d1N8%28%29%3e%3c";
 
+    WVPASSEQ(url_encode(input), desired);
 }
 
 /** Tests backslash_escape().

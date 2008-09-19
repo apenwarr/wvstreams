@@ -354,11 +354,14 @@ WvString url_encode(WvStringParm str)
 
     for (i=0; i < str.len(); i++)
     {
-        if (isalnum(str[i]) || strchr("/_.-~", str[i]))
+        // to be safe, we'll only let alphanumeric characters or
+        // characters specifically marked as "unreserved" according to
+        // rfc3986 through unescaped
+        if (isalnum(str[i]) || strchr("-._~", str[i]))
         {
             retval.put(&str[i], 1);
-        }               
-        else            
+        }
+        else
         {               
             char buf[4];
             sprintf(buf, "%%%02x", str[i] & 0xff);
