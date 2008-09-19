@@ -278,7 +278,7 @@ bool UniRegistryGenIter::next()
 	}
 	else
 	{
-	    fprintf(stderr, "KEY_ENUM result: %d\n", result);
+	    fprintf(stderr, "KEY_ENUM result: %ld\n", result);
 	    fflush(stderr);
 	    return false; // give up
 	}
