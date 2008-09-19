@@ -1,6 +1,7 @@
 #include "wvistreamlist.h"
 #include "wvtest.h"
 #include "wvloopback.h"
+#include "wvtimeutils.h"
 #ifdef _WIN32
 #include "streams.h"
 #endif
@@ -77,7 +78,7 @@ WVTEST_MAIN("spinning list 2")
     scount = lcount = 0;
     s.write("x");
     l.alarm(0);
-    sleep(1);
+    wvdelay(100);
     l.runonce(5000);
     s.drain();
     WVPASSEQ(scount, 1);

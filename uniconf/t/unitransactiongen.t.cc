@@ -551,7 +551,7 @@ WVTEST_MAIN("double notifications with daemon")
         // Try again...
         uniconf.unmount(uniconf.whichmount(), true);
         uniconf.mount(WvString("unix:%s", sockname));
-        sleep(1);
+        wvdelay(100);
     }
     WVPASS(uniconf.isok());
 

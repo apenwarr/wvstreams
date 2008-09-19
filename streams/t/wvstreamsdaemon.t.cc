@@ -8,6 +8,7 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <wvtimeutils.h>
 
 // This needs to be global (and not part of a WvStreamsDaemonTester class)
 // because the WvStreamsDaemon startup callback below needs to know the name
@@ -73,7 +74,7 @@ WvUnixConn *connect_to_daemon(WvString name, int num_retries,
             WVPASS("Connection unavailable.");
             break;
         }
-        sleep(1);
+        wvdelay(100);
     }
     return conn;
 }

@@ -7,6 +7,7 @@
 #include "uniconfgen-sanitytest.h"
 #include "wvfileutils.h"
 #include "uniclientgen.h"
+#include "wvtimeutils.h"
 #include "wvunixsocket.h"
 
 #include <signal.h>
@@ -57,7 +58,7 @@ WVTEST_MAIN("callbacks")
         // Try again...
         uniconf.unmount(uniconf.whichmount(), true);
         uniconf.mount(WvString("unix:%s", sockname));
-        sleep(1);
+        wvdelay(100);
     }
 
     num_tries = 0;
@@ -73,7 +74,7 @@ WVTEST_MAIN("callbacks")
         {
             WVRELEASE(sub_client_gen);
             wvout->print("Failed to connect, retrying...\n");
-            sleep(1);
+            wvdelay(100);
         }
         else break;
     }
