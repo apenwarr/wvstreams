@@ -606,10 +606,6 @@ static inline bool is_int(const char *str)
 /// do.
 WvString ptr2str(void* ptr);
 
-/// Reads the contents of a symlink.  Returns the contents, or
-/// WvString::null on error.
-WvString wvreadlink(WvStringParm path);
-
 #ifdef _WIN32
 /* Calls CryptProtectData on a string, and returns a BASE64 encoded version
  * of the encrypted data, suitable for entering into Uniconf or other use.

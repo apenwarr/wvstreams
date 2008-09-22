@@ -8,6 +8,7 @@
 
 #include "wvprociter.h"
 #include "wvfile.h"
+#include "wvfileutils.h"
 #include <sys/types.h>
 #include <signal.h>
 

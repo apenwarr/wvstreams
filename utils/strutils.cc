@@ -1327,31 +1327,6 @@ WvString ptr2str(void* ptr)
 }
 
 
-// Reads the contents of a symlink.  Returns WvString::null on error.
-WvString wvreadlink(WvStringParm path)
-{
-#ifdef _WIN32
-    return WvString::null; // no such thing as a symlink on Windows
-#else
-    WvString result;
-    int size = 64;
-    for (;;)
-    {
-        result.setsize(size);
-        int readlink_result = readlink(path, result.edit(), size);
-        if (readlink_result == -1)
-            return WvString::null;
-        if (readlink_result < size)
-        {
-            result.edit()[readlink_result] = '\0';
-            break;
-        }
-        size = 2*size; // increase buffer size
-    }
-    return result;
-#endif
-}
-
 #ifdef _WIN32
 WvString wvprotectdata(WvStringParm data, WvStringParm description)
 {

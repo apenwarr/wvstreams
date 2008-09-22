@@ -51,6 +51,12 @@ bool fcopy(WvStringParm srcdir, WvStringParm dstdir, WvStringParm relname);
 bool ftouch(WvStringParm file, time_t mtime = 0);
 
 /**
+ * Reads the contents of a symlink.  Returns the contents, or 
+ * WvString::null on error.
+ */
+WvString wvreadlink(WvStringParm path);
+
+/**
  * Check whether two files have the same date/time stamp. This can be used as a
  * quick check whether files are unchanged / the same, though obviously it
  * doesn't verify that they are indeed the same file.
