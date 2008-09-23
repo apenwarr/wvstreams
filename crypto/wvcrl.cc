@@ -46,6 +46,29 @@ WvCRL::WvCRL(const WvX509Mgr &cacert)
     : debug("X509 CRL", WvLog::Debug5)
 {
     assert(crl = X509_CRL_new());
+
+    // now, set the aki (FIXME: Mostly blatantly copied from wvx509.cc)
+
+    // can't set a meaningful AKI for subordinate certification without the 
+    // parent having an SKI
+    ASN1_OCTET_STRING *ikeyid = NULL;
+    X509_EXTENSION *ext;
+    int i = X509_get_ext_by_NID(cacert.cert, NID_subject_key_identifier, -1);
+    if ((i >= 0) && (ext = X509_get_ext(cacert.cert, i)))
+        ikeyid = static_cast<ASN1_OCTET_STRING *>(X509V3_EXT_d2i(ext));
+
+    if (!ikeyid)
+        return;
+
+    AUTHORITY_KEYID *akeyid = AUTHORITY_KEYID_new();
+    akeyid->issuer = NULL;
+    akeyid->serial = NULL;
+    akeyid->keyid = ikeyid;
+    ext = X509V3_EXT_i2d(NID_authority_key_identifier, 0, akeyid);
+    X509_CRL_add_ext(crl, ext, -1);
+    X509_EXTENSION_free(ext); 
+    AUTHORITY_KEYID_free(akeyid);
+
     cacert.signcrl(*this);
 }
 
