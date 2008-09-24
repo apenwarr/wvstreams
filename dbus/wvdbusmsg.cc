@@ -427,20 +427,22 @@ WvString WvDBusMsg::get_argstr() const
 
 WvDBusMsg::operator WvString() const
 {
+    WvString dest(get_dest());
+    if (!dest)
+	dest = "";
+    else
+	dest = WvString("%s:", dest);
     if (is_reply())
     {
 	if (iserror())
-	    return WvString("ERR#%s(%s)", get_replyserial(), get_argstr());
+	    return WvString("ERR->%s#%s(%s)",
+			    dest, get_replyserial(), get_argstr());
 	else
-	    return WvString("REPLY#%s(%s)", get_replyserial(), get_argstr());
+	    return WvString("REPLY->%s#%s(%s)",
+			    dest, get_replyserial(), get_argstr());
     }
     else
     {
-	WvString dest(get_dest());
-	if (!dest)
-	    dest = "";
-	else
-	    dest = WvString("%s:", dest);
 	WvString s("%s%s/%s.%s(%s)#%s",
 		   dest,
 		   get_path(), get_interface(), get_member(),
