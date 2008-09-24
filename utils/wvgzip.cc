@@ -37,7 +37,7 @@ void WvGzipEncoder::init()
     
     int retval;
     if (mode == Deflate)
-	retval = deflateInit(zstr, Z_DEFAULT_COMPRESSION);
+	retval = deflateInit(zstr, Z_BEST_SPEED);
     else
 	retval = inflateInit(zstr);
     
