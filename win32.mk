@@ -30,7 +30,7 @@ OBJSKIP=$(OBJREPLACED) $(OBJFIXME) \
 	utils/wvfork.o \
 	utils/wvmagiccircle.o \
 	utils/wvshmzone.o \
-	utils/wvprociter.o \
+	streams/wvprociter.o \
 	\
 	streams/wvlockdev.o \
 	streams/wvlockfile.o \
@@ -80,7 +80,7 @@ TOBJSKIP=$(TOBJFIXME) \
 	utils/t/wvregex.t.o \
 	utils/t/wvglob.t.o \
 	utils/t/wvglobdiriter.t.o \
-	utils/t/wvprociter.t.o \
+	streams/t/wvprociter.t.o \
 	\
 	streams/t/wvmagicloopback.t.o \
 	streams/t/wvlogrotator.t.o \
