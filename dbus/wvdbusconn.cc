@@ -141,6 +141,8 @@ void WvDBusConn::init(IWvDBusAuth *_auth, bool _client)
     if (!client) set_uniquename(WvString(":%s.0", conncount));
 
     if (!isok()) return;
+    
+    delay_output(true);
 
     // this will get enqueued until later, but we want to make sure it
     // comes before anything the user tries to send - including anything
@@ -440,17 +442,26 @@ bool WvDBusConn::post_select(SelectInfo &si)
 
     if (authorized && ready)
     {
-	size_t needed = WvDBusMsg::demarshal_bytes_needed(in_queue);
-	size_t amt = needed - in_queue.used();
-	if (amt < 4096)
-	    amt = 4096;
-	read(in_queue, amt);
-	WvDBusMsg *m;
-	while ((m = WvDBusMsg::demarshal(in_queue)) != NULL)
+	// put this in a loop so that wvdbusd can forward packets rapidly.
+	// Otherwise TCP_NODELAY kicks in, because we do a select() loop
+	// between packets, which causes delay_output() to flush.
+	bool ran;
+	do
 	{
-	    filter_func(*m);
-	    delete m;
-	}
+	    ran = false;
+	    size_t needed = WvDBusMsg::demarshal_bytes_needed(in_queue);
+	    size_t amt = needed - in_queue.used();
+	    if (amt < 4096)
+		amt = 4096;
+	    read(in_queue, amt);
+	    WvDBusMsg *m;
+	    while ((m = WvDBusMsg::demarshal(in_queue)) != NULL)
+	    {
+		ran = true;
+		filter_func(*m);
+		delete m;
+	    }
+	} while (ran);
     }
 
     alarm(mintimeout_msec());
