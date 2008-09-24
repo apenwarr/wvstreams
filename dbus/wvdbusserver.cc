@@ -195,20 +195,6 @@ void WvDBusServer::unregister_conn(WvDBusConn *conn)
 	}
     }
     
-    {
-	std::map<uint32_t,WvDBusConn*>::iterator i;
-	for (i = serial_to_conn.begin(); i != serial_to_conn.end(); )
-	{
-	    if (i->second == conn)
-	    {
-		serial_to_conn.erase(i->first);
-		i = serial_to_conn.begin();
-	    }
-	    else
-		++i;
-	}
-    }
-
     all_conns.unlink(conn);
 }
 
@@ -276,6 +262,13 @@ bool WvDBusServer::do_server_msg(WvDBusConn &conn, WvDBusMsg &msg)
     else if (method == "AddMatch")
     {
 	// we just proxy every signal to everyone for now
+	msg.reply().send(conn);
+	return true;
+    }
+    else if (method == "StartServiceByName")
+    {
+	// we don't actually support this, but returning an error message
+	// confuses perl's Net::DBus library, at least.
 	msg.reply().send(conn);
 	return true;
     }
@@ -370,27 +363,7 @@ bool WvDBusServer::do_bridge_msg(WvDBusConn &conn, WvDBusMsg &msg)
 {
     // if we get here, nobody handled the message internally, so we can try
     // to proxy it.
-    if (msg.is_reply())
-    {
-	uint32_t rserial = msg.get_replyserial();
-	std::map<uint32_t,WvDBusConn *>::iterator i 
-	    = serial_to_conn.find(rserial);
-	if (i != serial_to_conn.end())
-	{
-	    WvDBusConn *dconn = i->second;
-	    log("Proxy reply: target is %s\n", dconn->uniquename());
-	    dbus_message_set_sender(msg, conn.uniquename().cstr());
-	    dconn->send(msg);
-	    serial_to_conn.erase(rserial);
-	    return true;
-	}
-	else
-	{
-	    log("Proxy reply: unknown serial #%s!\n", rserial);
-	    // fall through and let someone else look at it
-	}
-    }
-    else if (!!msg.get_dest()) // don't handle blank (broadcast) paths here
+    if (!!msg.get_dest()) // don't handle blank (broadcast) paths here
     {
 	std::map<WvString,WvDBusConn*>::iterator i 
 	    = name_to_conn.find(msg.get_dest());
@@ -400,12 +373,7 @@ bool WvDBusServer::do_bridge_msg(WvDBusConn &conn, WvDBusMsg &msg)
 	    dconn ? dconn->uniquename() : WvString("(UNKNOWN)"));
 	dbus_message_set_sender(msg, conn.uniquename().cstr());
 	if (dconn)
-	{
-	    uint32_t serial = dconn->send(msg);
-	    serial_to_conn[serial] = &conn;
-	    log("Proxy: now expecting reply #%s to %s\n",
-		serial, conn.uniquename());
-	}
+	    dconn->send(msg);
 	else
 	{
 	    log(WvLog::Warning,

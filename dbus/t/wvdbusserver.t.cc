@@ -46,10 +46,17 @@ public:
 static int mysignal_count = 0;
 static bool mysignal(WvDBusMsg &msg)
 {
-    if (msg.get_interface() != "x.y.z.anything") return false;
-    fprintf(stderr, "Got a message! (%s)\n", ((WvString)msg).cstr());
-    mysignal_count++;
-    return true; // we handle *any* message
+    if (msg.get_interface() == "x.y.z.anything") 
+    {
+	fprintf(stderr, "Got a message! (%s)\n", ((WvString)msg).cstr());
+	mysignal_count++;
+	return true; // we handle *any* message
+    }
+    else
+    {
+	fprintf(stderr, "Ignored a message! (%s)\n", ((WvString)msg).cstr());
+	return false;
+    }
 }
 
 
