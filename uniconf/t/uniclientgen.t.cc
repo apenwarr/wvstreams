@@ -11,6 +11,7 @@
 #include "wvfile.h"
 #include "uniwatch.h"
 #include "wvstrutils.h"
+#include "wvtimeutils.h"
 
 #include <signal.h>
 #include <utime.h>
@@ -85,7 +86,7 @@ static UniClientGen *create_client_conn(WvString name, WvString sockname,
         {
             WVRELEASE(client_gen);
             wvout->print("Failed to connect, retrying...\n");
-            sleep(1);
+            wvdelay(100);
         }
         else break;
     }
@@ -129,7 +130,7 @@ WVTEST_MAIN("deltas")
     for (i=0; i<100; ++i)
     {
         client_gen->refresh();
-        usleep(1000);
+        wvdelay(1);
     }
 
     WVPASS(delta_count > old_delta_count);
@@ -251,7 +252,7 @@ WVTEST_MAIN("dead uniconfd")
             {
                 WVRELEASE(client_gen);
                 wvout->print("Failed to connect, retrying...\n");
-                sleep(1);
+                wvdelay(100);
             }
             else break;
         }

@@ -4,6 +4,7 @@
 #include "uniunwrapgen.h"
 #include "uniconfgen-sanitytest.h"
 #include "wvtest.h"
+#include "wvtimeutils.h"
 
 #include <signal.h>
 
@@ -116,7 +117,7 @@ WVTEST_MAIN("unwrapgen callbacks")
         // Try again...
         cfg.unmount(cfg.whichmount(), true);
         cfg.mount(WvString("unix:%s", sockname));
-        sleep(1);
+        wvdelay(100);
     }
 
     if (WVPASS(cfg.isok()))

@@ -1,4 +1,5 @@
 #include "wvtest.h"
+#include "wvtimeutils.h"
 #include "wvunixsocket.h"
 #include "wvunixlistener.h"
 #include "wvstring.h"
@@ -31,7 +32,7 @@ WVTEST_MAIN("non-blocking connect BUGZID:10714")
         while (stat(uds, &st) != 0)
         {
             wverr->print("Client: waiting for %s to appear\n", uds);
-            sleep(1);
+            wvdelay(100);
         }
 
         wverr->print("Client: connect()ing many times\n");
@@ -39,9 +40,10 @@ WVTEST_MAIN("non-blocking connect BUGZID:10714")
         for (i=0; i<200; ++i)
             WvUnixConn s(uds);
 
-        WVPASS("WvUnixConn::WvUnixConn doesn't hang when executing many times");
+        wverr->print("WvUnixConn::WvUnixConn doesn't hang when executing many "
+                     "times");
 
-        sleep(1);
+        wvdelay(100);
 
         kill(pid, SIGTERM);
         // In case a signal is in the process of being delivered...

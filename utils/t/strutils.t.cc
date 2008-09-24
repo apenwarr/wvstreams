@@ -195,16 +195,16 @@ WVTEST_MAIN("is_word")
         WVPASS(is_word(input[i]) == desired[i]);
 }
 
-/** Tests web_unescape().
- * web_unescape() should convert all url-encoded characters in an input
+/** Tests url_decode().
+ * url_decode() should convert all url-encoded characters in an input
  * string (%xx) to their corresponding ASCII characters.
  */
-WVTEST_MAIN("web_unescape")
+WVTEST_MAIN("url_decode")
 {
     const char *input = "%49+%6c%69%6b%65+%70%69%7a%7a%61%21";
     const char* desired = "I like pizza!";
 
-    WVPASS(web_unescape(input) == desired);
+    WVPASSEQ(url_decode(input), desired);
 }
 
 /** Tests url_encode().
@@ -214,9 +214,9 @@ WVTEST_MAIN("web_unescape")
 WVTEST_MAIN("url_encode")
 {
     const char *input = "http://www.free_email-account.com/~ponyman/mail.pl?name=\'to|\\|Y |)4|\\|Z4\'&pass=$!J83*p&folder=1N8()><";
-    const char *desired = "http%3a//www.free_email-account.com/~ponyman/mail.pl%3fname%3d%27to%7c%5c%7cY%20%7c%294%7c%5c%7cZ4%27%26pass%3d%24%21J83%2ap%26folder%3d1N8%28%29%3e%3c";
-    WVPASS(url_encode(input) == desired);
+   const char *desired = "http%3a%2f%2fwww.free_email-account.com%2f~ponyman%2fmail.pl%3fname%3d%27to%7c%5c%7cY%20%7c%294%7c%5c%7cZ4%27%26pass%3d%24%21J83%2ap%26folder%3d1N8%28%29%3e%3c";
 
+    WVPASSEQ(url_encode(input), desired);
 }
 
 /** Tests backslash_escape().
@@ -1098,25 +1098,6 @@ WVTEST_MAIN("sizetoa rounding")
     }
 }
 
-#ifndef _WIN32
-WVTEST_MAIN("wvreadlink")
-{
-    WvString symlink_name("/tmp/wvreadlink.%s", getpid());
-
-    unlink(symlink_name);
-
-    WVPASS(wvreadlink(symlink_name).isnull());
-
-    const char *old_paths[] = { "foo", "/usr/bin/cat", "wioaeboiabetiobawioebtgoaiwbegiouabvgibasdjbgaulsdbguavweovgaiuvgasuidvgiouavegiawoevgao;usvgo;uvaweo;gvawoevgaiowveeeeeeeeeeeeeeeeeeeeeeeeee;vgsdkkkkkkkkkkkkkkkkkkkkkkkjaasbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'ooooooooooaskklsdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddwaaaaaaaaaaabgopppppbooooooawgbopppppeeeboopasdopfbopasopdbfasbopdfoasopdbfasbdpfasdbfpoabsdopfbaopsbdfpasbdopfbapsobdfpoasbdopfbaspodbfpasodbfopasbopdfasdfabsdbopfasdfoasdfbopasopdfabsopdfabopsdfabopsdfaopsdfasdfpboooooooooasdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddpasdfasdpopsbdfpbasopdbfpaosdbfopasbdfopabsdfobasopdbfapsodbfpasbdfpaosbdfopabsdpfobasopdbfapsobfoasbdpfasbdpfbasopdbfpasbdfpoasbdfpabsdopfbasopdbfpaosdbfpaosbdfpbaspdbfopasbdfpasbdfopasbdfpabsdpfbaspdfbaspodbfopasdbfpoasbdfpasbdpfbaspdbfaspodbfpoasbdpfobapsdbfaopsdfbasdpofbaspdfpqwepfobapwoebfapwebfapwbefp", NULL };
-    const char **old_path;
-    for (old_path = &old_paths[0]; *old_path; ++old_path)
-    {
-        symlink(*old_path, symlink_name);
-        WVPASSEQ(wvreadlink(symlink_name), *old_path);
-        unlink(symlink_name);
-    }
-}
-#endif
 
 bool checkdateformat(WvString dtstr)
 {

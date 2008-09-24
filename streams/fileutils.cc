@@ -133,6 +133,32 @@ bool ftouch(WvStringParm file, time_t mtime)
 }
 
 
+// Reads the contents of a symlink.  Returns WvString::null on error.
+WvString wvreadlink(WvStringParm path)
+{
+#ifdef _WIN32
+    return WvString::null; // no such thing as a symlink on Windows
+#else
+    WvString result;
+    int size = 64;
+    for (;;)
+    {
+        result.setsize(size);
+        int readlink_result = readlink(path, result.edit(), size);
+        if (readlink_result == -1)
+            return WvString::null;
+        if (readlink_result < size)
+        {
+            result.edit()[readlink_result] = '\0';
+            break;
+        }
+        size = 2*size; // increase buffer size
+    }
+    return result;
+#endif
+}
+
+
 bool samedate(WvStringParm file1, WvStringParm file2)
 {
     struct stat buf;
@@ -291,12 +317,3 @@ mode_t get_umask()
     return rv;
 }
 
-
-void wvdelay(int msec_delay)
-{
-#ifdef _WIN32
-    Sleep(msec_delay);
-#else
-    usleep(msec_delay * 1000);
-#endif
-}

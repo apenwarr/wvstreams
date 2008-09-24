@@ -73,10 +73,8 @@ public:
      */
     WvX509(X509 *_cert);
 
-private:
     /** 
-     * Placeholder for Copy Constructor: this doesn't exist yet, but it keeps
-     * us out of trouble :) 
+     * Copy Constructor. 
      */
     WvX509(const WvX509 &x509);
 

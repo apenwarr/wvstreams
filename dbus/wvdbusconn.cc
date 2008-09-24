@@ -84,6 +84,11 @@ static IWvStream *stream_creator(WvStringParm _s, IObject *)
 
     if (!strcasecmp(s, "system"))
     {
+        // NOTE: the environment variable for the address of the system
+        // bus is very often not set-- in that case, look in your dbus 
+        // system bus config file (e.g. /etc/dbus-1/system.conf) for the 
+        // raw address and either set this environment variable to that, or 
+        // pass in the address directly
 	WvString bus(getenv("DBUS_SYSTEM_BUS_ADDRESS"));
 	if (!!bus)
 	    return IWvStream::create(translate(bus));

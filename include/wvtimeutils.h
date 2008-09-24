@@ -73,4 +73,9 @@ void wvstime_sync_forward();
 // be used for unit testing.
 void wvstime_set(const WvTime &);
 
+/**
+ * Delay for a requested number of milliseconds.
+ */
+void wvdelay(int msec_delay);
+
 #endif // __WVTIMEUTILS_H

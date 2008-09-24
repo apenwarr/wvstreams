@@ -10,6 +10,7 @@
 #include "wvfile.h"
 #include "wvunixsocket.h"
 #include "wvtest.h"
+#include "wvtimeutils.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -54,7 +55,7 @@ WVTEST_MAIN("tempgen/cachegen basics")
         {
             cfg_ok.xset("/tmp/dummy", "foo");
             if (cfg_ok.xget("/tmp/dummy") == "foo") break;
-            sleep(1);
+            wvdelay(100);
         }
     }
 
@@ -92,7 +93,7 @@ WVTEST_MAIN("cache:subtree:unix assertion failure")
         {
             cfg_ok.xset("/tmp/dummy", "foo");
             if (cfg_ok.xget("/tmp/dummy") == "foo") break;
-            sleep(1);
+            wvdelay(100);
         }
     }
 

@@ -308,8 +308,9 @@ bool isnewline(char c)
     return c=='\n' || c=='\r';
 }
 
-// ex: WvString foo = web_unescape("I+am+text.%0D%0A");
-WvString web_unescape(const char *str, bool no_space)
+
+// ex: WvString foo = url_decode("I+am+text.%0D%0A");
+WvString url_decode(WvStringParm str, bool no_space)
 {
     const char *iptr;
     char *optr;
@@ -346,26 +347,30 @@ WvString web_unescape(const char *str, bool no_space)
 
 
 // And it's magic companion: url_encode
-WvString url_encode(WvStringParm stuff)
+WvString url_encode(WvStringParm str)
 {
     unsigned int i;
     WvDynBuf retval;
 
-    for (i=0; i < stuff.len(); i++)
+    for (i=0; i < str.len(); i++)
     {
-        if (isalnum(stuff[i]) || strchr("/_.-~", stuff[i]))
+        // to be safe, we'll only let alphanumeric characters or
+        // characters specifically marked as "unreserved" according to
+        // rfc3986 through unescaped
+        if (isalnum(str[i]) || strchr("-._~", str[i]))
         {
-            retval.put(&stuff[i], 1);
-        }               
-        else            
+            retval.put(&str[i], 1);
+        }
+        else
         {               
             char buf[4];
-            sprintf(buf, "%%%02x", stuff[i] & 0xff);
+            sprintf(buf, "%%%02x", str[i] & 0xff);
             retval.put(&buf, 3);
         }
     }
     return retval.getstr();
 }
+
 
 WvString diff_dates(time_t t1, time_t t2)
 {
@@ -384,6 +389,7 @@ WvString diff_dates(time_t t1, time_t t2)
         sprintf(out, "%.0f second(s)", diff);
     return out;
 }
+
 
 WvString rfc822_date(time_t when)
 {
@@ -1320,31 +1326,6 @@ WvString ptr2str(void* ptr)
     return buf;
 }
 
-
-// Reads the contents of a symlink.  Returns WvString::null on error.
-WvString wvreadlink(WvStringParm path)
-{
-#ifdef _WIN32
-    return WvString::null; // no such thing as a symlink on Windows
-#else
-    WvString result;
-    int size = 64;
-    for (;;)
-    {
-        result.setsize(size);
-        int readlink_result = readlink(path, result.edit(), size);
-        if (readlink_result == -1)
-            return WvString::null;
-        if (readlink_result < size)
-        {
-            result.edit()[readlink_result] = '\0';
-            break;
-        }
-        size = 2*size; // increase buffer size
-    }
-    return result;
-#endif
-}
 
 #ifdef _WIN32
 WvString wvprotectdata(WvStringParm data, WvStringParm description)
