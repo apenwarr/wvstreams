@@ -247,6 +247,14 @@ bool WvDBusServer::do_server_msg(WvDBusConn &conn, WvDBusMsg &msg)
 	    .send(conn);
 	return true;
     }
+    else if (method == "NameHasOwner")
+    {
+	WvDBusMsg::Iter args(msg);
+	WvString known_name = args.getnext();
+	WvDBusConn *serv = name_to_conn[known_name];
+	msg.reply().append(!!serv).send(conn);
+	return true;
+    }
     else if (method == "GetNameOwner")
     {
 	WvDBusMsg::Iter args(msg);
