@@ -585,7 +585,7 @@ void WvX509::decode(const DumpMode mode, WvBuf &encoded)
         else if (mode == CertDER)
             cert = d2i_X509_bio(membuf, NULL);
         else
-            debug(WvLog::Warning, "Tried to encode certificate with unknown "
+            debug(WvLog::Warning, "Tried to decode certificate with unknown "
                   "mode!\n");
 
         BIO_free_all(membuf);
