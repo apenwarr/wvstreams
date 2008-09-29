@@ -151,6 +151,16 @@ WVTEST_MAIN("X509")
                  certreqtext);
     }
     {
+        // test the copy constructor
+        WvX509 t1;
+	t1.decode(WvX509::CertPEM, x509certtext);
+        basic_test(t1, dName1);
+
+        WvX509 t2(t1);
+        basic_test(t2, dName1);
+    }
+
+    {
 	WvX509Mgr t509(dName, 1024);
 	basic_test(t509, dName1);
     }
@@ -349,6 +359,7 @@ WVTEST_MAIN("certreq / signreq / signcert")
     WVPASS(cert.validate());
     WVPASS(cert.issuedbyca(cacert));
     WVPASS(cert.signedbyca(cacert));
+    WVPASSEQ(cert.get_aki(), cacert.get_ski());
     
     // change some stuff, verify that tests fail
     WvStringList ca_in, ocsp_in;

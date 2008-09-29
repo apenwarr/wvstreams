@@ -46,6 +46,7 @@ WVTEST_MAIN("CRL creation and use basics")
     WvCRL crl(ca);
     WVPASSEQ(crl.numcerts(), 0);
     WVPASSEQ(crl.get_issuer(), ca.get_subject());
+    WVPASSEQ(crl.get_aki(), ca.get_ski());
 
     WvRSAKey rsakey(DEFAULT_KEYLEN);
     WvString certreq = WvX509Mgr::certreq("cn=test.signed.com,dc=signed,dc=com", 
