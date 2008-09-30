@@ -126,6 +126,7 @@ void WvX509Mgr::create_selfissued(WvStringParm dname, bool is_ca)
 	debug("Setting Netscape Certificate Type.\n");
 	set_extension(NID_netscape_cert_type,
 		      "SSL CA, S/MIME CA, Object Signing CA");
+        set_ext_key_usage("OCSPSigning");
 //	debug("Setting Constraints.\n");
 //	set_constraints("requireExplicitPolicy");
     }

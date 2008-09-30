@@ -166,7 +166,7 @@ public:
     /**
      * get and set the serialNumber field of the certificate
      */
-    WvString get_serial() const;
+    WvString get_serial(bool hex = false) const;
     void set_serial(long serial_no);
 
     /** 

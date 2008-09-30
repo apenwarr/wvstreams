@@ -703,13 +703,17 @@ WvString WvX509::get_nsserver() const
 }
 
 
-WvString WvX509::get_serial() const
+WvString WvX509::get_serial(bool hex) const
 {
     CHECK_CERT_EXISTS_GET("serial", WvString::null);
 
     BIGNUM *bn = BN_new();
     bn = ASN1_INTEGER_to_BN(X509_get_serialNumber(cert), bn);
-    char * c = BN_bn2dec(bn);
+    char * c;
+    if (hex)
+        c = BN_bn2hex(bn);
+    else
+        c = BN_bn2dec(bn);
     WvString ret("%s", c);
     OPENSSL_free(c);
     BN_free(bn);

@@ -37,18 +37,19 @@ class WvOCSPResp
 {
 public:
     WvOCSPResp(const WvX509 &_issuer, const WvX509 &responder);
-    
+    virtual ~WvOCSPResp();
+
     void decode(WvBuf &buf);
   
     enum Status { ERROR, GOOD, REVOKED, UNKNOWN };
     Status get_status(const WvOCSPReq &req) const;
 
-    OCSP_RESPONSE *resp;
 
 private:
     WvX509 issuer;
     mutable WvX509 responder;
-
+    OCSP_RESPONSE *resp;
+    mutable WvLog log;
 };
 
 #endif // __WVOCSP_H
