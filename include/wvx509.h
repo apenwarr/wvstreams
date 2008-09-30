@@ -352,6 +352,8 @@ public:
 private:
     friend class WvCRL;
     friend class WvX509Mgr;
+    friend class WvOCSPReq;
+    friend class WvOCSPResp;
 
     /** X.509v3 Certificate - this is why this class exists */
     X509     *cert;
