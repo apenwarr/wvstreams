@@ -9,11 +9,13 @@ WvOCSPReq::WvOCSPReq(const WvX509 &cert, const WvX509 &issuer)
     wvssl_init();
 
     req = OCSP_REQUEST_new();
+    assert(req);
 
-    // FIXME: follow return values of all these things
-
-    id = OCSP_cert_to_id(NULL, cert.cert, issuer.cert);
-    OCSP_request_add0_id(req, id);
+    if (cert.isok() && issuer.isok())
+    {
+        id = OCSP_cert_to_id(NULL, cert.cert, issuer.cert);
+        OCSP_request_add0_id(req, id);
+    }
 }
 
 
@@ -29,12 +31,11 @@ WvOCSPReq::~WvOCSPReq()
 void WvOCSPReq::encode(WvBuf &buf)
 {
     BIO *bufbio = BIO_new(BIO_s_mem());
+    assert(bufbio);
     BUF_MEM *bm;
 
-    if (i2d_OCSP_REQUEST_bio(bufbio, req) <= 0)
-    {
-        // .. FIXME: handle failure via an error code
-    }
+    // there is no reason why the following should fail, except for OOM
+    assert(i2d_OCSP_REQUEST_bio(bufbio, req) > 0);
 
     BIO_get_mem_ptr(bufbio, &bm);
     buf.put(bm->data, bm->length);

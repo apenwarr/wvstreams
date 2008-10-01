@@ -27,6 +27,7 @@ public:
     void encode(WvBuf &buf);
 
 private:
+    WvOCSPReq(WvOCSPReq &); // not implemented yet
     friend class WvOCSPResp;
     OCSP_CERTID *id;
     OCSP_REQUEST *req;
@@ -46,6 +47,7 @@ public:
                       const WvX509 &responder) const;
 
 private:
+    WvOCSPResp(WvOCSPResp &); // not implemented yet
     OCSP_RESPONSE *resp;
     mutable WvLog log;
 };

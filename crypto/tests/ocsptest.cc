@@ -104,7 +104,8 @@ int main(int argc, char *argv[])
 
     wvcon->print("Got response, attempting to decode...\n");
     
-    WvOCSPResp resp(issuer, ocspserver);
+    WvOCSPResp resp;
     resp.decode(respbuf);
-    wvcon->print("Response status: %s\n", resp.get_status(req));
+    wvcon->print("Response status: %s\n", resp.get_status(req, issuer, 
+                                                          ocspserver));
 }
