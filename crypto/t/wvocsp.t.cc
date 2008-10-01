@@ -57,13 +57,14 @@ static WvOCSPResp::Status test_ocsp_req(WvX509 &cert, WvX509Mgr &cacert,
 
     WvSystem("openssl", "ocsp", "-CAfile", cafname, "-index", indexfname, "-rsigner", 
              cafname, "-rkey", cakeyfname, "-CA", cafname, 
-             "-reqin", reqfname, "-respout", respfname, "-text");
+             "-reqin", reqfname, "-respout", respfname);
 
-    WvOCSPResp resp(cacert, cacert); // issuer is ocsp server in these tests
+    WvOCSPResp resp; 
     {
         WvFile f(respfname, O_RDONLY);
         WvDynBuf buf;
-        f.read(buf, INT_MAX);
+        while (f.isok())
+            f.read(buf, 1024);
         resp.decode(buf);
     }
 
@@ -73,7 +74,8 @@ static WvOCSPResp::Status test_ocsp_req(WvX509 &cert, WvX509Mgr &cacert,
     ::unlink(cafname);
     ::unlink(cakeyfname);
 
-    return resp.get_status(req);
+    // we pretend issuer is ocsp server in these tests
+    return resp.get_status(req, cacert, cacert);
 }
 
 
@@ -95,7 +97,7 @@ WVTEST_MAIN("encoding request")
     ENCODE_TO_FILE2("/tmp/clicert", cert, WvX509::CertPEM);
 
     // this test breaks after 2020. oh well.
-    static const char *EXPDATE = "201210194703Z"; //dec 10, 2049
+    static const char *EXPDATE = "202010194703Z"; //dec 10, 2049
     static const char *REVDATE = "071211195254Z"; //dec 11 2007
 
     WVPASSEQ(test_ocsp_req(cert, cert, ""), WvOCSPResp::UNKNOWN);

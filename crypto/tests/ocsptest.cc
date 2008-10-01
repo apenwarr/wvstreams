@@ -78,7 +78,6 @@ int main(int argc, char *argv[])
     WvOCSPReq req(clicert, issuer);
     WvDynBuf reqbuf;
     req.encode(reqbuf);
-    wvcon->print("Length of request is ostensibly %s\n", reqbuf.used());
 
     WvBufStream input_stream;
     input_stream.write(reqbuf, reqbuf.used());

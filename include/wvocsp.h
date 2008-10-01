@@ -2,14 +2,14 @@
  *
  * OCSP request and response abstractions.
  *
- * OCSP provides a quick way of checking whether a certificate is valid or not. 
- * For more information, see: http://en.wikipedia.org/wiki/OCSP
+ * OCSP provides a quick way of checking whether a certificate is valid or 
+ * not. For more information, see: http://en.wikipedia.org/wiki/OCSP
  *
- * For the sake of simplicity, these classes only expose a simplified subset of
- * OCSP functionality:
- *  - A nonce is required.
+ * For the sake of both ease of implementation and use, these classes only 
+ * expose a simplified subset of OCSP functionality:
+ *  - A nonce (unique identifier for the request) is required.
  *  - Both the request and response objects assume only one certificate is to 
- *    be validated
+ *    be validated.
  *
  */ 
 #ifndef __WVOCSP_H
@@ -36,18 +36,16 @@ private:
 class WvOCSPResp
 {
 public:
-    WvOCSPResp(const WvX509 &_issuer, const WvX509 &responder);
+    WvOCSPResp();
     virtual ~WvOCSPResp();
 
     void decode(WvBuf &buf);
   
     enum Status { ERROR, GOOD, REVOKED, UNKNOWN };
-    Status get_status(const WvOCSPReq &req) const;
-
+    Status get_status(const WvOCSPReq &req, const WvX509 &issuer, 
+                      const WvX509 &responder) const;
 
 private:
-    WvX509 issuer;
-    mutable WvX509 responder;
     OCSP_RESPONSE *resp;
     mutable WvLog log;
 };

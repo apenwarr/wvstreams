@@ -42,9 +42,7 @@ void WvOCSPReq::encode(WvBuf &buf)
 }
 
 
-WvOCSPResp::WvOCSPResp(const WvX509 &_issuer, const WvX509 &_responder) :
-    issuer(_issuer),
-    responder(_responder),
+WvOCSPResp::WvOCSPResp() :
     resp(NULL),
     log("OCSP Response", WvLog::Debug5)
 {
@@ -72,7 +70,9 @@ void WvOCSPResp::decode(WvBuf &encoded)
 }
 
 
-WvOCSPResp::Status WvOCSPResp::get_status(const WvOCSPReq &req) const
+WvOCSPResp::Status WvOCSPResp::get_status(const WvOCSPReq &req, 
+                                          const WvX509 &issuer, 
+                                          const WvX509 &responder) const
 {
     if (!resp)
         return ERROR;
@@ -99,7 +99,7 @@ WvOCSPResp::Status WvOCSPResp::get_status(const WvOCSPReq &req) const
     STACK_OF(X509) *verify_other = sk_X509_new_null(); assert(verify_other);
     sk_X509_push(verify_other, responder.cert);
     X509_STORE *store = X509_STORE_new(); assert(store);
-    X509_STORE_add_cert(store, issuer.cert);    
+    X509_STORE_add_cert(store, issuer.cert);
     i = OCSP_basic_verify(bs, verify_other, store, OCSP_TRUSTOTHER);
     sk_free(verify_other);
     X509_STORE_free(store);
