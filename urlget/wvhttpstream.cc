@@ -107,9 +107,14 @@ void WvHttpStream::close()
             msgurl = urls.first();
         if (!msgurl && !waiting_urls.isempty())
             msgurl = waiting_urls.first();
+
         if (msgurl)
+        {
             log("URL '%s' is FAILED (%s (%s))\n", msgurl->url, geterr(),
-                errstr());
+                errstr());        
+            curl = msgurl;
+            doneurl();
+        }
     }
     waiting_urls.zap();
     if (curl)

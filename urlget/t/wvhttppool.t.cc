@@ -68,6 +68,28 @@ WVTEST_MAIN("WvHttpPool HEAD")
 	printf("Can't find www.google.com.  SKIPPED.\n");
 }
 
+
+WVTEST_MAIN("wvhttppool can't connect")
+{
+    unsigned int port = 4200;
+    WvHttpPool pool;
+    
+    WvIStreamList l;
+    l.append(&pool, false, "WvHttpPool");
+    
+    WvStream *buf;
+    WVPASS(buf = pool.addurl(WvString("http://joeyjoejoejuniorshabadoo.fi",
+                                      port), "HEAD"));
+    WVPASS(buf->isok());
+    buf->autoforward(*wvcon);
+    l.append(buf, true, "buf stream");
+    while (buf->isok() && (wvcon->isok() || !pool.idle()))
+        l.runonce();
+
+    WVFAIL(buf->isok());
+}
+
+
 bool pipelining_enabled = true;
 bool expecting_request = false;
 bool break_connection = false;
@@ -142,7 +164,7 @@ static void listener_callback(WvIStreamList *list, IWvStream *_newconn)
 static void do_test(WvIStreamList &l, unsigned int port,
 		    unsigned int num_requests)
 {
-    printf("pipelining [%d] requusts [%u]\n", pipelining_enabled,
+    printf("pipelining [%d] requests [%u]\n", pipelining_enabled,
            num_requests);
     WvHttpPool pool;
     WvIStreamList bufs;
