@@ -45,6 +45,7 @@ void WvOCSPReq::encode(WvBuf &buf)
 
 WvOCSPResp::WvOCSPResp() :
     resp(NULL),
+    bs(NULL),
     log("OCSP Response", WvLog::Debug5)
 {
     wvssl_init();
@@ -53,6 +54,9 @@ WvOCSPResp::WvOCSPResp() :
 
 WvOCSPResp::~WvOCSPResp()
 {
+    if (bs)
+        OCSP_BASICRESP_free(bs);
+        
     if (resp)
         OCSP_RESPONSE_free(resp);
 
@@ -66,36 +70,58 @@ void WvOCSPResp::decode(WvBuf &encoded)
     BIO_write(membuf, encoded.get(encoded.used()), encoded.used());
 
     resp = d2i_OCSP_RESPONSE_bio(membuf, NULL);
+    
+    if (resp)
+        bs = OCSP_response_get1_basic(resp);
 
     BIO_free_all(membuf);
 }
 
 
-WvOCSPResp::Status WvOCSPResp::get_status(const WvOCSPReq &req, 
-                                          const WvX509 &issuer, 
-                                          const WvX509 &responder) const
+bool WvOCSPResp::isok() const
 {
     if (!resp)
-        return ERROR;
+        return false;
 
     int i = OCSP_response_status(resp);
     if (i != OCSP_RESPONSE_STATUS_SUCCESSFUL)
-        return ERROR;
+        return false;
 
-    OCSP_BASICRESP * bs = OCSP_response_get1_basic(resp);
+    return true;
+}
+
+
+bool WvOCSPResp::check_nonce(const WvOCSPReq &req) const
+{
     if (!bs)
-        return ERROR;
+        return false;
 
+    int i;
     if ((i = OCSP_check_nonce(req.req, bs)) <= 0)
     {
         if (i == -1)
             log("No nonce in response\n");
         else
-            log("Nonce Verify error\n");
+            log("Nonce verify error\n");
         
-        OCSP_BASICRESP_free(bs);
-        return ERROR;
+        return false;
     }
+
+    return true;
+}
+
+
+WvOCSPResp::Status WvOCSPResp::get_status(const WvX509 &cert, 
+                                          const WvX509 &issuer, 
+                                          const WvX509 &responder) const
+{
+    if (!isok())
+        return ERROR;
+
+    if (!cert.isok() && !issuer.isok())
+        return ERROR;
+
+    int i;
 
     STACK_OF(X509) *verify_other = sk_X509_new_null(); assert(verify_other);
     sk_X509_push(verify_other, responder.cert);
@@ -115,21 +141,23 @@ WvOCSPResp::Status WvOCSPResp::get_status(const WvOCSPReq &req,
     int status, reason;
     ASN1_GENERALIZEDTIME *rev, *thisupd, *nextupd;
 
-    if(!OCSP_resp_find_status(bs, req.id, &status, &reason,
+    OCSP_CERTID *id = OCSP_cert_to_id(NULL, cert.cert, issuer.cert);
+    assert(id); // only fails in case of OOM
+
+    if(!OCSP_resp_find_status(bs, id, &status, &reason,
                               &rev, &thisupd, &nextupd))
     {
         log("OCSP Find Status Error: %s\n", wvssl_errstr());
-        OCSP_BASICRESP_free(bs);
+        OCSP_CERTID_free(id);
         return ERROR;
     }
+    OCSP_CERTID_free(id);
+
     if (!OCSP_check_validity(thisupd, nextupd, OCSP_MAX_VALIDITY_PERIOD, -1))
     {
         log("Error checking for OCSP validity: %s\n", wvssl_errstr());
-        OCSP_BASICRESP_free(bs);
         return ERROR;
     }
-
-    OCSP_BASICRESP_free(bs);
 
     if (status == V_OCSP_CERTSTATUS_GOOD)
         return GOOD;

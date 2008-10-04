@@ -68,6 +68,9 @@ static WvOCSPResp::Status test_ocsp_req(WvX509 &cert, WvX509Mgr &cacert,
         resp.decode(buf);
     }
 
+    WVPASS(resp.isok());
+    WVPASS(resp.check_nonce(req));
+
     ::unlink(reqfname);
     ::unlink(respfname);
     ::unlink(indexfname);
@@ -75,7 +78,7 @@ static WvOCSPResp::Status test_ocsp_req(WvX509 &cert, WvX509Mgr &cacert,
     ::unlink(cakeyfname);
 
     // we pretend issuer is ocsp server in these tests
-    return resp.get_status(req, cacert, cacert);
+    return resp.get_status(cert, cacert, cacert);
 }
 
 

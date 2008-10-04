@@ -6,8 +6,9 @@
  * not. For more information, see: http://en.wikipedia.org/wiki/OCSP
  *
  * For the sake of both ease of implementation and use, these classes only 
- * expose a simplified subset of OCSP functionality:
- *  - A nonce (unique identifier for the request) is required.
+ * expose a simplified subset of OCSP functionality.
+ *  - A nonce (unique identifier for the request) is always sent in the 
+ *    request.
  *  - Both the request and response objects assume only one certificate is to 
  *    be validated.
  *
@@ -41,14 +42,18 @@ public:
     virtual ~WvOCSPResp();
 
     void decode(WvBuf &buf);
+
+    bool isok() const;
+    bool check_nonce(const WvOCSPReq &req) const;
   
     enum Status { ERROR, GOOD, REVOKED, UNKNOWN };
-    Status get_status(const WvOCSPReq &req, const WvX509 &issuer, 
+    Status get_status(const WvX509 &cert, const WvX509 &issuer, 
                       const WvX509 &responder) const;
 
 private:
     WvOCSPResp(WvOCSPResp &); // not implemented yet
     OCSP_RESPONSE *resp;
+    OCSP_BASICRESP * bs;
     mutable WvLog log;
 };
 
