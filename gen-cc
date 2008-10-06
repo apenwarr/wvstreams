@@ -2,7 +2,7 @@
 OUTFILE=$1
 EXT=$2
 echo "* Generating $OUTFILE" >&2
-TEMPFILE=`tempfile --directory=. --prefix=gencc`
+TEMPFILE=gencc-$$.tmp
 
 cat >$TEMPFILE <<-EOF 
 	#!/bin/sh
