@@ -83,7 +83,13 @@
 
 /* normal libc functions we call */
 #undef __sleep
+#ifndef _WIN32
 #define __sleep sleep
+#else
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#define __sleep(x) Sleep(x * 1000)
+#endif
 #undef __strcasecmp
 #define __strcasecmp strcasecmp
 #undef __vsnprintf
