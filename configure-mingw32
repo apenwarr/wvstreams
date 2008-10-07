@@ -5,18 +5,15 @@ PORTS=$PWD/../wvports
 	--host=i586-mingw32msvc \
 	--enable-exceptions \
 	--with-xplc=$PORTS/xplc/build/xplc \
-	--with-argp=$PORTS/argp/build/argp \
 	CPPFLAGS="-mno-cygwin \
 		-I$PORTS/xplc/build/xplc/include \
 		-I$PORTS/zlib/build/zlib \
 		-I$PORTS/openssl/build/openssl/include $XCPPFLAGS \
-		-I$PORTS/argp/build/argp \
 		-I$PORTS/win32api/build/w32api/include" \
 	LDFLAGS="\
 		-L$PORTS/xplc/build/xplc \
 		-L$PORTS/zlib/build/zlib \
 		-L$PORTS/openssl/build/openssl \
-		-L$PORTS/argp/build/argp \
 		-L$PORTS/win32api/build/w32api/lib" \
 	LIBS="-lxplc-cxx -lwsock32 -lgdi32" \
 	$@
