@@ -44,7 +44,7 @@ ifeq (${EXEEXT},.exe)
   XPATH += $(WVSTREAMS)/win32 $(WVSTREAMS)/win32/cominclude
   AR=i586-mingw32msvc-ar
   LIBS += -lssl -lcrypto -lz -lole32 -lrpcrt4 -lwsock32 -lgdi32 -limagehlp \
-  	  -lxplc-cxx -lxplc -lstdc++ -largp
+  	  -lxplc-cxx -lxplc -lstdc++
 else
   CFLAGS += -fPIC
   CXXFLAGS += -fPIC

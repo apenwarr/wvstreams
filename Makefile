@@ -15,6 +15,27 @@ endif
 
 LIBS += $(LIBS_XPLC) -lm
 
+ifeq ($(USE_WVSTREAMS_ARGP),1)
+  utils/wvargs.o-CPPFLAGS += -Iargp
+  libwvutils.so-LIBS += -Largp -largp
+  libwvstatic.a-LIBS += -Largp -largp
+  libargp_a_SOURCES = argp-ba.c argp-eexst.c argp-fmtstream.c \
+		    argp-help.c argp-parse.c argp-pv.c \
+		    argp-pvh.c
+  argp_OBJS=$(patsubst %.c,argp/%.o,$(libargp_a_SOURCES))
+
+# argp does its own dependency checking, so let's call it once per wvstreams
+# build, in case some system dependencies have changed and argp should be
+# recompiled
+.PHONY: .argp-phony
+.argp-phony:
+	@$(MAKE) -C argp
+$(argp_OBJS): .argp-phony
+	@echo -n
+else
+  argp_OBJS=
+endif
+
 #
 # libwvbase: a the minimal code needed to link a wvstreams program.
 #
@@ -67,7 +88,7 @@ libwvbase.so-LIBS += $(LIBXPLC)
 TARGETS += libwvutils.so
 TESTS += $(call tests_cc,utils/tests)
 libwvutils_OBJS += $(filter-out $(BASEOBJS) $(TESTOBJS),$(call objects,utils))
-libwvutils.so: $(libwvutils_OBJS) $(LIBWVBASE)
+libwvutils.so: $(libwvutils_OBJS) $(LIBWVBASE) $(argp_OBJS)
 libwvutils.so-LIBS += -lz -lcrypt $(LIBS_PAM)
 utils/tests/%: PRELIBS+=$(LIBWVSTREAMS)
 
@@ -154,7 +175,8 @@ libwvstatic.a: \
 	$(libuniconf_OBJS) \
 	$(libwvdbus_OBJS) \
 	$(libwvqt_OBJS) \
-	uniconf/unigenhack_s.o
+	uniconf/unigenhack_s.o \
+	$(argp_OBJS)
 
 #
 # libwvtest: the WvTest tools for writing C++ unit tests
