@@ -22,7 +22,12 @@
 #include <config.h>
 #endif
 
+#ifndef _WIN32
 #include <sysexits.h>
+#else
+/* Stolen right from sysexits.h in Ubuntu 8.04 */
+#define EX_USAGE 64
+#endif
 
 #include "argp.h"
 
