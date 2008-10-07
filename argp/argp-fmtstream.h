@@ -42,7 +42,15 @@
 /* Disable stdio locking */
 # define FLOCKFILE(f)
 # define FUNLOCKFILE(f)
+#ifndef _WIN32
 # define PUTC_UNLOCKED(c, f) putc((c), (f))
+#else
+/* Mingw does something really dumb with putc (probably evaluating the 'stream'
+ * argument to it, which putc can technically do by the spec), which causes it
+ * to fatally abort.  If we use fputc, this problem goes away
+ */
+# define PUTC_UNLOCKED(c, f) fputc((c), (f))
+#endif
 # define FPUTS_UNLOCKED(s, f) fputs((s), (f))
 # define FWRITE_UNLOCKED(b, s, n, f) fwrite((b), (s), (n), (f))
 #endif /* No thread safe i/o */
