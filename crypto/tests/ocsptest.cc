@@ -82,6 +82,7 @@ int main(int argc, char *argv[])
     WvBufStream input_stream;
     input_stream.write(reqbuf, reqbuf.used());
 
+    WvHttpStream::global_enable_pipelining = false;
     WvHttpPool pool;
     WvIStreamList::globallist.append(&pool, false, "http pool");
 
@@ -102,10 +103,35 @@ int main(int argc, char *argv[])
     while (!got_response)
         WvIStreamList::globallist.runonce();
 
-    wvcon->print("Got response, attempting to decode...\n");
+    wvcon->print("Got response (length: %s), attempting to decode...\n", 
+                 respbuf.used());
     
     WvOCSPResp resp;
     resp.decode(respbuf);
-    wvcon->print("Response status: %s\n", resp.get_status(req, issuer, 
-                                                          ocspserver));
+    if (!resp.isok())
+    {
+        wvcon->print("Response not ok!\n");
+        exit(1);
+    }
+    
+    if (!resp.check_nonce(req))
+    {
+        wvcon->print("Response nonce does not check out!\n");
+        exit(1);
+    }
+    
+    WvString status_str;
+    switch(resp.get_status(clicert, issuer, ocspserver))
+        {
+        case WvOCSPResp::ERROR:
+            status_str = "ERROR";
+        case WvOCSPResp::GOOD:
+            status_str = "GOOD";
+        case WvOCSPResp::REVOKED:
+            status_str = "REVOKED";
+        case WvOCSPResp::UNKNOWN:
+            status_str = "UNKNOWN";
+        }
+
+    wvcon->print("Response status: %s\n", status_str);
 }

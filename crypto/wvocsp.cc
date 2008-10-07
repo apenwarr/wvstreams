@@ -73,6 +73,8 @@ void WvOCSPResp::decode(WvBuf &encoded)
     
     if (resp)
         bs = OCSP_response_get1_basic(resp);
+    else
+        log("Failed to decode response.\n");
 
     BIO_free_all(membuf);
 }
@@ -85,7 +87,10 @@ bool WvOCSPResp::isok() const
 
     int i = OCSP_response_status(resp);
     if (i != OCSP_RESPONSE_STATUS_SUCCESSFUL)
+    {
+        log("Status not successful: %s\n", wvssl_errstr());
         return false;
+    }
 
     return true;
 }
