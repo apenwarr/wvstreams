@@ -1,0 +1,9 @@
+.deps
+Makefile
+config.h
+config.log
+config.status
+configure.lineno
+stamp-h1
+testsuite/.deps
+testsuite/Makefile
