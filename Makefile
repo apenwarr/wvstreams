@@ -22,7 +22,9 @@ ifeq ($(USE_WVSTREAMS_ARGP),1)
   libargp_a_SOURCES = argp-ba.c argp-eexst.c argp-fmtstream.c \
 		    argp-help.c argp-parse.c argp-pv.c \
 		    argp-pvh.c
-  argp_OBJS=$(patsubst %.c,argp/%.o,$(libargp_a_SOURCES))
+  argp_Os=$(patsubst %.c,%.o,$(libargp_a_SOURCES)) \
+	$(shell grep "^LIBOBJS" argp/Makefile | cut -d" " -f1-3 --complement)
+  argp_OBJS=$(patsubst %,argp/%,$(argp_Os))
 
 # argp does its own dependency checking, so let's call it once per wvstreams
 # build, in case some system dependencies have changed and argp should be
