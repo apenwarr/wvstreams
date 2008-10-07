@@ -46,6 +46,9 @@ char *alloca ();
 #include <unistd.h>
 #include <limits.h>
 #include <assert.h>
+#ifdef _WIN32
+#include <malloc.h>
+#endif
 
 #ifndef _
 /* This is for other GNU distributions with internationalized messages.

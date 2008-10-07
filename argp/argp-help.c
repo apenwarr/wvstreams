@@ -49,6 +49,9 @@ char *alloca ();
 #include <ctype.h>
 /* Does any system still need malloc.h? If so, we'd need a configure
    test. */
+#ifdef _WIN32
+#include <malloc.h>
+#endif
 
 #ifndef _
 /* This is for other GNU distributions with internationalized messages.  */
