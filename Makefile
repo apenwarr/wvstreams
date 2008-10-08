@@ -183,15 +183,6 @@ TARGETS += wvtestmain.o libwvtest.a
 TESTOBJS = utils/wvtest.o
 libwvtest.a: wvtestmain.o $(TESTOBJS)
 
-#
-# Some example programs
-#
-TARGETS += examples/wvgrep/wvgrep examples/wvgrep/wvegrep
-examples/wvgrep/wvgrep: examples/wvgrep/wvgrep.o $(LIBWVSTREAMS)
-examples/wvgrep/wvegrep: examples/wvgrep/wvgrep
-	ln -f $< $@
-
-
 TARGETS_SO = $(filter %.so,$(TARGETS))
 TARGETS_A = $(filter %.a,$(TARGETS))
 
