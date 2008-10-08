@@ -391,7 +391,7 @@ SocketFromFDMaker::~SocketFromFDMaker()
 	if (result != 0)
 	{
 	    int e = GetLastError();
-	    if (e == WSASYSNOTREADY)
+	    if (e == WSASYSNOTREADY || e == WSANOTINITIALISED)
 	    {
 		fprintf(stderr, "Abnormal termination.  Skipping cleanup.\n");
 		_exit(42);
