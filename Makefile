@@ -24,11 +24,11 @@ ifeq ($(USE_WVSTREAMS_ARGP),1)
 # recompiled
   ARGP_TARGET=argp/libargp.list
   TARGETS += $(ARGP_TARGET)
-# Warning!  Crucial!  KEEP THIS SEMICOLON HERE!  Without it, if you blow away
-# $(ARGP_TARGET), $(MAKE) will get confused.
 .PHONY: argp/all
 argp/all:
 	$(MAKE) -C argp
+# Warning!  Crucial!  KEEP THIS SEMICOLON HERE!  Without it, if you blow away
+# $(ARGP_TARGET), $(MAKE) will get confused.
 $(ARGP_TARGET): argp/all;
 else
   ARGP_TARGET=
