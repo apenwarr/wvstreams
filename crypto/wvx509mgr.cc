@@ -126,7 +126,12 @@ void WvX509Mgr::create_selfissued(WvStringParm dname, bool is_ca)
 	debug("Setting Netscape Certificate Type.\n");
 	set_extension(NID_netscape_cert_type,
 		      "SSL CA, S/MIME CA, Object Signing CA");
+#if 0
+        // uncomment this to allow certificate to be used as
+        // an OCSP signer (seems too obscure to enable by default
+        // right now).
         set_ext_key_usage("OCSPSigning");
+#endif
 //	debug("Setting Constraints.\n");
 //	set_constraints("requireExplicitPolicy");
     }
