@@ -55,8 +55,8 @@ static WvOCSPResp::Status test_ocsp_req(WvX509 &cert, WvX509Mgr &cacert,
     WvOCSPReq req(cert, cacert);
     ENCODE_TO_FILE(reqfname, req);
 
-    WvSystem("openssl", "ocsp", "-CAfile", cafname, "-index", indexfname, "-rsigner", 
-             cafname, "-rkey", cakeyfname, "-CA", cafname, 
+    WvSystem("openssl", "ocsp", "-CAfile", cafname, "-index", indexfname, 
+             "-rsigner", cafname, "-rkey", cakeyfname, "-CA", cafname, 
              "-reqin", reqfname, "-respout", respfname);
 
     WvOCSPResp resp; 
@@ -78,7 +78,7 @@ static WvOCSPResp::Status test_ocsp_req(WvX509 &cert, WvX509Mgr &cacert,
     ::unlink(cakeyfname);
 
     // we pretend issuer is ocsp server in these tests
-    return resp.get_status(cert, cacert, cacert);
+    return resp.get_status(cert, cacert);
 }
 
 
@@ -103,13 +103,17 @@ WVTEST_MAIN("encoding request")
     static const char *EXPDATE = "202010194703Z"; //dec 10, 2049
     static const char *REVDATE = "071211195254Z"; //dec 11 2007
 
-    WVPASSEQ(test_ocsp_req(cert, cert, ""), WvOCSPResp::UNKNOWN);
+    // following test fails, because cert is not signed by itself
+    WVPASSEQ(test_ocsp_req(cert, cert, ""), WvOCSPResp::ERROR); 
+    // unknown, because the cert's serial not in CRL list
     WVPASSEQ(test_ocsp_req(cert, cacert, ""), WvOCSPResp::UNKNOWN);
+    // revoked
     WVPASSEQ(test_ocsp_req(cert, cacert, 
                            WvString("R\t%s\t%s\t%s\tunknown\t%s\n",
                                     EXPDATE, REVDATE, cert.get_serial(true),
                                     cert.get_subject())), 
              WvOCSPResp::REVOKED);
+    // good
     WVPASSEQ(test_ocsp_req(cert, cacert, 
                            WvString("V\t%s\t%s\t%s\tunknown\t%s\n",
                                     EXPDATE, REVDATE, cert.get_serial(true),

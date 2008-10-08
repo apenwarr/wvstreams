@@ -117,8 +117,7 @@ bool WvOCSPResp::check_nonce(const WvOCSPReq &req) const
 
 
 WvOCSPResp::Status WvOCSPResp::get_status(const WvX509 &cert, 
-                                          const WvX509 &issuer, 
-                                          const WvX509 &responder) const
+                                          const WvX509 &issuer) const
 {
     if (!isok())
         return ERROR;
@@ -129,17 +128,15 @@ WvOCSPResp::Status WvOCSPResp::get_status(const WvX509 &cert,
     int i;
 
     STACK_OF(X509) *verify_other = sk_X509_new_null(); assert(verify_other);
-    sk_X509_push(verify_other, responder.cert);
     X509_STORE *store = X509_STORE_new(); assert(store);
     X509_STORE_add_cert(store, issuer.cert);
-    i = OCSP_basic_verify(bs, verify_other, store, OCSP_TRUSTOTHER);
+    i = OCSP_basic_verify(bs, verify_other, store, 0);
     sk_free(verify_other);
     X509_STORE_free(store);
 
     if (i <= 0)
     {
         log("OCSP Verify Error: %s\n", wvssl_errstr());
-        OCSP_BASICRESP_free(bs);
         return ERROR;
     }
 
@@ -169,5 +166,8 @@ WvOCSPResp::Status WvOCSPResp::get_status(const WvX509 &cert,
     else if (status == V_OCSP_CERTSTATUS_REVOKED)
         return REVOKED;
 
+    log("OCSP cert status is %s, marking as UNKNOWN.\n", 
+        OCSP_cert_status_str(status));
+    
     return UNKNOWN;
 }

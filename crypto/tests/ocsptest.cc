@@ -54,7 +54,6 @@ int main(int argc, char *argv[])
     WvArgs args;
     args.add_required_arg("CLIENT_CERTIFICATE", false);
     args.add_required_arg("SIGNING_CERTIFICATE", false);
-    args.add_required_arg("RESPONDER_CERTIFICATE", false);
     args.add_required_arg("URL", false);
 
     WvStringList remaining_args;
@@ -63,7 +62,6 @@ int main(int argc, char *argv[])
 
     WvString clicertfname = remaining_args.popstr();
     WvString issuercertfname = remaining_args.popstr();
-    WvString respondercertfname = remaining_args.popstr();
     WvString url = remaining_args.popstr();
 
     WvX509 clicert;
@@ -72,7 +70,6 @@ int main(int argc, char *argv[])
     
     load_cert(clicertfname, clicert);
     load_cert(issuercertfname, issuer);
-    load_cert(respondercertfname, ocspserver);
 
     wvcon->print("Sending request...\n");
     WvOCSPReq req(clicert, issuer);
@@ -120,17 +117,22 @@ int main(int argc, char *argv[])
         exit(1);
     }
     
+    WvOCSPResp::Status status = resp.get_status(clicert, issuer);
     WvString status_str;
-    switch(resp.get_status(clicert, issuer, ocspserver))
+    switch(status)
         {
         case WvOCSPResp::ERROR:
             status_str = "ERROR";
+            break;
         case WvOCSPResp::GOOD:
             status_str = "GOOD";
+            break;
         case WvOCSPResp::REVOKED:
             status_str = "REVOKED";
+            break;
         case WvOCSPResp::UNKNOWN:
             status_str = "UNKNOWN";
+            break;
         }
 
     wvcon->print("Response status: %s\n", status_str);

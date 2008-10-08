@@ -48,8 +48,7 @@ public:
     bool check_nonce(const WvOCSPReq &req) const;
   
     enum Status { ERROR, GOOD, REVOKED, UNKNOWN };
-    Status get_status(const WvX509 &cert, const WvX509 &issuer, 
-                      const WvX509 &responder) const;
+    Status get_status(const WvX509 &cert, const WvX509 &issuer) const;
 
 private:
     WvOCSPResp(WvOCSPResp &); // not implemented yet
