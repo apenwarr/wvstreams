@@ -68,7 +68,6 @@ if ! pkg-config --modversion xplc-${xplc_version}; then
 fi
 AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC ${xplc_version} (required)]))
 AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib (required)]))
-AC_ARG_WITH(argp, AC_HELP_STRING([--with-argp], [argp (required)]))
 
 AC_ARG_VAR(MOC, [Qt meta object compiler])
 AC_ARG_VAR(WEAVER_BUILD_INFO, [Extra version info])
@@ -130,6 +129,16 @@ int main()
 		   AC_DEFINE([ATTR_DEPRECATED], [],
 			     [Compiler warning on deprecated functions])])
 CPPFLAGS="$CPPFLAGS_save"
+
+# argp
+USE_WVSTREAMS_ARGP=0
+AC_CHECK_HEADERS(argp.h)
+AC_CHECK_FUNC(argp_parse)
+if test "$ac_cv_func_argp_parse" != yes \
+    -o "$ac_cv_header_argp_h" != yes ; then
+    (cd argp && ./configure --build="$ac_cv_env_build_alias_value" --host="$ac_cv_env_host_alias_value")
+    USE_WVSTREAMS_ARGP=1
+fi
 
 # Function checks
 AC_FUNC_ALLOCA
@@ -529,11 +538,6 @@ if test "$with_zlib" != "no"; then
     AC_CHECK_LIB(z, compress,, [with_zlib=no])
 fi
 
-# argp
-if test "$with_argp" != "no"; then
-    AC_CHECK_HEADERS(argp.h,, [with_argp=no])
-fi
-
 # Find out whether TR1 or Boost are available.
 AC_CHECK_HEADERS(tr1/functional)
 AC_CHECK_HEADERS(boost/function.hpp)
@@ -575,10 +579,6 @@ if test "$with_zlib" = "no"; then
     AC_MSG_WARN([zlib is missing.])
     missing_required="$missing_required zlib"
 fi
-if test "$with_argp" = "no"; then
-    AC_MSG_WARN([argp is missing.])
-    missing_required="$missing_required argp"
-fi
 if test "$ac_cv_header_tr1_functional" != "yes" \
      -a "$ac_cv_header_boost_function_hpp" != "yes"; then
     AC_MSG_WARN([both tr1/functional and boost/function.hpp are missing.])
@@ -604,6 +604,8 @@ COMPILER_STANDARD=posix
 
 AC_SUBST(SO_VERSION)
 
+AC_SUBST(USE_WVSTREAMS_ARGP)
+
 AC_SUBST(enable_debug)
 AC_SUBST(enable_optimization)
 AC_SUBST(enable_resolver_fork)
@@ -620,7 +622,6 @@ AC_SUBST(with_qt)
 AC_SUBST(with_tcl)
 AC_SUBST(with_xplc)
 AC_SUBST(with_zlib)
-AC_SUBST(with_argp)
 
 AC_SUBST(LIBS_XPLC)
 AC_SUBST(LIBS_DBUS)

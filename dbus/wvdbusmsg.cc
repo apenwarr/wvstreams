@@ -435,11 +435,13 @@ WvDBusMsg::operator WvString() const
     if (is_reply())
     {
 	if (iserror())
-	    return WvString("ERR->%s#%s(%s)",
-			    dest, get_replyserial(), get_argstr());
+	    return WvString("ERR#%s->%s#%s(%s)",
+			    get_serial(), dest, get_replyserial(),
+			    get_argstr());
 	else
-	    return WvString("REPLY->%s#%s(%s)",
-			    dest, get_replyserial(), get_argstr());
+	    return WvString("REPLY#%s->%s#%s(%s)",
+			    get_serial(), dest, get_replyserial(),
+			    get_argstr());
     }
     else
     {

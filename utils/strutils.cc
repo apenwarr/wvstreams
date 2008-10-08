@@ -27,9 +27,7 @@
 #ifndef EACCES
 #define EACCES 0xfff
 #endif
-#include <wincrypt.h>
 #endif
-#include "wvbase64.h"
 
 char *terminate_string(char *string, char c)
 /**********************************************/
@@ -1325,73 +1323,3 @@ WvString ptr2str(void* ptr)
 
     return buf;
 }
-
-
-#ifdef _WIN32
-WvString wvprotectdata(WvStringParm data, WvStringParm description)
-{
-    DATA_BLOB encrypt_me, return_me;
-    encrypt_me.cbData = data.len() + 1;
-    encrypt_me.pbData = new BYTE[encrypt_me.cbData];
-    /* OK, we assume sizeof(char) = sizeof(BYTE), but that should never
-     * change
-     */
-    memcpy(encrypt_me.pbData, data.cstr(), encrypt_me.cbData); /*+ null ptr! */
-    WvString ret = WvString::null;
-    WvDynBuf inbuf, outbuf;
-    WvBase64Encoder encoder64;
-
-    const unsigned int desclen = description.len() + 1;
-    wchar_t *desc = new wchar_t[desclen];
-    mbstowcs(desc, description.cstr(), desclen);
-    
-    if (!CryptProtectData(&encrypt_me, desc, NULL, NULL, NULL, 0, &return_me))
-    {
-	/* FIXME:  Any error reporting useful here?  GetLastError? */
-	goto out;
-    }
-
-    inbuf.put(return_me.pbData, return_me.cbData);
-    if (!encoder64.encodebufstr(inbuf, ret, false, true)) {
-	ret = WvString::null;
-    }
-
-    LocalFree(return_me.pbData);
-out:
-    delete [] desc;
-    delete [] encrypt_me.pbData;
-    return ret;
-}
-
-WvString wvunprotectdata(WvStringParm data)
-{
-    /* Data is base64 encoded, must first decrypt it */
-    WvBase64Decoder decoder64;
-    WvDynBuf databuf;
-
-    decoder64.flushstrbuf(data, databuf, true);
-    DATA_BLOB decrypt_me, return_me;
-    decrypt_me.cbData = databuf.used();
-    decrypt_me.pbData = new BYTE[decrypt_me.cbData];
-    databuf.copy(decrypt_me.pbData, 0, decrypt_me.cbData);
-    WvString ret = WvString::null;
-
-    char *strdata;
-    if (!CryptUnprotectData(&decrypt_me, NULL, NULL, NULL, NULL, 0, &return_me))
-    {
-	goto out;
-    }
-
-    /* Since, clearly, all went well, we should have a null-terminated
-     * char * array stored in return_me.pbData */
-    strdata = new char[return_me.cbData];
-    memcpy(strdata, return_me.pbData, return_me.cbData);
-    ret = WvString(strdata).unique();
-
-    delete [] strdata;
-    LocalFree(return_me.pbData);
-out:
-    delete [] decrypt_me.pbData;
-    return ret;
-}
-#endif

@@ -209,7 +209,7 @@ void UniRegistryGen::setv(const UniConfPairList &pairs)
 
 bool UniRegistryGen::exists(const UniConfKey &key)
 {
-    return get(key) == WvString::null;
+    return !get(key).isnull();
 }
 
 bool UniRegistryGen::haschildren(const UniConfKey &key)
@@ -278,7 +278,7 @@ bool UniRegistryGenIter::next()
 	}
 	else
 	{
-	    fprintf(stderr, "KEY_ENUM result: %d\n", result);
+	    fprintf(stderr, "KEY_ENUM result: %ld\n", result);
 	    fflush(stderr);
 	    return false; // give up
 	}

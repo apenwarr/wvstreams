@@ -1,0 +1,14 @@
+.deps
+Makefile
+config.h
+config.log
+config.status
+configure.lineno
+stamp-h1
+argp-test.exe
+testsuite/.deps
+testsuite/ex1.exe
+testsuite/ex3.exe
+testsuite/ex4.exe
+testsuite/Makefile
+libargp.list

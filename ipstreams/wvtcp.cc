@@ -154,6 +154,7 @@ void WvTCPConn::nice_tcpopts()
     
     int value = 1;
     setsockopt(getfd(), SOL_SOCKET, SO_KEEPALIVE, &value, sizeof(value));
+    low_delay();
 }
 
 

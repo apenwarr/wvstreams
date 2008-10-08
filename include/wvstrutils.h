@@ -606,20 +606,4 @@ static inline bool is_int(const char *str)
 /// do.
 WvString ptr2str(void* ptr);
 
-#ifdef _WIN32
-/* Calls CryptProtectData on a string, and returns a BASE64 encoded version
- * of the encrypted data, suitable for entering into Uniconf or other use.
- *
- * Unless you are debugging Windows somehow and want to examine what the
- * label on encrypted data is, it's perfectly fine to leave the 'description'
- * parameter blank.
- */
-WvString wvprotectdata(WvStringParm data, WvStringParm description = "Data");
-
-/* Accepts a BASE64 encoded string of encrypted data (encrypted via
- * CryptProtectData, that is) and decrypts it and returns a WvString.
- */
-WvString wvunprotectdata(WvStringParm data);
-#endif
-
 #endif // __WVSTRUTILS_H
