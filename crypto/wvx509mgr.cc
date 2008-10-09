@@ -420,12 +420,6 @@ bool WvX509Mgr::signcrl(WvCRL &crl) const
     bool cakeyok = EVP_PKEY_set1_RSA(certkey, rsa->rsa);
     if (cakeyok)
     {
-	// Use Version 2 CRLs - Of COURSE that means
-	// to set it to 1 here... grumble..
-	X509_CRL_set_version(crl.getcrl(), 1);
-
-	X509_CRL_set_issuer_name(crl.getcrl(), X509_get_subject_name(cert));
-
 	ASN1_TIME *tmptm = ASN1_TIME_new();
 	// Set the LastUpdate time to now.
 	X509_gmtime_adj(tmptm, 0);

@@ -109,8 +109,8 @@ public:
 
     /**
      * Sign the CRL with the rsa key associated with this class. This method
-     * will also set the CRL's issuer name, set the CRL version to '2', update 
-     * the lastUpdate time, and set its validity period to 30 days.
+     * will also update the lastUpdate time, and set the CRL's validity period 
+     * to 30 days.
      */
     bool signcrl(WvCRL &unsignedcrl) const;
 

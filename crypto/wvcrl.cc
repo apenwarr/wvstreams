@@ -12,12 +12,14 @@
 #include "wvx509mgr.h"
 #include "wvbase64.h"
 
+
 static const char * warning_str_get = "Tried to determine %s, but CRL is blank!\n";
 #define CHECK_CRL_EXISTS_GET(x, y)                                      \
     if (!crl) {                                                         \
         debug(WvLog::Warning, warning_str_get, x);                      \
         return y;                                                       \
     }
+
 
 static ASN1_INTEGER * serial_to_int(WvStringParm serial)
 {
@@ -42,34 +44,37 @@ WvCRL::WvCRL()
 }
 
 
-WvCRL::WvCRL(const WvX509Mgr &cacert)
+WvCRL::WvCRL(const WvX509Mgr &ca)
     : debug("X509 CRL", WvLog::Debug5)
 {
     assert(crl = X509_CRL_new());
 
-    // now, set the aki (FIXME: Mostly blatantly copied from wvx509.cc)
+    // Use Version 2 CRLs - Of COURSE that means
+    // to set it to 1 here... grumble..
+    X509_CRL_set_version(crl, 1);
+    X509_CRL_set_issuer_name(crl, X509_get_issuer_name(ca.cert));
 
-    // can't set a meaningful AKI for subordinate certification without the 
-    // parent having an SKI
+    // most of this copied from wvx509.cc, sigh
     ASN1_OCTET_STRING *ikeyid = NULL;
     X509_EXTENSION *ext;
-    int i = X509_get_ext_by_NID(cacert.cert, NID_subject_key_identifier, -1);
-    if ((i >= 0) && (ext = X509_get_ext(cacert.cert, i)))
+    int i = X509_get_ext_by_NID(ca.cert, NID_subject_key_identifier, -1);
+    if ((i >= 0) && (ext = X509_get_ext(ca.cert, i)))
         ikeyid = static_cast<ASN1_OCTET_STRING *>(X509V3_EXT_d2i(ext));
 
-    if (!ikeyid)
-        return;
+    if (ikeyid)
+    {
+        AUTHORITY_KEYID *akeyid = AUTHORITY_KEYID_new();
+        akeyid->issuer = NULL;
+        akeyid->serial = NULL;
+        akeyid->keyid = ikeyid;
+        ext = X509V3_EXT_i2d(NID_authority_key_identifier, 0, akeyid);
+        X509_CRL_add_ext(crl, ext, -1);
+        X509_EXTENSION_free(ext); 
+        AUTHORITY_KEYID_free(akeyid);
+    }
 
-    AUTHORITY_KEYID *akeyid = AUTHORITY_KEYID_new();
-    akeyid->issuer = NULL;
-    akeyid->serial = NULL;
-    akeyid->keyid = ikeyid;
-    ext = X509V3_EXT_i2d(NID_authority_key_identifier, 0, akeyid);
-    X509_CRL_add_ext(crl, ext, -1);
-    X509_EXTENSION_free(ext); 
-    AUTHORITY_KEYID_free(akeyid);
-
-    cacert.signcrl(*this);
+    // Sign the CRL and set some expiration params
+    ca.signcrl(*this);
 }
 
 
@@ -96,8 +101,8 @@ bool WvCRL::signedbyca(const WvX509 &cacert) const
     EVP_PKEY_free(pkey);
     if (result < 0)
     {
-        debug("There was an error determining whether or not we were signed by "
-              "CA '%s'\n", cacert.get_subject());
+        debug("There was an error (%s) determining whether or not we were "
+              "signed by CA '%s'\n", wvssl_errstr(), cacert.get_subject());
         return false;
     }
     bool issigned = (result > 0);
