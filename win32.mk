@@ -123,8 +123,6 @@ PROGSKIP=\
 	ipstreams/tests/wsd \
 	crypto/tests/cryptotest \
 	linuxstreams/tests/aliastest \
-	linuxstreams/tests/dspechotest \
-	linuxstreams/tests/dsptest \
 	linuxstreams/tests/ifctest \
 	linuxstreams/tests/routetest \
 	uniconf/tests/unimem \
