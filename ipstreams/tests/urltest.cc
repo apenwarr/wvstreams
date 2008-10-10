@@ -2,7 +2,7 @@
  * Worldvisions Weaver Software:
  *   Copyright (C) 1997-2002 Net Integration Technologies, Inc.
  *
- * WvUDPStream test.  Waits for data on port 19.
+ * URL parsing test.
  */
 #include "wvurl.h"
 #include "wvstream.h"
