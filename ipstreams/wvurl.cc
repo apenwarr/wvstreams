@@ -25,6 +25,7 @@ static DefaultPort portmap[] = {
     { "exchangeit", 6969, false },
     { "https", 443, true },
     { "http", 80, true },
+    { "file", 0, true },
     { "sip", 5060, false },
     { "ftp", 21, true },
     { NULL, 0 }
