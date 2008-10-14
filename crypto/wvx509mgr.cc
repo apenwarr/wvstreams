@@ -263,30 +263,12 @@ WvString WvX509Mgr::signreq(WvStringParm pkcs10req) const
     // this part up until the FIXME: is about.
     WvString pkcs10(pkcs10req);
     
-    char *begin = strstr(pkcs10.edit(), "\nMII");
-    if (!begin)
-    {
-	debug("This doesn't look like PEM Encoded information...\n");
-	return WvString::null;
-    }
-    char *end = strstr(begin + 1, "\n---");
-    if (!end)
-    {
-	debug("Is this a complete certificate request?\n");
-	return WvString::null;
-    }
-    *++end = '\0';
-    WvString body(begin); // just the PKCS#10 request, 
-                          // without the ---BEGIN and ---END
-    
-    WvDynBuf reqbuf;
-    WvBase64Decoder dec;
-    dec.flushstrbuf(body, reqbuf, true);
-    
-    // FIXME: Duplicates code from cert_selfsign
-    size_t reqlen = reqbuf.used();
-    const unsigned char *req = reqbuf.get(reqlen);
-    X509_REQ *certreq = wv_d2i_X509_REQ(NULL, &req, reqlen);
+    BIO *membuf = BIO_new(BIO_s_mem());
+    BIO_write(membuf, pkcs10req, pkcs10req.len());
+
+    X509_REQ *certreq = PEM_read_bio_X509_REQ(membuf, NULL, NULL, NULL);
+    BIO_free_all(membuf);
+
     if (certreq)
     {
 	WvX509 newcert(X509_new());
