@@ -120,10 +120,10 @@ WvOCSPResp::Status WvOCSPResp::get_status(const WvX509 &cert,
                                           const WvX509 &issuer) const
 {
     if (!isok())
-        return ERROR;
+        return Error;
 
     if (!cert.isok() && !issuer.isok())
-        return ERROR;
+        return Error;
 
     int i;
 
@@ -137,7 +137,7 @@ WvOCSPResp::Status WvOCSPResp::get_status(const WvX509 &cert,
     if (i <= 0)
     {
         log("OCSP Verify Error: %s\n", wvssl_errstr());
-        return ERROR;
+        return Error;
     }
 
     int status, reason;
@@ -151,23 +151,23 @@ WvOCSPResp::Status WvOCSPResp::get_status(const WvX509 &cert,
     {
         log("OCSP Find Status Error: %s\n", wvssl_errstr());
         OCSP_CERTID_free(id);
-        return ERROR;
+        return Error;
     }
     OCSP_CERTID_free(id);
 
     if (!OCSP_check_validity(thisupd, nextupd, OCSP_MAX_VALIDITY_PERIOD, -1))
     {
         log("Error checking for OCSP validity: %s\n", wvssl_errstr());
-        return ERROR;
+        return Error;
     }
 
     if (status == V_OCSP_CERTSTATUS_GOOD)
-        return GOOD;
+        return Good;
     else if (status == V_OCSP_CERTSTATUS_REVOKED)
-        return REVOKED;
+        return Revoked;
 
-    log("OCSP cert status is %s, marking as UNKNOWN.\n", 
+    log("OCSP cert status is %s, marking as 'Unknown'.\n", 
         OCSP_cert_status_str(status));
     
-    return UNKNOWN;
+    return Unknown;
 }
