@@ -47,7 +47,7 @@ public:
     bool isok() const;
     bool check_nonce(const WvOCSPReq &req) const;
   
-    enum Status { ERROR, GOOD, REVOKED, UNKNOWN };
+    enum Status { Error, Good, Revoked, Unknown };
     Status get_status(const WvX509 &cert, const WvX509 &issuer) const;
 
 private:
