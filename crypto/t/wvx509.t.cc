@@ -642,3 +642,18 @@ WVTEST_MAIN("get_fingerprint")
     WVPASSEQ(foo.get_fingerprint(WvX509::FingerMD5),
 		"53:FD:C7:D4:8F:45:AE:1D:90:14:45:B4:0C:1B:02:BD");
 }
+
+
+WVTEST_MAIN("extended key usage")
+{
+    WvX509Mgr ca("CN=test.foo.com,DC=foo,DC=com", DEFAULT_KEYLEN, true);
+
+    WVPASSEQ(ca.get_ext_key_usage(), "");
+    ca.set_ext_key_usage("TLS Web Server Authentication, "
+                         "TLS Web Client Authentication, OCSP Signing");
+    WVPASSEQ(ca.get_ext_key_usage(), "TLS Web Server Authentication;\n"
+             "TLS Web Client Authentication;\nOCSP Signing");
+
+    ca.set_ext_key_usage("OCSP Signing");
+    WVPASSEQ(ca.get_ext_key_usage(), "OCSP Signing");
+}

@@ -1265,6 +1265,16 @@ void WvX509::set_extension(int nid, WvStringParm _values)
 {
     CHECK_CERT_EXISTS_SET("extension");
 
+    // first we check to see if the extension already exists, if so we need to
+    // kill it
+    int index = X509_get_ext_by_NID(cert, nid, -1);
+    if (index >= 0)
+    {
+        X509_EXTENSION *ex = X509_delete_ext(cert, index);
+        X509_EXTENSION_free(ex);
+    }    
+
+    // now set the extension
     WvString values(_values);
     X509_EXTENSION *ex = NULL;
     ex = X509V3_EXT_conf_nid(NULL, NULL, nid, values.edit());
