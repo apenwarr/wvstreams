@@ -124,21 +124,21 @@ WVTEST_MAIN("encoding request")
     static const char *REVDATE = "071211195254Z"; //dec 11 2007
 
     // following test fails, because cert is not signed by itself
-    WVPASSEQ(test_ocsp_req(cert, cert, cacert, ""), WvOCSPResp::ERROR); 
+    WVPASSEQ(test_ocsp_req(cert, cert, cacert, ""), WvOCSPResp::Error); 
     // unknown, because the cert's serial not in CRL list
-    WVPASSEQ(test_ocsp_req(cert, cacert, cacert, ""), WvOCSPResp::UNKNOWN);
+    WVPASSEQ(test_ocsp_req(cert, cacert, cacert, ""), WvOCSPResp::Unknown);
     // revoked
     WVPASSEQ(test_ocsp_req(cert, cacert, cacert,
                            WvString("R\t%s\t%s\t%s\tunknown\t%s\n",
                                     EXPDATE, REVDATE, cert.get_serial(true),
                                     cert.get_subject())), 
-             WvOCSPResp::REVOKED);
+             WvOCSPResp::Revoked);
     // good
     WVPASSEQ(test_ocsp_req(cert, cacert, cacert,
                            WvString("V\t%s\t%s\t%s\tunknown\t%s\n",
                                     EXPDATE, REVDATE, cert.get_serial(true),
                                     cert.get_subject())), 
-             WvOCSPResp::GOOD);
+             WvOCSPResp::Good);
 }
 
 
@@ -161,7 +161,7 @@ WVTEST_MAIN("ocsp key usage")
                            WvString("V\t%s\t%s\t%s\tunknown\t%s\n",
                                     EXPDATE, REVDATE, cert->get_serial(true),
                                     cert->get_subject())), 
-             WvOCSPResp::ERROR);
+             WvOCSPResp::Error);
 
     ocspcert->set_ext_key_usage("OCSP Signing");
     ocspcert->cert->ex_xkusage |= XKU_OCSP_SIGN;
@@ -173,7 +173,7 @@ WVTEST_MAIN("ocsp key usage")
                            WvString("V\t%s\t%s\t%s\tunknown\t%s\n",
                                     EXPDATE, REVDATE, cert->get_serial(true),
                                     cert->get_subject())), 
-             WvOCSPResp::GOOD);
+             WvOCSPResp::Good);
 
 
     

@@ -121,16 +121,16 @@ int main(int argc, char *argv[])
     WvString status_str;
     switch(status)
         {
-        case WvOCSPResp::ERROR:
+        case WvOCSPResp::Error:
             status_str = "ERROR";
             break;
-        case WvOCSPResp::GOOD:
+        case WvOCSPResp::Good:
             status_str = "GOOD";
             break;
-        case WvOCSPResp::REVOKED:
+        case WvOCSPResp::Revoked:
             status_str = "REVOKED";
             break;
-        case WvOCSPResp::UNKNOWN:
+        case WvOCSPResp::Unknown:
             status_str = "UNKNOWN";
             break;
         }
