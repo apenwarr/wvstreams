@@ -151,13 +151,25 @@ WVTEST_MAIN("X509")
                  certreqtext);
     }
     {
-        // test the copy constructor
+        // test the copy constructor for x509
         WvX509 t1;
 	t1.decode(WvX509::CertPEM, x509certtext);
         basic_test(t1, dName1);
 
         WvX509 t2(t1);
         basic_test(t2, dName1);
+    }
+
+    {
+        // test the copy construct for x509mgr
+        WvX509Mgr t1;
+	t1.decode(WvX509::CertPEM, x509certtext);
+	t1.decode(WvRSAKey::RsaPEM, rsakeytext);
+        basic_test(t1, dName1);
+
+        WvX509Mgr t2(t1);
+        basic_test(t2, dName1);
+        WVPASSEQ(t1.encode(WvRSAKey::RsaPEM), t2.encode(WvRSAKey::RsaPEM));
     }
 
     {

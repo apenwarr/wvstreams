@@ -48,6 +48,11 @@ class WvX509Mgr : public WvX509
      */
     WvX509Mgr(WvStringParm _dname, int bits, bool ca=false);
 
+    /** 
+     * Copy Constructor. 
+     */
+    WvX509Mgr(const WvX509Mgr &mgr);
+
   protected:
     /**
      * Given the Distinguished Name dname and an already generated keypair in 
@@ -58,14 +63,6 @@ class WvX509Mgr : public WvX509
      * signed: 
      */
     void create_selfissued(WvStringParm dname, bool is_ca = false);
-
-  private:
-
-    /** 
-     * Placeholder for Copy Constructor: this doesn't exist yet, but it keeps
-     * us out of trouble :) 
-     */
-    WvX509Mgr(const WvX509Mgr &mgr);
 
 public:
     /** Destructor */

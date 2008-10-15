@@ -40,6 +40,15 @@ WvX509Mgr::WvX509Mgr()
 }
 
 
+WvX509Mgr::WvX509Mgr(const WvX509Mgr &x)
+    : WvX509(x), 
+      debug("X509 Manager", WvLog::Debug5)
+{
+    rsa = NULL;
+    set_rsa(x.rsa);
+}
+
+
 WvX509Mgr::WvX509Mgr(WvStringParm _dname, WvRSAKey *_rsa, bool ca)
     : WvX509(),
       debug("X509 Manager", WvLog::Debug5)
@@ -130,7 +139,7 @@ void WvX509Mgr::create_selfissued(WvStringParm dname, bool is_ca)
         // uncomment this to allow certificate to be used as
         // an OCSP signer (seems too obscure to enable by default
         // right now).
-        set_ext_key_usage("OCSPSigning");
+        set_ext_key_usage("OCSP Signing");
 #endif
 //	debug("Setting Constraints.\n");
 //	set_constraints("requireExplicitPolicy");
