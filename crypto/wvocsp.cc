@@ -1,5 +1,5 @@
 #include "wvocsp.h"
-
+#include "wvsslhacks.h"
 
 static const int OCSP_MAX_VALIDITY_PERIOD = (5 * 60); // 5 min: openssl default
 
@@ -35,7 +35,7 @@ void WvOCSPReq::encode(WvBuf &buf)
     BUF_MEM *bm;
 
     // there is no reason why the following should fail, except for OOM
-    assert(i2d_OCSP_REQUEST_bio(bufbio, req) > 0);
+    assert(wv_i2d_OCSP_REQUEST_bio(bufbio, req) > 0);
 
     BIO_get_mem_ptr(bufbio, &bm);
     buf.put(bm->data, bm->length);
