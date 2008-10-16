@@ -42,3 +42,8 @@ X509 *wv_d2i_X509(X509 **a, unsigned char **pp, long length)
 {
     return d2i_X509(a, (void *)pp, length);
 }
+
+int wv_i2d_OCSP_REQUEST_bio(BIO *bio, OCSP_REQUEST *req)
+{
+    return i2d_OCSP_REQUEST_bio(bio, req);
+}
