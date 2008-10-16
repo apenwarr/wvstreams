@@ -116,6 +116,52 @@ bool WvOCSPResp::check_nonce(const WvOCSPReq &req) const
 }
 
 
+bool WvOCSPResp::signedbycert(const WvX509 &cert) const
+{
+    EVP_PKEY *skey = X509_get_pubkey(cert.cert);
+    int i = OCSP_BASICRESP_verify(bs, skey, 0);
+    EVP_PKEY_free(skey);
+
+    if(i > 0)
+        return true;
+
+    return false;    
+}
+
+
+WvX509 * WvOCSPResp::get_signing_cert() const
+{
+    if (!bs || !sk_X509_num(bs->certs))
+        return NULL;
+
+    // note: the following bit of code is taken almost verbatim from
+    // ocsp_vfy.c in OpenSSL 0.9.8. Copyright and attribution should 
+    // properly belong to them
+
+    OCSP_RESPID *id = bs->tbsResponseData->responderId;
+
+    if (id->type == V_OCSP_RESPID_NAME)
+    {
+        X509 *x = X509_find_by_subject(bs->certs, id->value.byName);
+        if (x)
+            return new WvX509(X509_dup(x));
+    }
+
+    if (id->value.byKey->length != SHA_DIGEST_LENGTH) return NULL;
+    unsigned char tmphash[SHA_DIGEST_LENGTH];
+    unsigned char *keyhash = id->value.byKey->data;
+    for (int i = 0; i < sk_X509_num(bs->certs); i++)
+    {
+        X509 *x = sk_X509_value(bs->certs, i);
+        X509_pubkey_digest(x, EVP_sha1(), tmphash, NULL);
+        if(!memcmp(keyhash, tmphash, SHA_DIGEST_LENGTH))
+            return new WvX509(X509_dup(x));
+    }
+    
+    return NULL;
+}
+
+
 WvOCSPResp::Status WvOCSPResp::get_status(const WvX509 &cert, 
                                           const WvX509 &issuer) const
 {
@@ -124,21 +170,6 @@ WvOCSPResp::Status WvOCSPResp::get_status(const WvX509 &cert,
 
     if (!cert.isok() && !issuer.isok())
         return Error;
-
-    int i;
-
-    STACK_OF(X509) *verify_other = sk_X509_new_null(); assert(verify_other);
-    X509_STORE *store = X509_STORE_new(); assert(store);
-    X509_STORE_add_cert(store, issuer.cert);
-    i = OCSP_basic_verify(bs, verify_other, store, 0);
-    sk_free(verify_other);
-    X509_STORE_free(store);
-
-    if (i <= 0)
-    {
-        log("OCSP Verify Error: %s\n", wvssl_errstr());
-        return Error;
-    }
 
     int status, reason;
     ASN1_GENERALIZEDTIME *rev, *thisupd, *nextupd;

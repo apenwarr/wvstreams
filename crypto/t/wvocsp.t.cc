@@ -39,20 +39,6 @@ const static int DEFAULT_KEYLEN = 512;
     }
 
 
-static WvX509Mgr * create_cert(WvStringParm name, WvX509Mgr &cacert)
-{
-    WvRSAKey rsakey(DEFAULT_KEYLEN);
-    WvString certreq = WvX509Mgr::certreq(name, rsakey);
-    WvString certpem = cacert.signreq(certreq);
-
-    WvX509Mgr * cert = new WvX509Mgr;
-    cert->decode(WvX509Mgr::CertPEM, certpem);
-    cert->decode(WvRSAKey::RsaPEM, rsakey.encode(WvRSAKey::RsaPEM));
-
-    return cert;
-}
-
-
 static WvOCSPResp::Status test_ocsp_req(WvX509 &cert, WvX509Mgr &cacert, 
                                         WvX509Mgr &ocspcert,
                                         WvStringParm indexcontents)
@@ -100,6 +86,13 @@ static WvOCSPResp::Status test_ocsp_req(WvX509 &cert, WvX509Mgr &cacert,
     ::unlink(ocspfname);
     ::unlink(ocspkeyfname);
 
+    WvX509 * signing_cert = resp.get_signing_cert();
+    WVPASS(signing_cert);
+    WVPASSEQ(signing_cert->get_subject(), ocspcert.get_subject());
+    WVPASS(resp.signedbycert(ocspcert));
+    WVFAIL(resp.signedbycert(cert)); 
+    WVRELEASE(signing_cert);
+
     return resp.get_status(cert, cacert);
 }
 
@@ -111,7 +104,7 @@ WVTEST_MAIN("encoding request")
 	= WvX509Mgr::certreq("cn=test.signed.com,dc=signed,dc=com", rsakey);
 
     WvX509Mgr cacert("CN=test.foo.com,DC=foo,DC=com", DEFAULT_KEYLEN, true);
-    // cacert.set_ext_key_usage("OCSPSigning");
+    // cacert.set_ext_key_usage("OCSP Signing");
     // cacert.signcert(cacert); // resign self
 
     WvX509Mgr cert; // only need wvx509mgr to test bogus signer problem
@@ -123,8 +116,6 @@ WVTEST_MAIN("encoding request")
     static const char *EXPDATE = "202010194703Z"; //dec 10, 2049
     static const char *REVDATE = "071211195254Z"; //dec 11 2007
 
-    // following test fails, because cert is not signed by itself
-    WVPASSEQ(test_ocsp_req(cert, cert, cacert, ""), WvOCSPResp::Error); 
     // unknown, because the cert's serial not in CRL list
     WVPASSEQ(test_ocsp_req(cert, cacert, cacert, ""), WvOCSPResp::Unknown);
     // revoked
@@ -140,46 +131,5 @@ WVTEST_MAIN("encoding request")
                                     cert.get_subject())), 
              WvOCSPResp::Good);
 }
-
-
-WVTEST_MAIN("ocsp key usage")
-{
-    WvX509Mgr cacert("CN=test.foo.com,DC=foo,DC=com", DEFAULT_KEYLEN, true);
-
-    WvX509Mgr *ocspcert = create_cert("cn=ocsp.foo.com,dc=foo,dc=com", 
-                                      cacert);
-
-    WvX509Mgr *cert = create_cert("cn=test.signed.com,dc=signed,dc=com", 
-                                  cacert);
-
-    // this test breaks after 2020. oh well.
-    static const char *EXPDATE = "202010194703Z"; //dec 10, 2049
-    static const char *REVDATE = "071211195254Z"; //dec 11 2007
-
-    // good, but ocsp cert doesn't have right key usage
-    WVPASSEQ(test_ocsp_req(*cert, cacert, *ocspcert,
-                           WvString("V\t%s\t%s\t%s\tunknown\t%s\n",
-                                    EXPDATE, REVDATE, cert->get_serial(true),
-                                    cert->get_subject())), 
-             WvOCSPResp::Error);
-
-    ocspcert->set_ext_key_usage("OCSP Signing");
-    ocspcert->cert->ex_xkusage |= XKU_OCSP_SIGN;
-
-    cacert.signcert(*ocspcert);
-    WvX509Mgr ocsp2(*ocspcert);
-
-    WVPASSEQ(test_ocsp_req(*cert, cacert, ocsp2,
-                           WvString("V\t%s\t%s\t%s\tunknown\t%s\n",
-                                    EXPDATE, REVDATE, cert->get_serial(true),
-                                    cert->get_subject())), 
-             WvOCSPResp::Good);
-
-
-    
-    WVRELEASE(ocspcert);
-    WVRELEASE(cert);
-}
-
 
 #endif // _WIN32
