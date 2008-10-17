@@ -68,7 +68,7 @@ public:
      * (used for client side operations...)
      * 
      * This either initializes a completely empty object, or takes _cert,
-     * and extracts the distinguished name into dname, and the the RSA
+     * and extracts the distinguished name into dname, and the RSA
      * public key into rsa. rsa->prv is empty.
      */
     WvX509(X509 *_cert);
