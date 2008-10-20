@@ -1,4 +1,4 @@
-WVSTREAMS=.
+WVSTREAMS:=$(shell pwd)
 
 include wvrules.mk
 
