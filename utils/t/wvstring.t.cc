@@ -4,8 +4,7 @@
 
 WVTEST_MAIN("basic")
 {
-    WvString a, b, c(""), d(""), e("hello"), f("Hello"), g(0), h(1), i(1.0),
-             j(NULL);
+    WvString a, b, c(""), d(""), e("hello"), f("Hello"), g(0), h(1), i(1.0);
     
     // null
     WVFAIL(a);
@@ -50,9 +49,6 @@ WVTEST_MAIN("basic")
     WVFAIL(h != i);
     WVPASS(i.num() == 1);
     WVPASS(WvString(-1).num() == -1);
-    
-    // silly NULL crap should at least be well-defined
-    WVPASS(j == "0");
 }
 
 
