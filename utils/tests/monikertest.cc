@@ -6,6 +6,7 @@ class ITest : public IObject
 {
 public:
     virtual void f() = 0;
+    virtual ~ITest() {}
 };
 
 DEFINE_IID(ITest, {0xcd3239a7, 0x0ea1, 0x4e1a,
