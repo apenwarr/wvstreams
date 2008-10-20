@@ -35,6 +35,7 @@ LIBS_PAM=@LIBS_PAM@
 LIBS_TCL=@LIBS_TCL@
 
 prefix=@prefix@
+datarootdir=@datarootdir@
 datadir=@datadir@
 includedir=@includedir@
 infodir=@infodir@
