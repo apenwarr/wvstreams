@@ -218,10 +218,13 @@ WVTEST_MAIN("url_decode")
  */
 WVTEST_MAIN("url_encode")
 {
-    const char *input = "http://www.free_email-account.com/~ponyman/mail.pl?name=\'to|\\|Y |)4|\\|Z4\'&pass=$!J83*p&folder=1N8()><";
-    const char *desired = "http%3a%2f%2fwww.free_email-account.com%2f~ponyman%2fmail.pl%3fname%3d%27to%7c%5c%7cY%20%7c%294%7c%5c%7cZ4%27%26pass%3d%24%21J83%2ap%26folder%3d1N8%28%29%3e%3c";
+    const char *input = "http://www.free_email-account.com/~ponyman/mail.pl?name=\'to|\\|Y |)4|\\|Z4\'&pass=$!J83*p&folder=1N8()><random%";
+    const char *desired = "http%3A%2F%2Fwww.free_email-account.com%2F~ponyman%2Fmail.pl%3Fname%3D'to%7C%5C%7CY%20%7C)4%7C%5C%7CZ4'%26pass%3D%24!J83*p%26folder%3D1N8()%3E%3Crandom%25";
+    const char *slash_desired = "http:%2F%2Fwww.free_email-account.com%2F~ponyman%2Fmail.pl?name=\'to|\\|Y |)4|\\|Z4\'&pass=$!J83*p&folder=1N8()><random%25";
 
     WVPASSEQ(url_encode(input), desired);
+    // for this next test, % should be escaped implicitly
+    WVPASSEQ(url_encode(input, "[/]"), slash_desired);
 
     const char *c = "";
     WVPASSEQ(url_encode(c), "");

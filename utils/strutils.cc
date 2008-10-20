@@ -348,27 +348,29 @@ WvString url_decode(WvStringParm str, bool no_space)
 
 
 // And its magic companion: url_encode
-WvString url_encode(WvStringParm str)
+WvString url_encode(WvStringParm str, WvStringParm unsafe)
 {
     unsigned int i;
     WvDynBuf retval;
 
+    WvRegex re(unsafe, WvRegex::EXTENDED);
+
     for (i=0; i < str.len(); i++)
     {
-        // to be safe, we'll only let alphanumeric characters or
-        // characters specifically marked as "unreserved" according to
-        // rfc3986 through unescaped
-        if (isalnum(str[i]) || strchr("-._~", str[i]))
+        char s[2] = { str[i], 0 };
+
+        if (!re.match(s) && s[0] != '%')
         {
             retval.put(&str[i], 1);
         }
         else
         {               
             char buf[4];
-            sprintf(buf, "%%%02x", str[i] & 0xff);
+            sprintf(buf, "%%%02X", str[i] & 0xff);
             retval.put(&buf, 3);
         }
     }
+
     return retval.getstr();
 }
 
