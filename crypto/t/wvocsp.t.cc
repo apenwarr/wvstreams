@@ -8,8 +8,6 @@
 #include "wvrsa.h"
 #include "wvsystem.h"
 
-#ifndef _WIN32 // the way we call openssl's ocsp util will not work on win32
-
 // default keylen for where we're not using pre-existing certs
 const static int DEFAULT_KEYLEN = 512; 
 
@@ -131,5 +129,3 @@ WVTEST_MAIN("encoding request")
                                     cert.get_subject())), 
              WvOCSPResp::Good);
 }
-
-#endif // _WIN32
