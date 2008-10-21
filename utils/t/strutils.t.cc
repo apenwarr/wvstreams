@@ -224,7 +224,7 @@ WVTEST_MAIN("url_encode")
 
     WVPASSEQ(url_encode(input), desired);
     // for this next test, % should be escaped implicitly
-    WVPASSEQ(url_encode(input, "[/]"), slash_desired);
+    WVPASSEQ(url_encode(input, "/"), slash_desired);
 
     const char *c = "";
     WVPASSEQ(url_encode(c), "");

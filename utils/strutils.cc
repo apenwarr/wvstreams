@@ -353,13 +353,11 @@ WvString url_encode(WvStringParm str, WvStringParm unsafe)
     unsigned int i;
     WvDynBuf retval;
 
-    WvRegex re(unsafe, WvRegex::EXTENDED);
-
     for (i=0; i < str.len(); i++)
     {
-        char s[2] = { str[i], 0 };
-
-        if (!re.match(s) && s[0] != '%')
+        if (((!!unsafe && !strchr(unsafe, str[i])) ||
+             (!unsafe && (isalnum(str[i]) || strchr("_.!~*'()-", str[i])))) &&
+            str[i] != '%')
         {
             retval.put(&str[i], 1);
         }

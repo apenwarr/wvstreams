@@ -129,14 +129,13 @@ WvString url_decode(WvStringParm str, bool no_space = false);
 
 /**
  * Converts all those pesky spaces, colons, and other nasties into nice 
- * unreadable Quasi-Unicode codes. The 'unsafe' parameter is a regular
- * expression defining all the characters that are unsafe, defaulting to
- * those characters which are not part of the uric character class defined
- * in RFC 2396. Note: The '%' character is always escaped, as otherwise
- * the string could not be decoded.
+ * unreadable Quasi-Unicode codes. The 'unsafe' parameter is a list of 
+ * characters that are unsafe and should be escaped. If unspecified,
+ * all characters which are not part of the uric character class defined
+ * in RFC 2396 will be escaped. Note: The '%' character is always escaped, as 
+ * otherwise the string would not be decodable.
  */
-WvString url_encode(WvStringParm str, 
-                    WvStringParm unsafe = "[^A-Za-z0-9_.!~*'()-]");
+WvString url_encode(WvStringParm str, WvStringParm unsafe = "");
  
 
 /**
