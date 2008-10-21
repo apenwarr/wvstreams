@@ -235,12 +235,14 @@ distclean: clean
 
 dist-hook:
 
-dist: dist-hook
+PKGDIR=$(WVPACKAGE_TARNAME)-$(WVPACKAGE_VERSION)
+
+dist: config.mk dist-hook
 	@echo '--> Making dist in ../build/$(PKGDIR)...'
 	@test -d ../build || mkdir ../build
 	@rsync -a --delete --force '$(shell pwd)/' '../build/$(PKGDIR)'
-	@find '../build/$(PKGDIR)' -name .svn -type d -print0 | xargs -0 rm -rf --
-	@find '../build/$(PKGDIR)' -name .cvsignore -type f -print0 | xargs -0 rm -f --
+	@find '../build/$(PKGDIR)' -name .git -type d -print0 | xargs -0 rm -rf --
+	@find '../build/$(PKGDIR)' -name .gitignore -type f -print0 | xargs -0 rm -f --
 	@$(MAKE) -C '../build/$(PKGDIR)' distclean
 	@rm -f '../build/$(PKGDIR).tar.gz'
 	@cd ../build; tar -zcf '$(PKGDIR).tar.gz' '$(PKGDIR)'

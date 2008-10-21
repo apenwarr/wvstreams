@@ -231,8 +231,8 @@ wvtestmain: \
 distclean: clean
 	rm -f uniconf/daemon/uniconfd.8 uniconf/tests/uni
 	rm -f config.mk config.log config.status \
-		include/wvautoconf.h config.cache reconfigure \
-		stamp-h.in configure include/wvautoconf.h.in
+		include/wvautoconf.h config.cache \
+		stamp-h.in 
 	rm -rf autom4te.cache
 	rm -f pkgconfig/*.pc
 
