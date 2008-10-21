@@ -248,7 +248,7 @@ int WvTest::run_all(const char * const *prefixes)
 	}
     }
     
-    if (prefixes && *prefixes)
+    if (prefixes && *prefixes && **prefixes)
 	printf("WvTest: WARNING: only ran tests starting with "
 	       "specifed prefix(es).\n");
     else
