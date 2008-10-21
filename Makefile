@@ -1,4 +1,4 @@
-WVSTREAMS:=$(shell pwd)
+WVSTREAMS:=.
 
 include wvrules.mk
 
@@ -197,7 +197,7 @@ tests: $(REAL_TESTS)
 test: all tests qtest
 
 qtest: all wvtestmain
-	LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(WVSTREAMS_LIB)" $(WVTESTRUN) $(MAKE) runtests
+	LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(shell pwd)" $(WVTESTRUN) $(MAKE) runtests
 
 runtests:
 	$(VALGRIND) ./wvtestmain '$(TESTNAME)'
