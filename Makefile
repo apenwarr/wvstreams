@@ -203,7 +203,7 @@ libwvtest.a: wvtestmain.o $(TESTOBJS)
 TARGETS_SO = $(filter %.so,$(TARGETS))
 TARGETS_A = $(filter %.a,$(TARGETS))
 
-all: configure $(filter-out $(WV_EXCLUDES), $(TARGETS))
+all: config.mk $(filter-out $(WV_EXCLUDES), $(TARGETS))
 
 TESTS += wvtestmain
 

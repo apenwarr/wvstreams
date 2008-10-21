@@ -35,10 +35,6 @@ include $(WVSTREAMS_SRC)/config.defaults.mk
 -include $(WVSTREAMS_SRC)/config.overrides.mk
 -include $(WVSTREAMS_SRC)/local.mk
 
-ifeq ($(wildcard $(WVSTREAMS_SRC)/config.mk),)
-  __junk:=$(shell echo "Warning: $(WVSTREAMS_SRC)/config.mk doesn't exist" >&2)
-endif
-
 ifeq (${EXEEXT},.exe)
   _WIN32=_WIN32
   XPATH += $(WVSTREAMS)/win32 $(WVSTREAMS)/win32/cominclude
