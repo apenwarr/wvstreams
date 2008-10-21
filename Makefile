@@ -1,6 +1,7 @@
 WVSTREAMS:=.
 
 include wvrules.mk
+include install.mk
 
 ifdef _WIN32
     include win32.mk
@@ -13,7 +14,7 @@ ifeq ("$(enable_testgui)", "no")
   WVTESTRUN=env
 endif
 
-LIBS += $(LIBS_XPLC) -lm
+LIBS += -lm
 
 ifeq ($(USE_WVSTREAMS_ARGP),1)
   utils/wvargs.o-CPPFLAGS += -Iargp
@@ -74,7 +75,23 @@ BASEOBJS = \
 	streams/wvfile.o \
 	streams/wvstreamclone.o  \
 	streams/wvconstream.o \
-	utils/wvcrashbase.o
+	utils/wvcrashbase.o \
+	xplc-cxx/factory.o \
+	xplc-cxx/getiface.o \
+	xplc-cxx/strtouuid.o \
+	xplc-cxx/uuidtostr.o \
+	xplc-cxx/xplc.o \
+	xplc/category.o \
+	xplc/catiter.o \
+	xplc/catmgr.o \
+	xplc/loader.o \
+	xplc/moduleloader.o \
+	xplc/modulemgr.o \
+	xplc/monikers.o \
+	xplc/new.o \
+	xplc/servmgr.o \
+	xplc/statichandler.o 
+
 TARGETS += libwvbase.so
 libwvbase_OBJS += $(filter-out uniconf/unigenhack.o $(WV_EXCLUDES),$(BASEOBJS))
 libwvbase.so: $(libwvbase_OBJS) uniconf/unigenhack.o
@@ -186,7 +203,7 @@ libwvtest.a: wvtestmain.o $(TESTOBJS)
 TARGETS_SO = $(filter %.so,$(TARGETS))
 TARGETS_A = $(filter %.a,$(TARGETS))
 
-all: $(filter-out $(WV_EXCLUDES), $(TARGETS))
+all: configure $(filter-out $(WV_EXCLUDES), $(TARGETS))
 
 TESTS += wvtestmain
 

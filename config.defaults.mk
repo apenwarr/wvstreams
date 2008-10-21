@@ -8,7 +8,6 @@ LN_S=ln -s
 LN=ln
 MOC=/usr/bin/moc
 
-LIBS_XPLC=-lxplc-cxx -lxplc
 LIBS_DBUS=-ldbus-1
 LIBS_QT=-lqt-mt
 LIBS_PAM=-lpam
