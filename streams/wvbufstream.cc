@@ -12,7 +12,6 @@
 WvBufStream::WvBufStream()
 {
     dead = eof = false; 
-    death_notify = NULL;
 }
 
 
@@ -25,9 +24,6 @@ WvBufStream::~WvBufStream()
 void WvBufStream::close()
 {
     dead = true; 
-    if (death_notify)
-	*death_notify = NULL;
-    death_notify = NULL;
     WvStream::close();
 }
 

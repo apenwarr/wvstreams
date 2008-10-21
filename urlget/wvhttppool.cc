@@ -43,7 +43,6 @@ WvUrlRequest::WvUrlRequest(WvStringParm _url, WvStringParm _method,
     {
         WvBufUrlStream *x = new WvBufUrlStream;
         outstream = x;
-        x->death_notify = (WvStream **)&outstream;
         x->url = url;
 
         putstream = content_source;
@@ -62,7 +61,6 @@ void WvUrlRequest::done()
 {
     if (outstream)
     {
-        outstream->death_notify = NULL;
         outstream->seteof();
         outstream = NULL; 
     }
