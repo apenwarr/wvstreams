@@ -31,6 +31,7 @@ class ModuleLoader: public IModuleLoader {
   IMPLEMENT_IOBJECT(ModuleLoader);
 public:
   virtual IModule* loadModule(const char* modulename);
+  virtual ~ModuleLoader() {}
 };
 
 class Module: public IModule {

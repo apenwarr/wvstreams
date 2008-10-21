@@ -34,6 +34,7 @@ public:
     return new ModuleManagerFactory;
   }
   virtual IServiceHandler* createModuleManager(const char* directory);
+  virtual ~ModuleManagerFactory() {}
 };
 
 struct ModuleNode;
