@@ -166,7 +166,7 @@ const char* loaderSymbol(void* aHandle,
 			 void** aPointer) {
   const char* rv = 0;
 
-  *aPointer = GetProcAddress(static_cast<HMODULE>(aHandle), aSymbol);
+  *aPointer = (void *)GetProcAddress(static_cast<HMODULE>(aHandle), aSymbol);
 
   if(!aPointer)
     rv = getErrorMessage();
