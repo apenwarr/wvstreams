@@ -121,7 +121,6 @@ WVTEST_MAIN("Checking Daemon created")
         // This is the client process
         wvout->print("Running code for client\n");
                 
-        // Will wait for 10 sec at max for the daemon to load
         WvUnixConn *client = connect_to_daemon(sock_name, 60, true);
 
 	if (WVPASS(client != NULL))
