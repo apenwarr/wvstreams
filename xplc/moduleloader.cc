@@ -51,7 +51,7 @@ Module* Module::loadModule(const char* modulename) {
   if(err)
     return NULL;
 
-  void * symbol = reinterpret_cast<void*>(moduleinfo);
+  void* symbol;
   err = loaderSymbol(dlh, "XPLC_Module", &symbol);
   moduleinfo = reinterpret_cast<XPLC_ModuleInfo*>(symbol);
 
