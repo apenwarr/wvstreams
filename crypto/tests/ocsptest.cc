@@ -118,22 +118,5 @@ int main(int argc, char *argv[])
     }
     
     WvOCSPResp::Status status = resp.get_status(clicert, issuer);
-    WvString status_str;
-    switch(status)
-        {
-        case WvOCSPResp::Error:
-            status_str = "ERROR";
-            break;
-        case WvOCSPResp::Good:
-            status_str = "GOOD";
-            break;
-        case WvOCSPResp::Revoked:
-            status_str = "REVOKED";
-            break;
-        case WvOCSPResp::Unknown:
-            status_str = "UNKNOWN";
-            break;
-        }
-
-    wvcon->print("Response status: %s\n", status_str);
+    wvcon->print("Response status: %s.\n", WvOCSPResp::status_str(status));
 }

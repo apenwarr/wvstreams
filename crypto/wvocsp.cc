@@ -202,3 +202,15 @@ WvOCSPResp::Status WvOCSPResp::get_status(const WvX509 &cert,
     
     return Unknown;
 }
+
+WvString WvOCSPResp::status_str(WvOCSPResp::Status status)
+{
+    if (status == Good)
+        return "good";
+    else if (status == Error)
+        return "error";
+    else if (status == Revoked)
+        return "revoked";
+
+    return "unknown";
+}

@@ -51,6 +51,7 @@ public:
 
     enum Status { Error, Good, Revoked, Unknown };
     Status get_status(const WvX509 &cert, const WvX509 &issuer) const;
+    static WvString status_str(Status status);
 
 private:
     WvOCSPResp(WvOCSPResp &); // not implemented yet
