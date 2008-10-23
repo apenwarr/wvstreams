@@ -129,10 +129,10 @@ bool WvOCSPResp::signedbycert(const WvX509 &cert) const
 }
 
 
-WvX509 * WvOCSPResp::get_signing_cert() const
+WvX509 WvOCSPResp::get_signing_cert() const
 {
     if (!bs || !sk_X509_num(bs->certs))
-        return NULL;
+        return WvX509();
 
     // note: the following bit of code is taken almost verbatim from
     // ocsp_vfy.c in OpenSSL 0.9.8. Copyright and attribution should 
@@ -144,7 +144,7 @@ WvX509 * WvOCSPResp::get_signing_cert() const
     {
         X509 *x = X509_find_by_subject(bs->certs, id->value.byName);
         if (x)
-            return new WvX509(X509_dup(x));
+            return WvX509(X509_dup(x));
     }
 
     if (id->value.byKey->length != SHA_DIGEST_LENGTH) return NULL;
@@ -155,10 +155,10 @@ WvX509 * WvOCSPResp::get_signing_cert() const
         X509 *x = sk_X509_value(bs->certs, i);
         X509_pubkey_digest(x, EVP_sha1(), tmphash, NULL);
         if(!memcmp(keyhash, tmphash, SHA_DIGEST_LENGTH))
-            return new WvX509(X509_dup(x));
+            return WvX509(X509_dup(x));
     }
     
-    return NULL;
+    return WvX509();
 }
 
 

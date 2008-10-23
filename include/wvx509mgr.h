@@ -80,6 +80,11 @@ public:
     virtual WvString errstr() const;
 
     /**
+     * The not operator returns true if !isok()
+     */
+    bool operator! () const;
+
+    /**
      * Allow us access to the RSA member.
      */
     WvRSAKey *get_rsa() { return rsa; }

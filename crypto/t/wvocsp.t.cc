@@ -77,12 +77,9 @@ static WvOCSPResp::Status test_ocsp_req(WvX509 &cert, WvX509Mgr &cacert,
     {
         WVPASS(resp.check_nonce(req));
 
-        WvX509 * signing_cert = resp.get_signing_cert();
-        if (WVPASS(signing_cert))
-        {
-            WVPASSEQ(signing_cert->get_subject(), ocspcert.get_subject());
-            WVRELEASE(signing_cert);
-        }
+        WvX509 signing_cert = resp.get_signing_cert();
+        WVPASS(signing_cert.isok());
+        WVPASSEQ(signing_cert.get_subject(), ocspcert.get_subject());
 
         WVPASS(resp.signedbycert(ocspcert));
         WVFAIL(resp.signedbycert(cert)); 

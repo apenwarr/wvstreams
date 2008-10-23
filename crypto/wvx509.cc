@@ -1289,6 +1289,12 @@ bool WvX509::isok() const
 }
 
 
+bool WvX509::operator! () const
+{
+    return !isok();
+}
+
+
 WvString WvX509::errstr() const
 {
     if (!cert)

@@ -344,10 +344,16 @@ public:
      */
     virtual bool isok() const;
 
-    /**
-     * Returns an error string if isok() is not true.
-     */
+     /**
+      * Returns an error string if isok() is not true.
+      */
     virtual WvString errstr() const;
+
+    /**
+     * The not operator returns true if !isok()
+     */
+    bool operator! () const;
+
 
 private:
     friend class WvCRL;

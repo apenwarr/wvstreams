@@ -175,6 +175,12 @@ bool WvX509Mgr::isok() const
 }
 
 
+bool WvX509Mgr::operator! () const
+{
+    return !isok();
+}
+
+
 WvString WvX509Mgr::errstr() const
 {
     if (!WvX509::isok())
