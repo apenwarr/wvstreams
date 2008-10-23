@@ -116,6 +116,15 @@ WVTEST_MAIN("encoding request")
     static const char *EXPDATE = "202010194703Z"; //dec 10, 2049
     static const char *REVDATE = "071211195254Z"; //dec 11 2007
 
+    {
+	WvSystem caller("openssl", "version");
+	if (caller.go())
+	{
+	    WVFAIL("Failed to run openssl utility, is it installed and in your PATH?");
+	    return;
+	}
+    }
+
     // unknown, because the cert's serial not in CRL list
     WVPASSEQ(test_ocsp_req(cert, cacert, cacert, ""), WvOCSPResp::Unknown);
     // revoked
