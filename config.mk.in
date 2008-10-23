@@ -61,5 +61,4 @@ with_pam=@with_pam@
 with_tcl=@with_tcl@
 with_readline=@with_readline@
 with_qt=@with_qt@
-with_xplc=@with_xplc@
 with_zlib=@with_zlib@
