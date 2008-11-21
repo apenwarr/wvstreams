@@ -73,8 +73,17 @@ static WvOCSPResp::Status test_ocsp_req(WvX509 &cert, WvX509Mgr &cacert,
         resp.decode(buf);
     }
 
-    WVPASS(resp.isok());
-    WVPASS(resp.check_nonce(req));
+    if (WVPASS(resp.isok()))
+    {
+        WVPASS(resp.check_nonce(req));
+
+        WvX509 signing_cert = resp.get_signing_cert();
+        WVPASS(signing_cert.isok());
+        WVPASSEQ(signing_cert.get_subject(), ocspcert.get_subject());
+
+        WVPASS(resp.signedbycert(ocspcert));
+        WVFAIL(resp.signedbycert(cert)); 
+    }
 
     ::unlink(reqfname);
     ::unlink(respfname);
@@ -83,13 +92,6 @@ static WvOCSPResp::Status test_ocsp_req(WvX509 &cert, WvX509Mgr &cacert,
     ::unlink(cakeyfname);
     ::unlink(ocspfname);
     ::unlink(ocspkeyfname);
-
-    WvX509 * signing_cert = resp.get_signing_cert();
-    WVPASS(signing_cert);
-    WVPASSEQ(signing_cert->get_subject(), ocspcert.get_subject());
-    WVPASS(resp.signedbycert(ocspcert));
-    WVFAIL(resp.signedbycert(cert)); 
-    WVRELEASE(signing_cert);
 
     return resp.get_status(cert, cacert);
 }

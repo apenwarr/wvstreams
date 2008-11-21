@@ -338,7 +338,7 @@ if test "$enable_resolver_fork" = "no"; then
               [Define to disable WvResolver forking for debugging with gdb.])
 fi
 
-# resolver-fork
+# xplc delete detector
 if test "$enable_delete_detector" = "yes"; then
     AC_DEFINE(ENABLE_DELETE_DETECTOR,,
               [Define to enable the XPLC delete detector.])

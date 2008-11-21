@@ -49,9 +49,7 @@ config.status: configure
 		--prefix=/usr --mandir=\$${prefix}/share/man \
 		--infodir=\$${prefix}/share/info \
 		--sysconfdir=/etc --localstatedir=/var \
-		--disable-debug --disable-verbose \
-		--with-qt --with-openslp
-
+		--disable-debug --disable-verbose 
 
 #Architecture
 build: build-arch build-indep
@@ -82,7 +80,6 @@ clean:
 	# Add here commands to clean up after the build process.
 	-$(MAKE) -C Docs/sgmlmanual clean
 	-rm -rf Docs/doxy-html
-	-$(MAKE) -C xplc distclean
 	-$(MAKE) distclean
 
 ifneq "$(wildcard /usr/share/misc/config.sub)" ""
@@ -137,10 +134,6 @@ install-arch:
 	# Install development package
 	$(MAKE) install-dev DESTDIR=$(PKGDEV)
 
-	# Install a minimal XPLC
-	$(MAKE) install-xplc DESTDIR=$(PKGDEV)
-	rm -f $(PKGDEV)/usr/lib/libxplc.so*
-
 	# Install UniConf daemon
 	$(MAKE) install-uniconfd DESTDIR=$(CURDIR)/debian/tmp
 	install -d $(CURDIR)/debian/tmp/etc/default
@@ -150,6 +143,7 @@ install-arch:
 	install -m644 debian/libwvstreams$(version)-base.lintian-override debian/libwvstreams$(version)-base/usr/share/lintian/overrides/libwvstreams$(version)-base
 	install -m644 debian/libwvstreams$(version)-extras.lintian-override debian/libwvstreams$(version)-extras/usr/share/lintian/overrides/libwvstreams$(version)-extras
 	install -m644 debian/libwvstreams$(version)-qt.lintian-override debian/libwvstreams$(version)-qt/usr/share/lintian/overrides/libwvstreams$(version)-qt
+	install -m644 debian/libwvstreams$(version)-dbus.lintian-override debian/libwvstreams$(version)-dbus/usr/share/lintian/overrides/libwvstreams$(version)-dbus
 
 	dh_install -s
 
@@ -181,6 +175,7 @@ binary-common:
 	dh_makeshlibs -plibwvstreams$(version)-base \
 		      -plibwvstreams$(version)-extras \
 		      -plibwvstreams$(version)-qt \
+		      -plibwvstreams$(version)-dbus \
 		      -plibuniconf$(version) \
 	dh_installdeb
 	dh_installdeb

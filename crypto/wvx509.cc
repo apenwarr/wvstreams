@@ -140,12 +140,10 @@ WvX509::WvX509(const WvX509 &x509)
     : debug("X509", WvLog::Debug5)
 {
     wvssl_init();
-    cert = NULL;
-
-    // this is pretty stupid, but will do for now
-    WvDynBuf buf;
-    x509.encode(CertDER, buf);
-    decode(CertDER, buf);
+    if (x509.cert)
+        cert = X509_dup(x509.cert);
+    else
+        cert = NULL;
 }
 
 
@@ -1286,6 +1284,12 @@ void WvX509::set_extension(int nid, WvStringParm _values)
 bool WvX509::isok() const
 {
     return cert;
+}
+
+
+bool WvX509::operator! () const
+{
+    return !isok();
 }
 
 

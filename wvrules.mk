@@ -231,8 +231,6 @@ _wvclean:
 	@rm -f semantic.cache tags
 	@rm -rf debian/tmp
 
-distclean: clean
-
 dist-hook:
 
 PKGDIR=$(WVPACKAGE_TARNAME)-$(WVPACKAGE_VERSION)
@@ -241,9 +239,11 @@ dist: config.mk dist-hook
 	@echo '--> Making dist in ../build/$(PKGDIR)...'
 	@test -d ../build || mkdir ../build
 	@rsync -a --delete --force '$(shell pwd)/' '../build/$(PKGDIR)'
+	cd ../build/$(PKGDIR) && git clean -d -f -x
+	cd ../build/$(PKGDIR) && git log > ChangeLog
+	cd ../build/$(PKGDIR) && ./autogen.sh
 	@find '../build/$(PKGDIR)' -name .git -type d -print0 | xargs -0 rm -rf --
 	@find '../build/$(PKGDIR)' -name .gitignore -type f -print0 | xargs -0 rm -f --
-	@$(MAKE) -C '../build/$(PKGDIR)' distclean
 	@rm -f '../build/$(PKGDIR).tar.gz'
 	@cd ../build; tar -zcf '$(PKGDIR).tar.gz' '$(PKGDIR)'
 	@echo '--> Created tarball in ../build/$(PKGDIR).tar.gz.'
