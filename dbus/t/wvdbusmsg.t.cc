@@ -13,7 +13,7 @@ WVTEST_MAIN("dbusmsg basics")
     WVPASSEQ(msg.get_interface(), "my.ifc");
     WVPASSEQ(msg.get_member(), "method");
     
-    WVPASSEQ(msg.get_argstr(), "yoink,-1,65535,b1,-2,4294967296,123.45");
+    WVPASSEQ(msg.get_argstr(), "yoink,-1,65535,1,-2,4294967296,123.45");
     
     {
 	WvDBusMsg::Iter i(msg);
@@ -66,7 +66,7 @@ WVTEST_MAIN("dbusmsg arrays")
 	.varray_start("i").append(-5).append(-6).varray_end()
 	.array_end();
     WVPASS(true);
-    WVPASSEQ(msg.get_argstr(), "{5},[str,5,b1],[one,two],[5,6],[{[str1,str2]},{[-5,-6]}]");
+    WVPASSEQ(msg.get_argstr(), "{5},[str,5,1],[one,two],[5,6],[{[str1,str2]},{[-5,-6]}]");
 }
 
 WVTEST_MAIN("dbusmsg char signedness")
@@ -77,7 +77,7 @@ WVTEST_MAIN("dbusmsg char signedness")
     signed char sc3 = CHAR_MIN;
     WvDBusMsg msg("my.dest", "/my/path", "my.ifc", "method");
     msg.array_start("y").append(uc).append(sc1).append(sc2).append(sc3).array_end();
-    WVPASSEQ(msg.get_argstr(), "[y255,y127,y255,y128]");
+    WVPASSEQ(msg.get_argstr(), "[255,127,255,128]");
 
     WvDBusMsg::Iter it(msg);
     it.rewind();
