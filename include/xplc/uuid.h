@@ -76,7 +76,7 @@
  * UUID.
  */
 
-#ifdef WIN32
+#if defined WIN32 || defined SOLARIS
 typedef unsigned long u_int32_t;
 typedef unsigned short u_int16_t;
 typedef unsigned char u_int8_t;

@@ -16,6 +16,8 @@ AC_GNU_SOURCE
 AC_PROG_CC
 AC_PROG_MAKE_SET
 AC_PROG_RANLIB
+AC_CHECK_PROG(AR,ar)
+AC_CHECK_PROG(AR,gar)
 AM_PROG_CC_STDC
 
 if test "x$am_cv_prog_cc_stdc" = xno ; then

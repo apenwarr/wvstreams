@@ -53,6 +53,11 @@
 #define FORCE_NONZERO 0
 #endif
 
+#ifdef SOLARIS
+#define SOL_TCP 6
+#define SOL_IP 0
+#endif
+
 WV_LINK(WvTCPConn);
 WV_LINK(WvTCPListener);
 

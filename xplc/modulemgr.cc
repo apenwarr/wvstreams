@@ -79,6 +79,10 @@ struct ModuleNode {
   }
 };
 
+#ifdef SOLARIS
+#define PATH_MAX 4096
+#endif
+
 IServiceHandler* ModuleManagerFactory::createModuleManager(const char* directory) {
 #if !defined(WIN32)
   DIR* dir;

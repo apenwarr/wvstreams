@@ -215,7 +215,11 @@ bool WvPam::authenticate(WvStringParm rhost, WvStringParm user, WvStringParm pas
     // Grab the current user name (now that we've authenticated)
     if (!d->user)
     {
+#ifdef SOLARIS
+        void *x = NULL;
+#else
         const void *x = NULL;
+#endif
         d->status = pam_get_item(d->pamh, PAM_USER, &x);
         if (!check_pam_status("get username")) return false;
         d->user = (const char *)x;
