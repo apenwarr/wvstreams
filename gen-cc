@@ -1,6 +1,8 @@
-#!/bin/sh -e
+#!/bin/sh +e
 OUTFILE=$1
 EXT=$2
+TEMPDIR=`dirname \$EXT`
+TEMPDEP=`dirname \$EXT`/.`basename \$EXT .o`.d
 echo "* Generating $OUTFILE" >&2
 TEMPFILE=gencc-$$.tmp
 
@@ -10,8 +12,8 @@ cat >$TEMPFILE <<-EOF
 	
 	MODE=\$1
 	BASE=\$2
-	DIR=`dirname \$BASE`
-	DEPFILE=`dirname \$BASE`/.`basename \$BASE .o`.d
+	DIR=\$TEMPDIR
+	DEPFILE=\$TEMPDEP
 	shift
 	shift
 	
