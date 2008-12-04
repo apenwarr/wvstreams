@@ -85,17 +85,24 @@ AC_CANONICAL_TARGET
 case "$target" in
     *-linux*)
         ARCH_SUBDIRS="linuxstreams"
+        OS="LINUX"
 	;;
     *-sunos*|*-solaris*)
     	ARCH_SUBDIRS=""
 	ac_libs="-lstdc++ -lgcc_s -ldl -lm -lc"
+	OS="SOLARIS"
 	;;
+    *-win*)
+    	OS="WIN32"
+    	;;
     *)
     	ARCH_SUBDIRS=""
+    	OS="OTHER"
 	;;
 esac
 AC_SUBST(target)
 AC_SUBST(ARCH_SUBDIRS)
+AC_SUBST(OS)
 
 # Detect endianness
 AC_C_BIGENDIAN

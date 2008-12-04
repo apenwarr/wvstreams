@@ -46,7 +46,8 @@ else
   CXXFLAGS += -fPIC
 endif
 
-ifdef _SOLARIS
+ifeq (${OS},SOLARIS)
+ _SOLARIS= _SOLARIS
  AR=gar
 endif
 
