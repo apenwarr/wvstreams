@@ -10,8 +10,8 @@ cat >$TEMPFILE <<-EOF
 	
 	MODE=\$1
 	BASE=\$2
-	DIR=\$(dirname \$BASE)
-	DEPFILE=\$(dirname \$BASE)/.\$(basename \$BASE .o).d
+	DIR=`dirname \$BASE`
+	DEPFILE=`dirname \$BASE`/.`basename \$BASE .o`.d
 	shift
 	shift
 	

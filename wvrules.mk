@@ -46,6 +46,10 @@ else
   CXXFLAGS += -fPIC
 endif
 
+ifdef _SOLARIS
+ AR=gar
+endif
+
 include $(WVSTREAMS_SRC)/wvrules-$(COMPILER_STANDARD).mk
 
 ifeq (${WVTESTRUN},)
@@ -124,6 +128,13 @@ wvsoname=$(if $($1-SONAME),$($1-SONAME),$(if $(SONAME),$(SONAME),$1))
 ifdef _WIN32
   define wvlink_so
 	@echo "Skipping $@ on win32 (can't build shared libraries)"
+  endef
+endif
+
+ifdef _SOLARIS
+  define wvlink_so
+	@echo "Solaris Link!"
+	$(LINK_MSG)$(WVLINK_CC) $(LDFLAGS) $($1-LDFLAGS) -shared -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
   endef
 else
   define wvlink_so

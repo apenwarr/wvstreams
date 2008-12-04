@@ -7,6 +7,14 @@ ifdef _WIN32
     include win32.mk
 endif
 
+ifdef _SOLARIS
+    RM = rm -f
+    CFLAGS += -DSOLARIS
+    CXXFLAGS += -DSOLARIS
+else
+    RM = rm -fv 
+endif
+
 %: %.subst
 	sed -e 's/#VERSION#/$(WVPACKAGE_VERSION)/g' < $< > $@
 
@@ -234,21 +242,27 @@ distclean: clean
 		include/wvautoconf.h config.cache \
 		stamp-h.in 
 	rm -rf autom4te.cache
+	rm -rf argp/autom4te.cache
+	rm -rf argp/config.status argp/config.log
+	rm -rf argp/configure.lineno argp/config.h
+	rm -rf argp/Makefile argp/testsuite/Makefile
+	rm -rf argp/testsuite/ex1 argp/testsuite/ex2 argp/testsuite/ex3
+	rm -rf argp/libargp.a argp/stamp-h1
 	rm -f pkgconfig/*.pc
 
 clean:
 	$(subdirs)
-	@rm -fv .junk $(TARGETS) uniconf/daemon/uniconfd \
+	@$(RM) .junk $(TARGETS) uniconf/daemon/uniconfd \
 		$(TESTS) tmp*.ini uniconf/daemon/uniconfd.ini \
 		.wvtest-total \
 		$(shell find . -name '*.o' -o -name '.*.d' \
 			-o -name '*~' -o -name '*.moc')
 		
 clean-targets:
-	rm -fv $(TARGETS)
+	$(RM) $(TARGETS)
 	
 clean-tests:
-	rm -fv $(TESTS)
+	$(RM) $(TESTS)
 
 kdoc:
 	kdoc -f html -d Docs/kdoc-html --name wvstreams --strip-h-path */*.h
