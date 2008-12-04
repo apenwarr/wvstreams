@@ -4,6 +4,7 @@ config.h
 config.log
 config.status
 configure.lineno
+configure
 stamp-h1
 argp-test.exe
 testsuite/.deps
