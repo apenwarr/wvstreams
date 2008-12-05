@@ -94,13 +94,19 @@ case "$target" in
 	OS="SOLARIS"
 	;;
     *-win*)
+    	ARCH_SUBDIRS="win32"
     	OS="WIN32"
+    	;;
+    *-apple*)
+    	ARCH_SUBDIRS=""
+    	OS="MACOS"
     	;;
     *)
     	ARCH_SUBDIRS=""
     	OS="OTHER"
 	;;
 esac
+
 AC_SUBST(target)
 AC_SUBST(ARCH_SUBDIRS)
 AC_SUBST(OS)

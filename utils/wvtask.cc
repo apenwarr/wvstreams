@@ -360,7 +360,11 @@ void WvTaskMan::get_stack(WvTask &task, size_t size)
         
             task.stack = mmap(next_stack_addr, task.stacksize,
                 PROT_READ | PROT_WRITE,
+#ifndef MACOS 
                 MAP_PRIVATE | MAP_ANONYMOUS,
+#else
+                MAP_PRIVATE,
+#endif
                 -1, 0);
         }
 	
