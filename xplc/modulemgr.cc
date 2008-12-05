@@ -79,7 +79,7 @@ struct ModuleNode {
   }
 };
 
-#ifdef SOLARIS
+#if defined(SOLARIS) || defined(MACOS)
 #define PATH_MAX 4096
 #endif
 

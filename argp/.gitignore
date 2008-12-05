@@ -13,3 +13,8 @@ testsuite/ex3.exe
 testsuite/ex4.exe
 testsuite/Makefile
 libargp.list
+argp-test
+testsuite/ex1
+testsuite/ex2
+testsuite/ex3
+testsuite/ex4

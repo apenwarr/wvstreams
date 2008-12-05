@@ -47,8 +47,12 @@ else
 endif
 
 ifeq (${OS},SOLARIS)
- _SOLARIS= _SOLARIS
- AR=gar
+  _SOLARIS= _SOLARIS
+  AR=gar
+endif
+
+ifeq (${OS},MACOS)
+  _MACOS=_MACOS
 endif
 
 include $(WVSTREAMS_SRC)/wvrules-$(COMPILER_STANDARD).mk

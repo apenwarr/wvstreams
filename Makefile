@@ -11,8 +11,13 @@ ifdef _SOLARIS
     RM = rm -f
     CFLAGS += -DSOLARIS
     CXXFLAGS += -DSOLARIS
-else
-    RM = rm -fv 
+else 
+    ifdef _MACOS
+    	CFLAGS+= -DMACOS
+    	CXXFLAGS+= -DMACOS
+    else
+    	RM = rm -fv
+    endif 
 endif
 
 %: %.subst
