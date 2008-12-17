@@ -347,8 +347,8 @@ fi
 # dbus
 if test "$with_dbus" != "no"; then
     WV_APPEND(CPPFLAGS, -DDBUS_API_SUBJECT_TO_CHANGE -Iinclude/dbus-upstream)
-    if test "$with_dbus" = ""; then
-        DBUS_LIBDIR="$(pkg-config --libs-only-L dbus-1 | sed 's/^-L//' | awk '{print $1}')"
+    if test "$with_dbus" = "" -o "$with_dbus" = "yes"; then
+        DBUS_LIBDIR="$(pkg-config --variable=libdir dbus-1)"
 	if test -z "$DBUS_LIBDIR"; then
 	    DBUS_LIBDIR=/usr/lib  # Default path for static linking
 	fi
