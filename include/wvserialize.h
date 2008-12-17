@@ -349,7 +349,7 @@ template <>
  * except as the last character.
  */
 template <>
-extern WvString _wv_deserialize<WvString>(WvBuf &buf);
+WvString _wv_deserialize<WvString>(WvBuf &buf);
 
 
 /** Deserialize a WvBuf. */
