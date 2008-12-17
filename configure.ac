@@ -63,6 +63,7 @@ AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
 AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
 AC_ARG_WITH(qt, AC_HELP_STRING([--with-qt], [Qt]))
 AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib (required)]))
+AC_ARG_WITH(valgrind, AC_HELP_STRING([--with-valgrind], [Valgrind]))
 
 AC_ARG_VAR(MOC, [Qt meta object compiler])
 AC_ARG_VAR(WEAVER_BUILD_INFO, [Extra version info])
@@ -493,8 +494,10 @@ if test "$with_qt" != "no"; then
 fi
 
 # valgrind
-AC_CHECK_PROG(VALGRIND, valgrind, valgrind)
-AC_CHECK_HEADERS(valgrind/memcheck.h)
+if test "$with_valgrind" != "no"; then
+    AC_CHECK_PROG(VALGRIND, valgrind, valgrind)
+    AC_CHECK_HEADERS(valgrind/memcheck.h)
+fi
 
 # zlib
 if test "$with_zlib" != "no"; then
