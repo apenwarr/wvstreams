@@ -467,7 +467,7 @@ if test "$with_qt" != "no"; then
         CPPFLAGS_save="$CPPFLAGS"
         LDFLAGS_save="$LDFLAGS"
         LIBS_save="$LIBS"
-        for wv_qtdir in $with_qt $QTDIR $QT_SEARCH_PATH; do
+        for wv_qtdir in $with_qt $QTDIR $QT_SEARCH_PATH $(pkg-config --variable=prefix qt-mt); do
             eval wv_qtdir="$wv_qtdir"
             CPPFLAGS="$CPPFLAGS_save -I$wv_qtdir/include -I$wv_qtdir/include/qt3"
             LDFLAGS="$LDFLAGS_save -L$wv_qtdir/lib"
