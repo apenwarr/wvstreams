@@ -483,7 +483,7 @@ if test "$with_qt" != "no"; then
     with_qt=$wv_cv_with_qt
     if test "$with_qt" != no; then
         WV_APPEND(CPPFLAGS, -I$with_qt/include -I$with_qt/include/qt3)
-        if [ "$wv_qtdir" != "/usr" ]; then
+        if test "$wv_qtdir" != "/usr" ; then
                 # never explicitly include /usr/lib
 	        WV_APPEND(LDFLAGS, -L$with_qt/lib)
 	fi
