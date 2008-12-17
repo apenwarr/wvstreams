@@ -358,7 +358,7 @@ template <>
 class WvDeserialize<WvBuf *>
 {
 public:
-    static inline WvBuf *go(WvBuf &buf)
+    static WvBuf *go(WvBuf &buf)
     {
 	size_t len = wv_deserialize<size_t>(buf);
 	WvBuf *outbuf = new WvInPlaceBuf(new char[len], 0, len, true);

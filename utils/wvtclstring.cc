@@ -8,6 +8,7 @@
 #include "wvstring.h"
 #include "wvstringmask.h"
 #include "wvtclstring.h"
+#include <climits>
 
 const WvStringMask WVTCL_NASTY_SPACES(WVTCL_NASTY_SPACES_STR);
 const WvStringMask WVTCL_NASTY_NEWLINES(WVTCL_NASTY_NEWLINES_STR);
