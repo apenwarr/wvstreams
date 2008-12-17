@@ -150,7 +150,7 @@ endif
 %.E: %.cc;	$(call wvcxx,$@,$<,$*,,-E)
 %.E: %.cpp;	$(call wvcxx,$@,$<,$*,,-E)
 
-%.moc: %.h;	moc -o $@ $<
+%.moc: %.h;	$(MOC) -o $@ $<
 
 %: %.o;		$(call wvlink,$@,$^) 
 %.t: %.t.o;	$(call wvlink,$@,$(call reverse,$(filter %.o,$^)) $(filter-out %.o,$^) $(LIBWVTEST))
