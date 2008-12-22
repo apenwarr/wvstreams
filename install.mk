@@ -1,5 +1,5 @@
 ifeq ("$(with_readline)", "no")
-install: install-shared install-dev install-xplc install-uniconfd
+install: install-shared install-dev install-uniconfd
 else
 install: install-shared install-dev install-uniconfd install-wsd
 endif
