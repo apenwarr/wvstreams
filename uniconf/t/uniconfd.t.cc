@@ -289,7 +289,7 @@ static WvPipe * setup_master_daemon(bool implicit_root,
         WvString &masterpipename, WvString &ininame)
 {
     ininame = wvtmpfilename("uniconfd.t-ini");
-    WvString pidfile = wvtmpfilename("uiconfd.t-mpid");
+    WvString pidfile = wvtmpfilename("uniconfd.t-mpid");
 
     WvFile stuff(ininame, (O_CREAT | O_WRONLY));
     stuff.print("pickles/apples/foo=1\n");
