@@ -105,7 +105,7 @@ static void spin(WvIStreamList &l)
 
 static void appendbuf(WvStream &s, void *_buf)
 {
-    printf("append!\n");
+    wvcon->print("append!\n");
     WvDynBuf *buf = (WvDynBuf *)_buf;
     s.read(*buf, 10240);
 }
@@ -115,7 +115,7 @@ static void linecmp(WvIStreamList &sl, WvBuf &buf,
 		    const char *w1, const char *w2 = NULL,
 		    const char *w3 = NULL)
 {
-    printf("%s", WvString("Awaiting '%s' '%s' '%s'\n", w1, w2, w3).cstr());
+    wvcon->print("Awaiting '%s' '%s' '%s'\n", w1, w2, w3);
     spin(sl);
     
     WvString line = wvtcl_getword(buf, "\r\n");
@@ -216,18 +216,17 @@ WVTEST_MAIN("daemon multimount")
 
     WvIStreamList::globallist.append(&conn, false, "connection");
     WvIStreamList::globallist.append(&daemon, false, "daemon");
-    printf("You are about to enter the no spin zone\n");
+    wvcon->print("You are about to enter the no spin zone\n");
     while (!WvIStreamList::globallist.isempty() && 
            conn.isok() && daemon.isok())
     {
-        printf("Spinning: streams left: %i\n", 
+        wvcon->print("Spinning: streams left: %s\n", 
                WvIStreamList::globallist.count());
         WvIStreamList::globallist.runonce();
     }
 
     WVPASS(daemon.isok());
     WvIStreamList::globallist.zap();
-    fprintf(stderr, "we're here\n");
 }
 
 
@@ -267,11 +266,11 @@ WVTEST_MAIN("daemon quit")
 
     WvIStreamList::globallist.append(&conn, false, "conn");
     WvIStreamList::globallist.append(&daemon, false, "daemon");
-    printf("You are about to enter the no spin zone\n");
+    wvcon->print("You are about to enter the no spin zone\n");
     while (!WvIStreamList::globallist.isempty() && 
            conn.isok() && daemon.isok())
     {
-        printf("Spinning: streams left: %i\n", 
+        wvcon->print("Spinning: streams left: %s\n", 
                WvIStreamList::globallist.count());
         WvIStreamList::globallist.runonce();
     }
@@ -401,12 +400,12 @@ static void daemon_proxy_test(bool implicit_root)
     
     WvIStreamList::globallist.append(&conn, false, "conn");
 
-    printf("Spinning: streams left: %i\n", 
+    wvcon->print("Spinning: streams left: %s\n", 
            WvIStreamList::globallist.count());
     while (!WvIStreamList::globallist.isempty() && 
             conn.isok())
     {
-        printf("Spinning: streams left: %i\n", 
+        wvcon->print("Spinning: streams left: %s\n", 
                WvIStreamList::globallist.count());
         WvIStreamList::globallist.runonce();
     }
