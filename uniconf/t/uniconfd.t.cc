@@ -308,10 +308,11 @@ static WvPipe * setup_master_daemon(bool implicit_root,
         mount2 = inimount;
     }
 
+    WvString lmoniker("unix:%s", masterpipename);
     const char * const uniconfd_args[] = {
         "uniconf/daemon/uniconfd",
         "-d", "--pid-file", pidfile.cstr(),
-        "-l", WvString("unix:%s", masterpipename).cstr(),
+        "-l", lmoniker.cstr(),
         mount1.cstr(),
         mount2.cstr(),
         NULL
@@ -333,10 +334,11 @@ static WvPipe * setup_slave_daemon(bool implicit_root, WvStringParm masterpipena
     else
         rootmount.append("/=retry:cache:unix:%s", masterpipename);
 
+    WvString lmoniker("unix:%s", slavepipename);
     const char * const uniconfd_args[] = {
         "uniconf/daemon/uniconfd",
-        "-d", "--pid-file", pidfile.cstr(),
-        "-l", WvString("unix:%s", slavepipename).cstr(),
+        "--pid-file", pidfile.cstr(),
+        "-l", lmoniker,
         rootmount.cstr(),
         NULL
     };
@@ -361,18 +363,20 @@ static void wait_for_pipe_ready(WvStringParm pipename)
         line = sock->getline(100);
     }
     WVRELEASE(sock);
-    fprintf(stderr, "Pipe ready! (%s)\n", line.cstr());
+    wvcon->print("Pipe ready! (%s)\n", line);
 }
 
 
 static void daemon_proxy_test(bool implicit_root)
 {
+    wvcon->print("Setting up master daemon.\n");
     WvString masterpipename, ininame;
     WvPipe *master = setup_master_daemon(implicit_root, masterpipename, ininame);
     master->setcallback(wv::bind(WvPipe::ignore_read, wv::ref(*master)));
     master->nowrite();
     wait_for_pipe_ready(masterpipename);
     
+    wvcon->print("Setting up slave daemon.\n");
     WvString slavepipename;
     WvPipe *slave = setup_slave_daemon(implicit_root, masterpipename, slavepipename);
     slave->setcallback(wv::bind(WvPipe::ignore_read, wv::ref(*slave)));
