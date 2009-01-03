@@ -58,6 +58,11 @@
 #define SOL_IP 0
 #endif
 
+#ifdef MACOS
+#define SOL_TCP 6
+#define SOL_IP 0
+#endif
+
 WV_LINK(WvTCPConn);
 WV_LINK(WvTCPListener);
 

@@ -10,6 +10,9 @@
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#ifdef MACOS
+#include <sys/types.h>
+#endif
 #include <net/if_arp.h>
 #endif
 

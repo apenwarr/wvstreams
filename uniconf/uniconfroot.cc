@@ -58,7 +58,7 @@ static bool watchout(UniWatchInfoTree *t)
 	{
 	    fail = true;
 	    if (1)
-		fprintf(stderr, "Remaining watch: '%s' (%d)\n",
+		fprintf(stderr, "Remaining watch: '%s' (%zd)\n",
 			w->fullkey().printable().cstr(), w->watches.count());
 	}
     }

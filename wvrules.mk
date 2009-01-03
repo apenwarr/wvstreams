@@ -35,17 +35,6 @@ include $(WVSTREAMS_SRC)/config.defaults.mk
 -include $(WVSTREAMS_SRC)/config.overrides.mk
 -include $(WVSTREAMS_SRC)/local.mk
 
-ifeq (${EXEEXT},.exe)
-  _WIN32=_WIN32
-  XPATH += $(WVSTREAMS)/win32 $(WVSTREAMS)/win32/cominclude
-  AR=i586-mingw32msvc-ar
-  LIBS += -lssl -lcrypto -lz -lole32 -lrpcrt4 -lwsock32 -lgdi32 -limagehlp \
-  	  -lstdc++
-else
-  CFLAGS += -fPIC
-  CXXFLAGS += -fPIC
-endif
-
 ifeq (${OS},SOLARIS)
   _SOLARIS= _SOLARIS
   AR=gar
@@ -53,6 +42,20 @@ endif
 
 ifeq (${OS},MACOS)
   _MACOS=_MACOS
+endif
+
+ifeq (${OS},WIN32)
+  _WIN32=_WIN32
+endif
+
+ifdef _WIN32
+  XPATH += $(WVSTREAMS)/win32 $(WVSTREAMS)/win32/cominclude
+  AR=i586-mingw32msvc-ar
+  LIBS += -lssl -lcrypto -lz -lole32 -lrpcrt4 -lwsock32 -lgdi32 -limagehlp \
+  	  -lstdc++
+else
+  CFLAGS += -fPIC
+  CXXFLAGS += -fPIC
 endif
 
 include $(WVSTREAMS_SRC)/wvrules-$(COMPILER_STANDARD).mk
@@ -140,6 +143,13 @@ ifdef _SOLARIS
   define wvlink_so
 	@echo "Solaris Link!"
 	$(LINK_MSG)$(WVLINK_CC) $(LDFLAGS) $($1-LDFLAGS) -shared -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
+  endef
+else ifdef _MACOS
+  define wvlink_so
+	@echo "MacOS Link!"
+	$(LINK_MSG)$(WVLINK_CC) $(LDFLAGS) $($1-LDFLAGS) -dynamiclib -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
+#	libtool -dynamic -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
+
   endef
 else
   define wvlink_so

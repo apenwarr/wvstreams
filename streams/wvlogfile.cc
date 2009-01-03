@@ -18,6 +18,10 @@
 
 #define MAX_LOGFILE_SZ	1024*1024*100	// 100 Megs
 
+#ifdef MACOS
+#define O_LARGEFILE 00000000 // MAC doesn't need Largefile support, so just make it a dummy value when ORd
+#endif
+
 static time_t gmtoffset()
 {
     time_t nowgmt = time(NULL);
