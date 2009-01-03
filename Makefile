@@ -117,7 +117,12 @@ TARGETS += libwvutils.so
 TESTS += $(call tests_cc,utils/tests)
 libwvutils_OBJS += $(filter-out $(BASEOBJS) $(TESTOBJS),$(call objects,utils))
 libwvutils.so: $(libwvutils_OBJS) $(LIBWVBASE) $(ARGP_TARGET)
+ifndef _MACOS
 libwvutils.so-LIBS += -lz -lcrypt $(LIBS_PAM)
+else
+libwvutils.so-LIBS += -lz $(LIBS_PAM)
+endif
+
 utils/tests/%: PRELIBS+=$(LIBWVSTREAMS)
 
 #
@@ -236,10 +241,16 @@ ifeq ("$(TESTNAME)", "")
 	cd uniconf/tests && DAEMON=1 ./unitest.sh
 endif
 
-wvtestmain: \
-	$(filter-out $(TEST_SKIP_OBJS), $(call objects, $(filter-out win32/%, \
-		$(shell find . -type d -name t -printf "%P\n")))) \
-	$(LIBWVDBUS) $(LIBUNICONF) $(LIBWVSTREAMS) $(LIBWVTEST)
+
+ifndef _MACOS
+TEST_TARGETS = 	$(filter-out $(TEST_SKIP_OBJS), $(call objects, $(filter-out win32/%, \
+		$(shell find . -type d -name t -printf "%P\n"))))
+else
+TEST_TARGETS = 	$(filter-out $(TEST_SKIP_OBJS), $(call objects, $(filter-out win32/%, \
+		$(shell find . -type d -name t -print))))
+endif
+
+wvtestmain: $(TEST_TARGETS) $(LIBWVDBUS) $(LIBUNICONF) $(LIBWVSTREAMS) $(LIBWVTEST)
 
 distclean: clean
 	rm -f uniconf/daemon/uniconfd.8 uniconf/tests/uni

@@ -1,6 +1,7 @@
 #include "strutils.h"
-#include <crypt.h>
-
+#ifndef MACOS
+  #include <crypt.h>
+#endif
 #include <unistd.h>
 #include <stdlib.h>
 
