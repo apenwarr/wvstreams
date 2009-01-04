@@ -10,10 +10,6 @@
 #ifndef __WVDIRITER_H
 #define __WVDIRITER_H
 
-#ifdef ISDARWIN
-# include <sys/types.h>
-#endif
-
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>

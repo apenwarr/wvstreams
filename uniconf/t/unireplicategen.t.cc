@@ -8,7 +8,12 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
+
+#ifdef MACOS
+#include <signal.h>
+#else
 #include <sys/signal.h>
+#endif
 
 WVTEST_MAIN("UniReplicateGen Sanity Test")
 {

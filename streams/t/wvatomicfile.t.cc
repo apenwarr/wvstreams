@@ -2,6 +2,10 @@
 #include "wvtest.h"
 #include "wvatomicfile.h"
 
+#ifdef MACOS
+  #include <sys/stat.h>
+#endif
+
 WVTEST_MAIN("atomic file test")
 {
     struct stat st;

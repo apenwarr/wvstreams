@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#ifndef  ISDARWIN
+#ifndef  MACOS
 # include <malloc.h>
 #else
 # include <stdlib.h>

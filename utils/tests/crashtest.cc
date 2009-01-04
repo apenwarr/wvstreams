@@ -7,7 +7,7 @@
 #include <signal.h>
 #include <stdlib.h>
 
-#ifndef  ISDARWIN
+#ifndef  MACOS
 # include <malloc.h>
 #endif
 

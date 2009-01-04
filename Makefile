@@ -15,6 +15,8 @@ else
     ifdef _MACOS
     	CFLAGS+= -DMACOS
     	CXXFLAGS+= -DMACOS
+    	WV_EXCLUDES+= linuxstreams/tests/aliastest linuxstreams/tests/ifctest linuxstreams/tests/routetest qt/tests/qtstringtest
+    	TEST_SKIP_OBJS+= linuxstreams/t/%
     else
     	RM = rm -fv
     endif 
@@ -189,7 +191,8 @@ endif
 
 #
 # libwvqt: helper library to make WvStreams work better in Qt event loops
-#
+#          This is not made to work with MacOS, so let's not ask it to.
+ifndef _MACOS
 ifneq ("$(with_qt)", "no")
   TARGETS += libwvqt.so
   TESTS += $(patsubst %.cc,%,$(wildcard qt/tests/*.cc))
@@ -201,7 +204,7 @@ ifneq ("$(with_qt)", "no")
   qt/wvqtstreamclone.o: include/wvqtstreamclone.moc
   qt/wvqthook.o: include/wvqthook.moc
 endif
-
+endif
 #
 # libwvstatic.a: all the wvstreams libraries in one static .a file, to make
 # it easy to link your programs statically to wvstreams.
