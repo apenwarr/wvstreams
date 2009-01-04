@@ -15,7 +15,12 @@ WVTEST_MAIN("pushdir exists")
 
     WVPASS(newpushdir.isok());
 
+#ifdef MACOS
+    char *pwd = static_cast<char *>(calloc(PATH_MAX,sizeof(char *)));
+    getcwd(pwd,PATH_MAX);
+#else
     char *pwd =  get_current_dir_name();
+#endif
     WVPASSEQ(pwd, dir);
     free(pwd);
 

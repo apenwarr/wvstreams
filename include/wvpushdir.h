@@ -27,9 +27,13 @@ public:
 
     WvPushDir(WvStringParm new_dir)
     {
+#ifdef MACOS
+       old_dir = static_cast<char *>(calloc(PATH_MAX, sizeof(char *)));
+       getcwd(old_dir, PATH_MAX);;
+#else
        old_dir = get_current_dir_name();
+#endif
        dir_handle = opendir(old_dir);
-
        if (chdir(new_dir) == -1)
           errnum = errno;
     }

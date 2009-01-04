@@ -217,7 +217,7 @@ static void do_transfer(WvSSLStream *ssl)
     char buf[1024];
     int rlen = ssl->read(buf, sizeof(buf));
     tlen += rlen;
-    printf("Read %d bytes (%d total)\n", rlen, tlen);
+    printf("Read %d bytes (%zd total)\n", rlen, tlen);
 }
 
 
@@ -298,7 +298,7 @@ WVTEST_MAIN("ssl establish connection")
     char data[20000];
     size_t wlen = ssl->write(data, sizeof(data));
 
-    printf("Wrote %d bytes\n", wlen);
+    printf("Wrote %zd bytes\n", wlen);
 
     // setup for next test
     singleconn->setcallback(wv::bind(do_transfer, singleconn));
