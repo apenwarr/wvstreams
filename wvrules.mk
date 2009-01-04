@@ -148,8 +148,6 @@ else ifdef _MACOS
   define wvlink_so
 	@echo "MacOS Link!"
 	$(LINK_MSG)$(WVLINK_CC) $(LDFLAGS) $($1-LDFLAGS) -dynamiclib -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
-#	libtool -dynamic -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
-
   endef
 else
   define wvlink_so
