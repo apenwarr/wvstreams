@@ -131,12 +131,18 @@ utils/tests/%: PRELIBS+=$(LIBWVSTREAMS)
 TARGETS += libwvstreams.so
 TARGETS += crypto/tests/ssltest ipstreams/tests/unixtest
 TARGETS += crypto/tests/printcert
-ifneq ("$(with_readline)", "no")
-  TARGETS += ipstreams/tests/wsd
-  ipstreams/tests/wsd-LIBS += -lreadline
+
+ifndef _MACOS
+  ifneq ("$(with_readline)", "no")
+    TARGETS += ipstreams/tests/wsd
+    ipstreams/tests/wsd-LIBS += -lreadline
+  else
+    TEST_SKIP_OBJS += ipstreams/tests/wsd
+  endif
 else
   TEST_SKIP_OBJS += ipstreams/tests/wsd
 endif
+
 TESTS += $(call tests_cc,configfile/tests)
 TESTS += $(call tests_cc,streams/tests)
 TESTS += $(call tests_cc,ipstreams/tests)

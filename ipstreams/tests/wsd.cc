@@ -5,6 +5,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#ifndef MACOS // The version of READLINE shipped with MacOS is brain damaged.
 
 class WvReadLineStream : public WvStream
 {
@@ -217,3 +218,4 @@ int main(int argc, char **argv)
     return 0;
 }
 
+#endif // Apple brain damaged Readline.

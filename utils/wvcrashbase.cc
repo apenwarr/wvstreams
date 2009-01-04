@@ -14,8 +14,58 @@
 IWvStream *WvCrashInfo::in_stream = NULL;
 const char *WvCrashInfo::in_stream_id = NULL;
 enum WvCrashInfo::InStreamState WvCrashInfo::in_stream_state = UNUSED;
+static const int ring_buffer_order = wvcrash_ring_buffer_order;
+static const int ring_buffer_size = wvcrash_ring_buffer_size;
+static const int ring_buffer_mask = ring_buffer_size - 1;
+static char ring_buffer[ring_buffer_size+1];
+static int ring_buffer_start = 0, ring_buffer_used = 0;
 
-// FIXME: this file mostly only works in Linux
+void wvcrash_ring_buffer_put(const char *str)
+{
+    wvcrash_ring_buffer_put(str, strlen(str));
+}
+
+
+void wvcrash_ring_buffer_put(const char *str, size_t len)
+{
+    while (len > 0)
+    {
+        int pos = (ring_buffer_start + ring_buffer_used) & ring_buffer_mask;
+        ring_buffer[pos] = *str++;
+        --len;
+        if (ring_buffer_used == ring_buffer_size)
+            ring_buffer_start = (ring_buffer_start + 1) & ring_buffer_mask;
+        else
+            ++ring_buffer_used;
+    }
+}
+
+
+const char *wvcrash_ring_buffer_get()
+{
+    if (ring_buffer_used == 0)
+        return NULL;
+    const char *result;
+    if (ring_buffer_start + ring_buffer_used >= ring_buffer_size)
+    {
+        ring_buffer[ring_buffer_size] = '\0';
+        result = &ring_buffer[ring_buffer_start];
+        ring_buffer_used -= ring_buffer_size - ring_buffer_start;
+        ring_buffer_start = 0;
+    }
+    else
+    {
+        ring_buffer[ring_buffer_start + ring_buffer_used] = '\0';
+        result = &ring_buffer[ring_buffer_start];
+        ring_buffer_start += ring_buffer_used;
+        ring_buffer_used = 0;
+    }
+    return result;
+}
+
+
+
+// FIXME: leaving of a will and catching asserts mostly only works in Linux
 #ifdef __linux
 
 #ifdef __USE_GNU
@@ -29,11 +79,6 @@ static const int buffer_size = 2048;
 static char will_msg[buffer_size];
 static char assert_msg[buffer_size];
 
-static const int ring_buffer_order = wvcrash_ring_buffer_order;
-static const int ring_buffer_size = wvcrash_ring_buffer_size;
-static const int ring_buffer_mask = ring_buffer_size - 1;
-static char ring_buffer[ring_buffer_size+1];
-static int ring_buffer_start = 0, ring_buffer_used = 0;
 
 extern "C"
 {
@@ -106,50 +151,6 @@ const char *wvcrash_read_assert()
 }
 
 
-void wvcrash_ring_buffer_put(const char *str)
-{
-    wvcrash_ring_buffer_put(str, strlen(str));
-}
-
-
-void wvcrash_ring_buffer_put(const char *str, size_t len)
-{
-    while (len > 0)
-    {
-        int pos = (ring_buffer_start + ring_buffer_used) & ring_buffer_mask;
-        ring_buffer[pos] = *str++;
-        --len;
-        if (ring_buffer_used == ring_buffer_size)
-            ring_buffer_start = (ring_buffer_start + 1) & ring_buffer_mask;
-        else
-            ++ring_buffer_used;
-    }
-}
-
-
-const char *wvcrash_ring_buffer_get()
-{
-    if (ring_buffer_used == 0)
-        return NULL;
-    const char *result;
-    if (ring_buffer_start + ring_buffer_used >= ring_buffer_size)
-    {
-        ring_buffer[ring_buffer_size] = '\0';
-        result = &ring_buffer[ring_buffer_start];
-        ring_buffer_used -= ring_buffer_size - ring_buffer_start;
-        ring_buffer_start = 0;
-    }
-    else
-    {
-        ring_buffer[ring_buffer_start + ring_buffer_used] = '\0';
-        result = &ring_buffer[ring_buffer_start];
-        ring_buffer_start += ring_buffer_used;
-        ring_buffer_used = 0;
-    }
-    return result;
-}
-
-
 void __wvcrash_init_buffers(const char *program_name)
 {
     if (program_name)
@@ -159,7 +160,7 @@ void __wvcrash_init_buffers(const char *program_name)
 }
 
 
-#else // __linux
+#else // this is NOT __linux
 
 void wvcrash_leave_will(const char *will) {}
 const char *wvcrash_read_will() { return NULL; }
