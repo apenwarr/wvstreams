@@ -300,3 +300,10 @@ doxygen:
 	kdoc doxygen \
 	install install-shared install-dev uninstall \
 	tests test
+
+debug-make:
+	@echo tests: $(TESTS)
+	@echo real_tests: $(REAL_TESTS)
+	@echo skip_tests: $(TEST_SKIP_OBJS)
+	@echo excluded_items: $(WV_EXCLUDES)
+	@echo targets: $(TARGETS)
