@@ -251,13 +251,8 @@ ifeq ("$(TESTNAME)", "")
 endif
 
 
-ifndef _MACOS
 TEST_TARGETS = 	$(filter-out $(TEST_SKIP_OBJS), $(call objects, $(filter-out win32/%, \
-		$(shell find . -type d -name t -printf "%P\n"))))
-else
-TEST_TARGETS = 	$(filter-out $(TEST_SKIP_OBJS), $(call objects, $(filter-out win32/%, \
-		$(shell find . -type d -name t -print))))
-endif
+		$(shell find . -type d -name t | sed 's,^\./,,'))))
 
 wvtestmain: $(TEST_TARGETS) $(LIBWVDBUS) $(LIBUNICONF) $(LIBWVSTREAMS) $(LIBWVTEST)
 
