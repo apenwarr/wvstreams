@@ -9,6 +9,7 @@
  * internal header files with other WvStreams header files.
  */ 
 #include <inttypes.h>
+#if 0
 #define DBUS_COMPILATION
 //#undef PACKAGE_BUGREPORT
 //#undef PACKAGE_NAME
@@ -21,8 +22,28 @@
 #include <dbus-upstream/dbus/dbus-internals.h>
 #include <dbus-upstream/dbus/dbus-string.h>
 #include <dbus-upstream/dbus/dbus-message-private.h>
+#include <stdio.h>
+#endif
 
-int wvdbus_marshal(DBusMessage *msg, char **cbuf, size_t *len)
+int wvdbus_marshal(DBusMessage *msg, char **cbuf, int *len)
+{
+    static uint32_t global_serial = 1000;
+
+    if (!dbus_message_get_serial(msg))
+    {
+        fprintf(stderr, "setting serial (%d).\n", dbus_message_get_serial(msg));
+        dbus_message_set_serial(msg, ++global_serial);
+    }
+
+    dbus_message_marshal(msg, cbuf, len);
+    
+    return 1;
+}
+
+#if 0
+// this version of the function has no dependancy on recent versions of dbus
+
+int wvdbus_marshal(DBusMessage *msg, char **cbuf, int *len)
 {
     static uint32_t global_serial = 1000;
     DBusString tmp;
@@ -32,7 +53,7 @@ int wvdbus_marshal(DBusMessage *msg, char **cbuf, size_t *len)
     
     if (!dbus_message_get_serial(msg))
 	_dbus_message_set_serial(msg, ++global_serial);
-    
+
     _dbus_message_lock(msg);
     _dbus_string_copy(&msg->header.data, 0, &tmp, 0);
     *len = _dbus_string_get_length(&tmp);
@@ -43,9 +64,20 @@ int wvdbus_marshal(DBusMessage *msg, char **cbuf, size_t *len)
     _dbus_string_free(&tmp);
     return 1;
 }
+#endif
+
+int wvdbus_message_length(const void *buf, size_t len)
+{
+    int msglen = dbus_message_demarshal_bytes_needed(buf, len);
+    if (msglen > 0)
+        return msglen;
+    else if (msglen == 0)
+        return DBUS_MINIMUM_HEADER_SIZE;
+
+    return 0;
+}
 
 #if 0
-
 int wvdbus_message_length(const void *buf, size_t len)
 {
     if (!buf || len < DBUS_MINIMUM_HEADER_SIZE)
@@ -72,6 +104,31 @@ int wvdbus_message_length(const void *buf, size_t len)
 	return 0; // broken!
 }
 #endif
+
+DBusMessage *wvdbus_demarshal(const void *buf, size_t len, size_t *used)
+{
+    size_t real_len = wvdbus_message_length(buf, len);
+    if (real_len == 0) // invalid message data
+    {
+	*used = len; // clear invalid crap - the best we can do
+	return NULL;
+    }
+    else if (real_len > len) // not enough data
+    {
+	*used = 0;
+	return NULL;
+    }
+
+    DBusError error;
+    dbus_error_init(&error);
+    DBusMessage *_msg = dbus_message_demarshal(buf, len, &error);
+    if (dbus_error_is_set(&error))
+        dbus_error_free (&error);
+
+    *used = real_len;
+    return _msg;
+}
+
 #if 0
 DBusMessage *wvdbus_demarshal(const void *buf, size_t len, size_t *used)
 {
