@@ -44,13 +44,15 @@ int wvdbus_marshal(DBusMessage *msg, char **cbuf, size_t *len)
     return 1;
 }
 
+#if 0
 
-size_t wvdbus_message_length(const void *buf, size_t len)
+int wvdbus_message_length(const void *buf, size_t len)
 {
     if (!buf || len < DBUS_MINIMUM_HEADER_SIZE)
 	return DBUS_MINIMUM_HEADER_SIZE;
     
     // doesn't copy - no need to free
+
     DBusString buftmp;
     _dbus_string_init_const_len(&buftmp, (const char *)buf, len);
     
@@ -69,8 +71,8 @@ size_t wvdbus_message_length(const void *buf, size_t len)
     else
 	return 0; // broken!
 }
-
-
+#endif
+#if 0
 DBusMessage *wvdbus_demarshal(const void *buf, size_t len, size_t *used)
 {
     DBusMessageLoader *loader;
@@ -122,3 +124,4 @@ fail:
     *used = real_len ? real_len : len;
     return NULL;
 }
+#endif
