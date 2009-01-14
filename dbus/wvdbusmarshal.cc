@@ -37,7 +37,7 @@ size_t WvDBusMsg::demarshal_bytes_needed(WvBuf &buf)
 
 void WvDBusMsg::marshal(WvBuf &buf)
 {
-    size_t len;
+    int len;
     char *cbuf;
     
     if (wvdbus_marshal(*this, &cbuf, &len))

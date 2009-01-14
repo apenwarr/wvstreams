@@ -9,6 +9,7 @@
  * internal header files with other WvStreams header files.
  */ 
 #include <inttypes.h>
+#include <dbus/dbus.h>
 #if 0
 #define DBUS_COMPILATION
 //#undef PACKAGE_BUGREPORT
@@ -17,7 +18,6 @@
 //#undef PACKAGE_TARNAME
 //#undef PACKAGE_VERSION
 #undef interface
-#include <dbus/dbus.h>
 #include <dbus-upstream/dbus/dbus-marshal-header.h>
 #include <dbus-upstream/dbus/dbus-internals.h>
 #include <dbus-upstream/dbus/dbus-string.h>
@@ -31,7 +31,6 @@ int wvdbus_marshal(DBusMessage *msg, char **cbuf, int *len)
 
     if (!dbus_message_get_serial(msg))
     {
-        fprintf(stderr, "setting serial (%d).\n", dbus_message_get_serial(msg));
         dbus_message_set_serial(msg, ++global_serial);
     }
 
@@ -121,7 +120,7 @@ DBusMessage *wvdbus_demarshal(const void *buf, size_t len, size_t *used)
 
     DBusError error;
     dbus_error_init(&error);
-    DBusMessage *_msg = dbus_message_demarshal(buf, len, &error);
+    DBusMessage *_msg = dbus_message_demarshal(buf, real_len, &error);
     if (dbus_error_is_set(&error))
         dbus_error_free (&error);
 
