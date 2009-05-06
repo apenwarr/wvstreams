@@ -121,8 +121,7 @@ WVTEST_MAIN("Checking Daemon created")
         // This is the client process
         wvout->print("Running code for client\n");
                 
-        // Will wait for 10 sec at max for the daemon to load
-        WvUnixConn *client = connect_to_daemon(sock_name, 10, true);
+        WvUnixConn *client = connect_to_daemon(sock_name, 60, true);
 
 	if (WVPASS(client != NULL))
 	{
@@ -166,7 +165,7 @@ WVTEST_MAIN("Checking Daemon created")
   
         // connect_to_daemon returns NULL if it couldn't connect (i.e. if the
         // stream is not isok()); this is what we expect.
-        WvUnixConn *check_conn = connect_to_daemon(sock_name, 10, false);
+        WvUnixConn *check_conn = connect_to_daemon(sock_name, 60, false);
         WVFAIL(check_conn);
         WVRELEASE(check_conn);
     }

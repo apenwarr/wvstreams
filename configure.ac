@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(WvStreams, 4.4.1, wvstreams-devel@googlegroups.com, wvstreams)
-SO_VERSION=4.4
+AC_INIT(WvStreams, 4.5.1, wvstreams-devel@googlegroups.com, wvstreams)
+SO_VERSION=4.5
 
 # append to a variable without introducing superfluous white space
 AC_DEFUN([WV_APPEND],[
@@ -62,12 +62,8 @@ AC_ARG_WITH(openssl, AC_HELP_STRING([--with-openssl], [OpenSSL >= 0.9.7 (require
 AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
 AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
 AC_ARG_WITH(qt, AC_HELP_STRING([--with-qt], [Qt]))
-xplc_version='0.3.13'
-if ! pkg-config --modversion xplc-${xplc_version}; then
-    xplc_version='0.3.11'
-fi
-AC_ARG_WITH(xplc, AC_HELP_STRING([--with-xplc], [XPLC ${xplc_version} (required)]))
 AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib (required)]))
+AC_ARG_WITH(valgrind, AC_HELP_STRING([--with-valgrind], [Valgrind]))
 
 AC_ARG_VAR(MOC, [Qt meta object compiler])
 AC_ARG_VAR(WEAVER_BUILD_INFO, [Extra version info])
@@ -141,6 +137,8 @@ if test "$ac_cv_func_argp_parse" != yes \
 fi
 
 # Function checks
+AC_HEADER_DIRENT
+
 AC_FUNC_ALLOCA
 
 AC_CHECK_HEADERS(execinfo.h)
@@ -328,11 +326,7 @@ LDFLAGS="$LDFLAGS_save"
 # Detect pkg-config
 AC_PATH_PROG([PKGCONFIG], [pkg-config], [no])
 if test "$PKGCONFIG" = "no"; then
-    if test "$with_xplc" = ""; then
-	AC_MSG_ERROR([pkg-config is not installed])
-    else
-	AC_MSG_WARN([pkg-config is not installed])
-    fi
+    AC_MSG_WARN([pkg-config is not installed])
 fi
 
 if test "$enable_debug" != "no"; then
@@ -345,7 +339,7 @@ if test "$enable_resolver_fork" = "no"; then
               [Define to disable WvResolver forking for debugging with gdb.])
 fi
 
-# resolver-fork
+# xplc delete detector
 if test "$enable_delete_detector" = "yes"; then
     AC_DEFINE(ENABLE_DELETE_DETECTOR,,
               [Define to enable the XPLC delete detector.])
@@ -354,8 +348,8 @@ fi
 # dbus
 if test "$with_dbus" != "no"; then
     WV_APPEND(CPPFLAGS, -DDBUS_API_SUBJECT_TO_CHANGE -Iinclude/dbus-upstream)
-    if test "$with_dbus" = ""; then
-        DBUS_LIBDIR="$(pkg-config --libs-only-L dbus-1 | sed 's/^-L//' | awk '{print $1}')"
+    if test "$with_dbus" = "" -o "$with_dbus" = "yes"; then
+        DBUS_LIBDIR="$(pkg-config --variable=libdir dbus-1)"
 	if test -z "$DBUS_LIBDIR"; then
 	    DBUS_LIBDIR=/usr/lib  # Default path for static linking
 	fi
@@ -474,7 +468,7 @@ if test "$with_qt" != "no"; then
         CPPFLAGS_save="$CPPFLAGS"
         LDFLAGS_save="$LDFLAGS"
         LIBS_save="$LIBS"
-        for wv_qtdir in $with_qt $QTDIR $QT_SEARCH_PATH; do
+        for wv_qtdir in $with_qt $QTDIR $QT_SEARCH_PATH $(pkg-config --variable=prefix qt-mt); do
             eval wv_qtdir="$wv_qtdir"
             CPPFLAGS="$CPPFLAGS_save -I$wv_qtdir/include -I$wv_qtdir/include/qt3"
             LDFLAGS="$LDFLAGS_save -L$wv_qtdir/lib"
@@ -490,7 +484,7 @@ if test "$with_qt" != "no"; then
     with_qt=$wv_cv_with_qt
     if test "$with_qt" != no; then
         WV_APPEND(CPPFLAGS, -I$with_qt/include -I$with_qt/include/qt3)
-        if [ "$wv_qtdir" != "/usr" ]; then
+        if test "$wv_qtdir" != "/usr" ; then
                 # never explicitly include /usr/lib
 	        WV_APPEND(LDFLAGS, -L$with_qt/lib)
 	fi
@@ -500,36 +494,9 @@ if test "$with_qt" != "no"; then
 fi
 
 # valgrind
-AC_CHECK_PROG(VALGRIND, valgrind, valgrind)
-AC_CHECK_HEADERS(valgrind/memcheck.h)
-
-# xplc
-if test "$with_xplc" != "no"; then
-    if test "$with_xplc" = ""; then
-	if pkg-config --modversion xplc-${xplc_version}; then
-            WV_APPEND(CPPFLAGS, [`pkg-config --cflags xplc-${xplc_version}`])
-	    WV_APPEND(LDFLAGS, [`pkg-config --libs-only-L xplc-${xplc_version}`])
-	    AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
-	    LIBS_save="$LIBS"
-	    AC_CHECK_LIB(xplc, XPLC_getServiceManager,
-	    			[LIBS_XPLC="-lxplc-cxx -lxplc"],
-				[with_xplc=no])
-	    LIBS="$LIBS_save"
-	    xplc_pc="xplc-${xplc_version}"
-	else
-	    with_xplc='no'
-	fi
-    else
-        WV_APPEND(CPPFLAGS, [-I$with_xplc/include])
-	WV_APPEND(LDFLAGS, [-L$with_xplc])
-	AC_CHECK_HEADERS(xplc/core.h,, [with_xplc=no], [#define UNSTABLE])
-	LIBS_save="$LIBS"
-	AC_CHECK_LIB(xplc, XPLC_getServiceManager,
-			[LIBS_XPLC="-lxplc-cxx -lxplc"],
-			[with_xplc=no])
-	LIBS="$LIBS_save"
-	xplc_pc="xplc-${xplc_version}"
-    fi
+if test "$with_valgrind" != "no"; then
+    AC_CHECK_PROG(VALGRIND, valgrind, valgrind)
+    AC_CHECK_HEADERS(valgrind/memcheck.h)
 fi
 
 # zlib
@@ -560,10 +527,6 @@ fi
 if test "$with_qt" = "no"; then
     AC_MSG_WARN([Qt is missing.])
     missing_devel=yes
-fi
-if test "$with_xplc" = "no"; then
-    AC_MSG_WARN([XPLC is missing.])
-    missing_required="$missing_required XPLC"
 fi
 if test "$VALGRIND" = ""; then
     AC_MSG_WARN([Valgrind is missing.])
@@ -620,16 +583,12 @@ AC_SUBST(with_pam)
 AC_SUBST(with_readline)
 AC_SUBST(with_qt)
 AC_SUBST(with_tcl)
-AC_SUBST(with_xplc)
 AC_SUBST(with_zlib)
 
-AC_SUBST(LIBS_XPLC)
 AC_SUBST(LIBS_DBUS)
 AC_SUBST(LIBS_QT)
 AC_SUBST(LIBS_PAM)
 AC_SUBST(LIBS_TCL)
-
-AC_SUBST(xplc_pc)
 
 AC_SUBST(ac_libs)
 AC_SUBST(COMPILER_STANDARD)

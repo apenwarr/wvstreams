@@ -310,12 +310,15 @@ bool isnewline(char c)
 // ex: WvString foo = url_decode("I+am+text.%0D%0A");
 WvString url_decode(WvStringParm str, bool no_space)
 {
+    if (!str)
+        return str;
+ 
     const char *iptr;
     char *optr;
     char *idx1, *idx2;
     static const char hex[] = "0123456789ABCDEF";
     WvString in, intmp(str), out;
- 
+
     in = trim_string(intmp.edit());
     out.setsize(strlen(in) + 1);
 
@@ -344,28 +347,28 @@ WvString url_decode(WvStringParm str, bool no_space)
 }
 
 
-// And it's magic companion: url_encode
-WvString url_encode(WvStringParm str)
+// And its magic companion: url_encode
+WvString url_encode(WvStringParm str, WvStringParm unsafe)
 {
     unsigned int i;
     WvDynBuf retval;
 
     for (i=0; i < str.len(); i++)
     {
-        // to be safe, we'll only let alphanumeric characters or
-        // characters specifically marked as "unreserved" according to
-        // rfc3986 through unescaped
-        if (isalnum(str[i]) || strchr("-._~", str[i]))
+        if (((!!unsafe && !strchr(unsafe, str[i])) ||
+             (!unsafe && (isalnum(str[i]) || strchr("_.!~*'()-", str[i])))) &&
+            str[i] != '%')
         {
             retval.put(&str[i], 1);
         }
         else
         {               
             char buf[4];
-            sprintf(buf, "%%%02x", str[i] & 0xff);
+            sprintf(buf, "%%%02X", str[i] & 0xff);
             retval.put(&buf, 3);
         }
     }
+
     return retval.getstr();
 }
 

@@ -107,9 +107,14 @@ void WvHttpStream::close()
             msgurl = urls.first();
         if (!msgurl && !waiting_urls.isempty())
             msgurl = waiting_urls.first();
+
         if (msgurl)
+        {
             log("URL '%s' is FAILED (%s (%s))\n", msgurl->url, geterr(),
-                errstr());
+                errstr());        
+            curl = msgurl;
+            doneurl();
+        }
     }
     waiting_urls.zap();
     if (curl)
@@ -203,29 +208,29 @@ static WvString fixnl(WvStringParm nonl)
 WvString WvHttpStream::request_str(WvUrlRequest *url, bool keepalive)
 {
     WvString request;
-    WvString auth(""), content = putstream_data.getstr();
+    WvString auth("");
     if(!!url->url.getuser() && !!url->url.getpassword())
         auth = WvString("Authorization: Basic %s\n",
                     encode64(url->url.getuser(), url->url.getpassword()));
 
-    request = fixnl(WvString("%s %s HTTP/1.1\n"
-                "Host: %s:%s\n"
-                "Connection: %s\n"
-                "%s"
-                "%s"
-                "%s%s"
-                "\n"
-                "%s",
-                url->method,
-                url->url.getfile(),
-                url->url.gethost(), url->url.getport(),
-                keepalive ? "keep-alive" : "close",
-                auth,
-                (content.len() > 0 ? WvString("Content-Length: %s\n", content.len()).cstr() : ""),
-                trim_string(url->headers.edit()),
-                !!url->headers ? "\n" : "",
-                (content.len() > 0 ? content.cstr() : ""))
-            );
+    request = fixnl(
+        WvString(
+            "%s %s HTTP/1.1\n"
+            "Host: %s:%s\n"
+            "Connection: %s\n"
+            "%s"
+            "%s"
+            "%s%s"
+            "\n",
+            url->method,
+            url->url.getfile(),
+            url->url.gethost(), url->url.getport(),
+            keepalive ? "keep-alive" : "close",
+            auth,
+            (putstream_data.used() > 0 ? WvString(
+                "Content-Length: %s\n", putstream_data.used()) : ""),
+            trim_string(url->headers.edit()),
+            !!url->headers ? "\n" : ""));
     return request;
 }
 
@@ -236,6 +241,7 @@ void WvHttpStream::send_request(WvUrlRequest *url)
     log("Request #%s: %s\n", request_count, url->url);
     write(request_str(url, url->pipeline_test
                 || request_count < max_requests));
+    write(putstream_data);
     sent_url_request = true;
     alarm(60000);
 }

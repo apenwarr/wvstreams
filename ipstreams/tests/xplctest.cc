@@ -27,6 +27,7 @@ class HelloFactory : public IMoniker
 public:
     virtual IObject *resolve(const char *s)
         { return new Hello; }
+    virtual ~HelloFactory() {}
 };
 
 UUID_MAP_BEGIN(HelloFactory)

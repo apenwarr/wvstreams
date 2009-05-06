@@ -40,6 +40,15 @@ WvX509Mgr::WvX509Mgr()
 }
 
 
+WvX509Mgr::WvX509Mgr(const WvX509Mgr &x)
+    : WvX509(x), 
+      debug("X509 Manager", WvLog::Debug5)
+{
+    rsa = NULL;
+    set_rsa(x.rsa);
+}
+
+
 WvX509Mgr::WvX509Mgr(WvStringParm _dname, WvRSAKey *_rsa, bool ca)
     : WvX509(),
       debug("X509 Manager", WvLog::Debug5)
@@ -126,6 +135,12 @@ void WvX509Mgr::create_selfissued(WvStringParm dname, bool is_ca)
 	debug("Setting Netscape Certificate Type.\n");
 	set_extension(NID_netscape_cert_type,
 		      "SSL CA, S/MIME CA, Object Signing CA");
+#if 0
+        // uncomment this to allow certificate to be used as
+        // an OCSP signer (seems too obscure to enable by default
+        // right now).
+        set_ext_key_usage("OCSP Signing");
+#endif
 //	debug("Setting Constraints.\n");
 //	set_constraints("requireExplicitPolicy");
     }
@@ -157,6 +172,12 @@ WvX509Mgr::~WvX509Mgr()
 bool WvX509Mgr::isok() const
 {
     return WvX509::isok() && rsa && rsa->isok() && test();
+}
+
+
+bool WvX509Mgr::operator! () const
+{
+    return !isok();
 }
 
 
@@ -257,30 +278,12 @@ WvString WvX509Mgr::signreq(WvStringParm pkcs10req) const
     // this part up until the FIXME: is about.
     WvString pkcs10(pkcs10req);
     
-    char *begin = strstr(pkcs10.edit(), "\nMII");
-    if (!begin)
-    {
-	debug("This doesn't look like PEM Encoded information...\n");
-	return WvString::null;
-    }
-    char *end = strstr(begin + 1, "\n---");
-    if (!end)
-    {
-	debug("Is this a complete certificate request?\n");
-	return WvString::null;
-    }
-    *++end = '\0';
-    WvString body(begin); // just the PKCS#10 request, 
-                          // without the ---BEGIN and ---END
-    
-    WvDynBuf reqbuf;
-    WvBase64Decoder dec;
-    dec.flushstrbuf(body, reqbuf, true);
-    
-    // FIXME: Duplicates code from cert_selfsign
-    size_t reqlen = reqbuf.used();
-    const unsigned char *req = reqbuf.get(reqlen);
-    X509_REQ *certreq = wv_d2i_X509_REQ(NULL, &req, reqlen);
+    BIO *membuf = BIO_new(BIO_s_mem());
+    BIO_write(membuf, pkcs10req, pkcs10req.len());
+
+    X509_REQ *certreq = PEM_read_bio_X509_REQ(membuf, NULL, NULL, NULL);
+    BIO_free_all(membuf);
+
     if (certreq)
     {
 	WvX509 newcert(X509_new());
@@ -414,12 +417,6 @@ bool WvX509Mgr::signcrl(WvCRL &crl) const
     bool cakeyok = EVP_PKEY_set1_RSA(certkey, rsa->rsa);
     if (cakeyok)
     {
-	// Use Version 2 CRLs - Of COURSE that means
-	// to set it to 1 here... grumble..
-	X509_CRL_set_version(crl.getcrl(), 1);
-
-	X509_CRL_set_issuer_name(crl.getcrl(), X509_get_subject_name(cert));
-
 	ASN1_TIME *tmptm = ASN1_TIME_new();
 	// Set the LastUpdate time to now.
 	X509_gmtime_adj(tmptm, 0);

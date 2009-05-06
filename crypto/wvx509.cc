@@ -140,12 +140,10 @@ WvX509::WvX509(const WvX509 &x509)
     : debug("X509", WvLog::Debug5)
 {
     wvssl_init();
-    cert = NULL;
-
-    // this is pretty stupid, but will do for now
-    WvDynBuf buf;
-    x509.encode(CertDER, buf);
-    decode(CertDER, buf);
+    if (x509.cert)
+        cert = X509_dup(x509.cert);
+    else
+        cert = NULL;
 }
 
 
@@ -585,7 +583,7 @@ void WvX509::decode(const DumpMode mode, WvBuf &encoded)
         else if (mode == CertDER)
             cert = d2i_X509_bio(membuf, NULL);
         else
-            debug(WvLog::Warning, "Tried to encode certificate with unknown "
+            debug(WvLog::Warning, "Tried to decode certificate with unknown "
                   "mode!\n");
 
         BIO_free_all(membuf);
@@ -703,13 +701,17 @@ WvString WvX509::get_nsserver() const
 }
 
 
-WvString WvX509::get_serial() const
+WvString WvX509::get_serial(bool hex) const
 {
     CHECK_CERT_EXISTS_GET("serial", WvString::null);
 
     BIGNUM *bn = BN_new();
     bn = ASN1_INTEGER_to_BN(X509_get_serialNumber(cert), bn);
-    char * c = BN_bn2dec(bn);
+    char * c;
+    if (hex)
+        c = BN_bn2hex(bn);
+    else
+        c = BN_bn2dec(bn);
     WvString ret("%s", c);
     OPENSSL_free(c);
     BN_free(bn);
@@ -1261,6 +1263,16 @@ void WvX509::set_extension(int nid, WvStringParm _values)
 {
     CHECK_CERT_EXISTS_SET("extension");
 
+    // first we check to see if the extension already exists, if so we need to
+    // kill it
+    int index = X509_get_ext_by_NID(cert, nid, -1);
+    if (index >= 0)
+    {
+        X509_EXTENSION *ex = X509_delete_ext(cert, index);
+        X509_EXTENSION_free(ex);
+    }    
+
+    // now set the extension
     WvString values(_values);
     X509_EXTENSION *ex = NULL;
     ex = X509V3_EXT_conf_nid(NULL, NULL, nid, values.edit());
@@ -1272,6 +1284,12 @@ void WvX509::set_extension(int nid, WvStringParm _values)
 bool WvX509::isok() const
 {
     return cert;
+}
+
+
+bool WvX509::operator! () const
+{
+    return !isok();
 }
 
 

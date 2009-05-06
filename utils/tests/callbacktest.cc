@@ -32,7 +32,7 @@ static A bunk1(const A &a)
 
 static void print_a(const A &a)
 {
-    printf("result: %d/%d\n", a.x, a.y);
+    printf("result: %ld/%ld\n", a.x, a.y);
 }
 
 

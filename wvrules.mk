@@ -35,16 +35,12 @@ include $(WVSTREAMS_SRC)/config.defaults.mk
 -include $(WVSTREAMS_SRC)/config.overrides.mk
 -include $(WVSTREAMS_SRC)/local.mk
 
-ifeq ($(wildcard $(WVSTREAMS_SRC)/config.mk),)
-  __junk:=$(shell echo "Warning: $(WVSTREAMS_SRC)/config.mk doesn't exist" >&2)
-endif
-
 ifeq (${EXEEXT},.exe)
   _WIN32=_WIN32
   XPATH += $(WVSTREAMS)/win32 $(WVSTREAMS)/win32/cominclude
   AR=i586-mingw32msvc-ar
   LIBS += -lssl -lcrypto -lz -lole32 -lrpcrt4 -lwsock32 -lgdi32 -limagehlp \
-  	  -lxplc-cxx -lxplc -lstdc++
+  	  -lstdc++
 else
   CFLAGS += -fPIC
   CXXFLAGS += -fPIC
@@ -76,7 +72,8 @@ runtests:
 INCFLAGS=$(addprefix -I,$(WVSTREAMS_INC) $(XPATH))
 CPPFLAGS+=$(INCFLAGS) \
 	-D_BSD_SOURCE -D_GNU_SOURCE $(OSDEFINE) \
-	-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
+	-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 \
+	-DUNSTABLE
 
 ifeq ($(VERBOSE),1)
   COMPILE_MSG :=
@@ -153,7 +150,7 @@ endif
 %.E: %.cc;	$(call wvcxx,$@,$<,$*,,-E)
 %.E: %.cpp;	$(call wvcxx,$@,$<,$*,,-E)
 
-%.moc: %.h;	moc -o $@ $<
+%.moc: %.h;	$(MOC) -o $@ $<
 
 %: %.o;		$(call wvlink,$@,$^) 
 %.t: %.t.o;	$(call wvlink,$@,$(call reverse,$(filter %.o,$^)) $(filter-out %.o,$^) $(LIBWVTEST))
@@ -234,17 +231,19 @@ _wvclean:
 	@rm -f semantic.cache tags
 	@rm -rf debian/tmp
 
-distclean: clean
-
 dist-hook:
 
-dist: dist-hook
+PKGDIR=$(WVPACKAGE_TARNAME)-$(WVPACKAGE_VERSION)
+
+dist: config.mk dist-hook
 	@echo '--> Making dist in ../build/$(PKGDIR)...'
 	@test -d ../build || mkdir ../build
 	@rsync -a --delete --force '$(shell pwd)/' '../build/$(PKGDIR)'
-	@find '../build/$(PKGDIR)' -name .svn -type d -print0 | xargs -0 rm -rf --
-	@find '../build/$(PKGDIR)' -name .cvsignore -type f -print0 | xargs -0 rm -f --
-	@$(MAKE) -C '../build/$(PKGDIR)' distclean
+	cd ../build/$(PKGDIR) && git clean -d -f -x
+	cd ../build/$(PKGDIR) && git log > ChangeLog
+	cd ../build/$(PKGDIR) && ./autogen.sh
+	@find '../build/$(PKGDIR)' -name .git -type d -print0 | xargs -0 rm -rf --
+	@find '../build/$(PKGDIR)' -name .gitignore -type f -print0 | xargs -0 rm -f --
 	@rm -f '../build/$(PKGDIR).tar.gz'
 	@cd ../build; tar -zcf '$(PKGDIR).tar.gz' '$(PKGDIR)'
 	@echo '--> Created tarball in ../build/$(PKGDIR).tar.gz.'

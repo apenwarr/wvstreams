@@ -275,8 +275,8 @@ static off_t size_of(const char *fname)
 WVTEST_MAIN("atomic updates")
 {
     WvString dirname("atomic-update-dir.tmp"), fname("%s/test.ini", dirname);
-    chmod(dirname, 0700);
-    WvSystem("rm", "-rf", dirname);
+    chmod(dirname, 0700);    
+    rm_rf(dirname);
     WVPASS(!mkdir(dirname, 0700)); // honours umask
     WVPASS(!chmod(dirname, 0700)); // doesn't include umask
     
@@ -312,7 +312,7 @@ WVTEST_MAIN("atomic updates")
     
     // clean up
     chmod(dirname, 0700);
-    WvSystem("rm", "-rf", dirname);
+    rm_rf(dirname);
 }
 
 

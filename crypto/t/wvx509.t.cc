@@ -151,13 +151,25 @@ WVTEST_MAIN("X509")
                  certreqtext);
     }
     {
-        // test the copy constructor
+        // test the copy constructor for x509
         WvX509 t1;
 	t1.decode(WvX509::CertPEM, x509certtext);
         basic_test(t1, dName1);
 
         WvX509 t2(t1);
         basic_test(t2, dName1);
+    }
+
+    {
+        // test the copy construct for x509mgr
+        WvX509Mgr t1;
+	t1.decode(WvX509::CertPEM, x509certtext);
+	t1.decode(WvRSAKey::RsaPEM, rsakeytext);
+        basic_test(t1, dName1);
+
+        WvX509Mgr t2(t1);
+        basic_test(t2, dName1);
+        WVPASSEQ(t1.encode(WvRSAKey::RsaPEM), t2.encode(WvRSAKey::RsaPEM));
     }
 
     {
@@ -629,4 +641,19 @@ WVTEST_MAIN("get_fingerprint")
 		"CA:49:50:D4:44:51:0B:AD:46:4F:E8:6C:3B:B2:3E:3F:61:31:27:ED");
     WVPASSEQ(foo.get_fingerprint(WvX509::FingerMD5),
 		"53:FD:C7:D4:8F:45:AE:1D:90:14:45:B4:0C:1B:02:BD");
+}
+
+
+WVTEST_MAIN("extended key usage")
+{
+    WvX509Mgr ca("CN=test.foo.com,DC=foo,DC=com", DEFAULT_KEYLEN, true);
+
+    WVPASSEQ(ca.get_ext_key_usage(), "");
+    ca.set_ext_key_usage("TLS Web Server Authentication, "
+                         "TLS Web Client Authentication, OCSP Signing");
+    WVPASSEQ(ca.get_ext_key_usage(), "TLS Web Server Authentication;\n"
+             "TLS Web Client Authentication;\nOCSP Signing");
+
+    ca.set_ext_key_usage("OCSP Signing");
+    WVPASSEQ(ca.get_ext_key_usage(), "OCSP Signing");
 }

@@ -47,10 +47,11 @@ WVTEST_MAIN("CRL creation and use basics")
     WVPASSEQ(crl.numcerts(), 0);
     WVPASSEQ(crl.get_issuer(), ca.get_subject());
     WVPASSEQ(crl.get_aki(), ca.get_ski());
+    WVPASS(crl.signedbyca(ca));
 
     WvRSAKey rsakey(DEFAULT_KEYLEN);
-    WvString certreq = WvX509Mgr::certreq("cn=test.signed.com,dc=signed,dc=com", 
-                                       rsakey);
+    WvString certreq = WvX509Mgr::certreq(
+        "cn=test.signed.com,dc=signed,dc=com", rsakey);
     WvString srequest = ca.signreq(certreq);
     WvX509 user;
     user.decode(WvX509::CertPEM, srequest);

@@ -44,9 +44,9 @@ public:
     
     /**
      * Initialize a CRL object, signed and created by the certificate
-     * 'cacert'.
+     * 'ca'.
      */
-    WvCRL(const WvX509Mgr &cacert);
+    WvCRL(const WvX509Mgr &ca);
 
     /** Destructor */
     virtual ~WvCRL();
@@ -145,7 +145,7 @@ public:
      */
     int numcerts() const;
     
-private:
+private:    
     mutable WvLog debug;
     X509_CRL *crl;
 };

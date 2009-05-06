@@ -137,7 +137,7 @@ private:
  */
 class WvCrc32Digest : public WvDigest
 {
-    unsigned long int crc;
+    uint32_t crc;
 
 public:
     WvCrc32Digest();
@@ -157,7 +157,7 @@ public:
  */
 class WvAdler32Digest : public WvDigest
 {
-    unsigned long int crc;
+    uint32_t crc;
 
 public:
     WvAdler32Digest();

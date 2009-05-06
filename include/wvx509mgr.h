@@ -48,6 +48,11 @@ class WvX509Mgr : public WvX509
      */
     WvX509Mgr(WvStringParm _dname, int bits, bool ca=false);
 
+    /** 
+     * Copy Constructor. 
+     */
+    WvX509Mgr(const WvX509Mgr &mgr);
+
   protected:
     /**
      * Given the Distinguished Name dname and an already generated keypair in 
@@ -58,14 +63,6 @@ class WvX509Mgr : public WvX509
      * signed: 
      */
     void create_selfissued(WvStringParm dname, bool is_ca = false);
-
-  private:
-
-    /** 
-     * Placeholder for Copy Constructor: this doesn't exist yet, but it keeps
-     * us out of trouble :) 
-     */
-    WvX509Mgr(const WvX509Mgr &mgr);
 
 public:
     /** Destructor */
@@ -81,6 +78,11 @@ public:
      * Says what the error is, if isok() is not true.
      */
     virtual WvString errstr() const;
+
+    /**
+     * The not operator returns true if !isok()
+     */
+    bool operator! () const;
 
     /**
      * Allow us access to the RSA member.
@@ -109,8 +111,8 @@ public:
 
     /**
      * Sign the CRL with the rsa key associated with this class. This method
-     * will also set the CRL's issuer name, set the CRL version to '2', update 
-     * the lastUpdate time, and set its validity period to 30 days.
+     * will also update the lastUpdate time, and set the CRL's validity period 
+     * to 30 days.
      */
     bool signcrl(WvCRL &unsignedcrl) const;
 

@@ -34,9 +34,6 @@ class WvBufStream : public WvStream
 	 eof;  /*!< true if the sender has no more data to write(). */
     
 public:
-    // when we close, set this pointer to NULL.  A bit hacky...
-    WvStream **death_notify;
-    
     WvBufStream();
     virtual ~WvBufStream();
 	

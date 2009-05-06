@@ -1,6 +1,7 @@
-WVSTREAMS=.
+WVSTREAMS:=.
 
 include wvrules.mk
+include install.mk
 
 ifdef _WIN32
     include win32.mk
@@ -13,29 +14,25 @@ ifeq ("$(enable_testgui)", "no")
   WVTESTRUN=env
 endif
 
-LIBS += $(LIBS_XPLC) -lm
+LIBS += -lm
 
 ifeq ($(USE_WVSTREAMS_ARGP),1)
   utils/wvargs.o-CPPFLAGS += -Iargp
   libwvutils.so-LIBS += -Largp -largp
-  libwvstatic.a-LIBS += -Largp -largp
-  libargp_a_SOURCES = argp-ba.c argp-eexst.c argp-fmtstream.c \
-		    argp-help.c argp-parse.c argp-pv.c \
-		    argp-pvh.c
-  argp_Os=$(patsubst %.c,%.o,$(libargp_a_SOURCES)) \
-	$(shell grep "^LIBOBJS" argp/Makefile | cut -d" " -f1-3 --complement)
-  argp_OBJS=$(patsubst %,argp/%,$(argp_Os))
 
 # argp does its own dependency checking, so let's call it once per wvstreams
 # build, in case some system dependencies have changed and argp should be
 # recompiled
-.PHONY: .argp-phony
-.argp-phony:
-	@$(MAKE) -C argp
-$(argp_OBJS): .argp-phony
-	@echo -n
+  ARGP_TARGET=argp/libargp.list
+  TARGETS += $(ARGP_TARGET)
+.PHONY: argp/all
+argp/all:
+	$(MAKE) -C argp
+# Warning!  Crucial!  KEEP THIS SEMICOLON HERE!  Without it, if you blow away
+# $(ARGP_TARGET), $(MAKE) will get confused.
+$(ARGP_TARGET): argp/all;
 else
-  argp_OBJS=
+  ARGP_TARGET=
 endif
 
 #
@@ -78,7 +75,23 @@ BASEOBJS = \
 	streams/wvfile.o \
 	streams/wvstreamclone.o  \
 	streams/wvconstream.o \
-	utils/wvcrashbase.o
+	utils/wvcrashbase.o \
+	xplc-cxx/factory.o \
+	xplc-cxx/getiface.o \
+	xplc-cxx/strtouuid.o \
+	xplc-cxx/uuidtostr.o \
+	xplc-cxx/xplc.o \
+	xplc/category.o \
+	xplc/catiter.o \
+	xplc/catmgr.o \
+	xplc/loader.o \
+	xplc/moduleloader.o \
+	xplc/modulemgr.o \
+	xplc/monikers.o \
+	xplc/new.o \
+	xplc/servmgr.o \
+	xplc/statichandler.o 
+
 TARGETS += libwvbase.so
 libwvbase_OBJS += $(filter-out uniconf/unigenhack.o $(WV_EXCLUDES),$(BASEOBJS))
 libwvbase.so: $(libwvbase_OBJS) uniconf/unigenhack.o
@@ -90,7 +103,7 @@ libwvbase.so-LIBS += $(LIBXPLC)
 TARGETS += libwvutils.so
 TESTS += $(call tests_cc,utils/tests)
 libwvutils_OBJS += $(filter-out $(BASEOBJS) $(TESTOBJS),$(call objects,utils))
-libwvutils.so: $(libwvutils_OBJS) $(LIBWVBASE) $(argp_OBJS)
+libwvutils.so: $(libwvutils_OBJS) $(LIBWVBASE) $(ARGP_TARGET)
 libwvutils.so-LIBS += -lz -lcrypt $(LIBS_PAM)
 utils/tests/%: PRELIBS+=$(LIBWVSTREAMS)
 
@@ -178,7 +191,7 @@ libwvstatic.a: \
 	$(libwvdbus_OBJS) \
 	$(libwvqt_OBJS) \
 	uniconf/unigenhack_s.o \
-	$(argp_OBJS)
+	$(ARGP_TARGET)
 
 #
 # libwvtest: the WvTest tools for writing C++ unit tests
@@ -187,19 +200,10 @@ TARGETS += wvtestmain.o libwvtest.a
 TESTOBJS = utils/wvtest.o
 libwvtest.a: wvtestmain.o $(TESTOBJS)
 
-#
-# Some example programs
-#
-TARGETS += examples/wvgrep/wvgrep examples/wvgrep/wvegrep
-examples/wvgrep/wvgrep: examples/wvgrep/wvgrep.o $(LIBWVSTREAMS)
-examples/wvgrep/wvegrep: examples/wvgrep/wvgrep
-	ln -f $< $@
-
-
 TARGETS_SO = $(filter %.so,$(TARGETS))
 TARGETS_A = $(filter %.a,$(TARGETS))
 
-all: $(filter-out $(WV_EXCLUDES), $(TARGETS))
+all: config.mk $(filter-out $(WV_EXCLUDES), $(TARGETS))
 
 TESTS += wvtestmain
 
@@ -210,7 +214,7 @@ tests: $(REAL_TESTS)
 test: all tests qtest
 
 qtest: all wvtestmain
-	LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(WVSTREAMS_LIB)" $(WVTESTRUN) $(MAKE) runtests
+	LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(shell pwd)" $(WVTESTRUN) $(MAKE) runtests
 
 runtests:
 	$(VALGRIND) ./wvtestmain '$(TESTNAME)'
@@ -227,8 +231,8 @@ wvtestmain: \
 distclean: clean
 	rm -f uniconf/daemon/uniconfd.8 uniconf/tests/uni
 	rm -f config.mk config.log config.status \
-		include/wvautoconf.h config.cache reconfigure \
-		stamp-h.in configure include/wvautoconf.h.in
+		include/wvautoconf.h config.cache \
+		stamp-h.in 
 	rm -rf autom4te.cache
 	rm -f pkgconfig/*.pc
 

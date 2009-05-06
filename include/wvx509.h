@@ -68,7 +68,7 @@ public:
      * (used for client side operations...)
      * 
      * This either initializes a completely empty object, or takes _cert,
-     * and extracts the distinguished name into dname, and the the RSA
+     * and extracts the distinguished name into dname, and the RSA
      * public key into rsa. rsa->prv is empty.
      */
     WvX509(X509 *_cert);
@@ -166,7 +166,7 @@ public:
     /**
      * get and set the serialNumber field of the certificate
      */
-    WvString get_serial() const;
+    WvString get_serial(bool hex = false) const;
     void set_serial(long serial_no);
 
     /** 
@@ -344,14 +344,22 @@ public:
      */
     virtual bool isok() const;
 
-    /**
-     * Returns an error string if isok() is not true.
-     */
+     /**
+      * Returns an error string if isok() is not true.
+      */
     virtual WvString errstr() const;
+
+    /**
+     * The not operator returns true if !isok()
+     */
+    bool operator! () const;
+
 
 private:
     friend class WvCRL;
     friend class WvX509Mgr;
+    friend class WvOCSPReq;
+    friend class WvOCSPResp;
 
     /** X.509v3 Certificate - this is why this class exists */
     X509     *cert;

@@ -120,7 +120,7 @@ bool isnewline(char c);
 /**
  * Converts escaped characters (things like %20 etc.) from web URLS
  * into their normal ASCII representations. If you happen to be
- * decoding PEM encoded stuff,or anything that has + signs in it that
+ * decoding PEM encoded stuff, or anything that has + signs in it that
  * you don't want encoded as spaces, then set no_space to true, and
  * it should "just work" for you.
  */
@@ -129,9 +129,13 @@ WvString url_decode(WvStringParm str, bool no_space = false);
 
 /**
  * Converts all those pesky spaces, colons, and other nasties into nice 
- * unreadable Quasi-Unicode codes
+ * unreadable Quasi-Unicode codes. The 'unsafe' parameter is a list of 
+ * characters that are unsafe and should be escaped. If unspecified,
+ * all characters which are not part of the uric character class defined
+ * in RFC 2396 will be escaped. Note: The '%' character is always escaped, as 
+ * otherwise the string would not be decodable.
  */
-WvString url_encode(WvStringParm str);
+WvString url_encode(WvStringParm str, WvStringParm unsafe = "");
  
 
 /**

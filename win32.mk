@@ -92,12 +92,14 @@ TOBJSKIP=$(TOBJFIXME) \
 	\
 	linuxstreams/t/wvpty.t.o \
 	\
+	crypto/t/wvocsp.t.o \
+	\
 	uniconf/t/unitempgenvsdaemon.t.o \
 	
 PROGSKIP=\
 	ipstreams/tests/unixtest \
-	examples/wvgrep/wvgrep \
-	examples/wvgrep/wvegrep \
+	utils/tests/wvgrep \
+	utils/tests/wvegrep \
 	utils/tests/buffertest \
 	utils/tests/crashtest \
 	utils/tests/crashtest-nofd \
@@ -123,8 +125,6 @@ PROGSKIP=\
 	ipstreams/tests/wsd \
 	crypto/tests/cryptotest \
 	linuxstreams/tests/aliastest \
-	linuxstreams/tests/dspechotest \
-	linuxstreams/tests/dsptest \
 	linuxstreams/tests/ifctest \
 	linuxstreams/tests/routetest \
 	uniconf/tests/unimem \

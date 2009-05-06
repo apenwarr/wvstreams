@@ -125,9 +125,11 @@ WvString WvDBusMsg::Iter::get_str() const
     switch (type())
     {
     case DBUS_TYPE_BYTE:
-	return WvString("y%s", get_int());
+	// Don't do this: things like vxodbc expect to be able to atoi()
+	// the resulting string!
+	//return WvString("y%s", get_int());
     case DBUS_TYPE_BOOLEAN: 
-	return WvString("b%s", get_int());
+	//return WvString("b%s", get_int());
     case DBUS_TYPE_INT16: 
     case DBUS_TYPE_INT32: 
     case DBUS_TYPE_INT64: 

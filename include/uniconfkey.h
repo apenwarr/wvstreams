@@ -12,11 +12,6 @@
 #include <limits.h>
 
 
-// The Python headers try to #define ANY as void.  If we're building Python
-// wrappers, get rid of that.
-#undef ANY
-
-
 /**
  * Represents a UniConf key which is a path in a hierarchy structured much
  * like the traditional Unix filesystem.
