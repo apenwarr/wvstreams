@@ -13,10 +13,17 @@
 
 WvDBusMsg *WvDBusMsg::demarshal(WvBuf &buf)
 {
-    size_t used = 0;
-    DBusMessage *_msg = wvdbus_demarshal(buf.peek(0, buf.used()), buf.used(),
-					 &used);
-    buf.get(used);
+    // to make sure bytes are aligned (as required by d-bus), copy them into a 
+    // new buffer (not very efficient, but what can you do without reworking
+    // our buffer implementation)
+    WvDynBuf alignedbuf;
+    size_t used = buf.used();
+    alignedbuf.put(buf.peek(0, used), used);
+
+    size_t bytes_gotten = 0;
+    DBusMessage *_msg = wvdbus_demarshal(alignedbuf.peek(0, used), used,
+					 &bytes_gotten);
+    buf.get(bytes_gotten);
     if (_msg)
     {
 	WvDBusMsg *msg = new WvDBusMsg(_msg);
@@ -30,8 +37,14 @@ WvDBusMsg *WvDBusMsg::demarshal(WvBuf &buf)
 
 size_t WvDBusMsg::demarshal_bytes_needed(WvBuf &buf)
 {
+    // to make sure bytes are aligned (as required by d-bus), copy them into a 
+    // new buffer (not very efficient, but what can you do without reworking
+    // our buffer implementation)
+    WvDynBuf alignedbuf;
     size_t used = buf.used();
-    return wvdbus_message_length(buf.peek(0, used), used);
+    alignedbuf.put(buf.peek(0, used), used);
+
+    return wvdbus_message_length(alignedbuf.peek(0, used), used);
 }
 
 

@@ -34,8 +34,10 @@ int wvdbus_marshal(DBusMessage *msg, char **cbuf, int *len)
         dbus_message_set_serial(msg, ++global_serial);
     }
 
+    dbus_message_lock (msg); 
+
     dbus_message_marshal(msg, cbuf, len);
-    
+
     return 1;
 }
 
