@@ -1,6 +1,23 @@
 #include "wvtest.h"
 #include "wvdbusmsg.h"
 
+WVTEST_MAIN("marshalling/demarshalling")
+{
+    WvDBusMsg msg("my.dest", "/my/path", "my.ifc", "method");
+    WvDynBuf buf;
+    msg.marshal(buf);
+
+    WvDBusMsg *msg2 = WvDBusMsg::demarshal(buf);
+
+    WvString msg1_str = msg;
+    WvString msg2_str = (*msg2);
+
+    WVPASSEQ(msg1_str, msg2_str);
+
+    delete msg2;
+}
+
+
 WVTEST_MAIN("dbusmsg basics")
 {
     WvDBusMsg msg("my.dest", "/my/path", "my.ifc", "method");

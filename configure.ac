@@ -359,29 +359,32 @@ if test "$enable_delete_detector" = "yes"; then
 fi
 
 # dbus
-if test "$with_dbus" != "no"; then
-    WV_APPEND(CPPFLAGS, -DDBUS_API_SUBJECT_TO_CHANGE -Iinclude/dbus-upstream)
+if test "$with_dbus" != "no"; then        
     if test "$with_dbus" = "" -o "$with_dbus" = "yes"; then
-        DBUS_LIBDIR="$(pkg-config --variable=libdir dbus-1)"
-	if test -z "$DBUS_LIBDIR"; then
-	    DBUS_LIBDIR=/usr/lib  # Default path for static linking
+        AC_MSG_CHECKING([Checking that D-Bus version greater than 1.2.14 installed.])
+        if pkg-config --atleast-version 1.2.14 dbus-1; then
+	    WV_APPEND(CPPFLAGS, [`pkg-config --cflags dbus-1`])
+            WV_APPEND(LDFLAGS, [`pkg-config --libs dbus-1`])
+	    AC_MSG_RESULT([yes])
+        else
+	    with_dbus=no
+	    AC_MSG_RESULT([no])
 	fi
-        WV_APPEND(CPPFLAGS, [`pkg-config --cflags dbus-1`])
-        WV_APPEND(LDFLAGS, [`pkg-config --libs-only-L dbus-1`])
     else
+        # no version check when doing --with-dbus
         DBUS_LIBDIR=$with_dbus/dbus/.libs
     	WV_APPEND(CPPFLAGS, -I$with_dbus)
-    	WV_APPEND(LDFLAGS, -L$DBUS_LIBDIR)
+    	WV_APPEND(LDFLAGS, -L$DBUS_LIBDIR -ldbus-1)
     fi
 
-    AC_CHECK_HEADERS(dbus/dbus.h,, [with_dbus=no])
-    LIBS_save="$LIBS"
-    LIBS="$LIBS $DBUS_LIBDIR/libdbus-1.a"
-    with_dbus=no
-    AC_TRY_LINK([extern "C" void dbus_message_new(); ],
-                [dbus_message_new(); ],
-                [with_dbus=])
-    LIBS="$LIBS_save"
+    # double check that we actually have D-Bus
+    if test "$with_dbus" != "no"; then
+        AC_CHECK_HEADERS(dbus/dbus.h,, [with_dbus=no])
+	with_dbus=no
+	AC_TRY_LINK([extern "C" void dbus_message_new(); ],
+                    [dbus_message_new(); ],
+                    [with_dbus=])
+    fi
 
     if test "$with_dbus" != "no"; then
         AC_DEFINE(WITH_DBUS,,
