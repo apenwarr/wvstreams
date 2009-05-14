@@ -374,7 +374,8 @@ if test "$with_dbus" != "no"; then
         # no version check when doing --with-dbus
         DBUS_LIBDIR=$with_dbus/dbus/.libs
     	WV_APPEND(CPPFLAGS, -I$with_dbus)
-    	WV_APPEND(LDFLAGS, -L$DBUS_LIBDIR -ldbus-1)
+    	WV_APPEND(LDFLAGS, -L$DBUS_LIBDIR)
+    	WV_APPEND(LIBS, -ldbus-1)
     fi
 
     # double check that we actually have D-Bus
