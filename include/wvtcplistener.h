@@ -32,22 +32,6 @@ public:
      */
     virtual IWvStream *accept();
     
-    /**
-     * Tell this listener to automatically accept new
-     * connections, assigning them their own callback function 'cb'
-     * Pass list==NULL or run setcallback() to disable auto-accepting.
-     *
-     * Be careful not to accept() connections yourself if you do this,
-     * or we may end up accept()ing twice, causing a hang the second time.
-     */
-    void auto_accept(WvIStreamList *list, wv::function<void(IWvStream*)> cb);
-
-    /**
-     * Like auto_accept() above, but always uses the globallist instead
-     * of a user-defined list.
-     */
-    void auto_accept(wv::function<void(IWvStream*)> cb);
-
     /** src() is a bit of a misnomer, but it returns the listener port. */
     virtual const WvIPPortAddr *src() const;
     
