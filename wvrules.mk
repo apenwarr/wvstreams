@@ -61,7 +61,7 @@ endif
 include $(WVSTREAMS_SRC)/wvrules-$(COMPILER_STANDARD).mk
 
 ifeq (${WVTESTRUN},)
-  WVTESTRUN=$(WVSTREAMS_BIN)/wvtestrunner.pl
+  WVTESTRUN=$(WVSTREAMS_BIN)/wvtestrun
 endif
 
 # macros that expand to the object files in the given directories
