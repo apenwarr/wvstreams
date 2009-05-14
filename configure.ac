@@ -93,7 +93,7 @@ case "$target" in
 	ac_libs="-lstdc++ -lgcc_s -ldl -lm -lc"
 	OS="SOLARIS"
 	;;
-    *-win*)
+    *-win*|*-mingw32*)
     	ARCH_SUBDIRS="win32"
     	OS="WIN32"
     	;;
