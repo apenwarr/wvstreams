@@ -145,7 +145,14 @@ AC_CHECK_HEADERS(argp.h)
 AC_CHECK_FUNC(argp_parse)
 if test "$ac_cv_func_argp_parse" != yes \
     -o "$ac_cv_header_argp_h" != yes ; then
-    (cd argp && ./configure "$@")
+    (
+    	echo
+    	echo 'configuring argp...'
+    	cd argp
+    	./configure --host=$host_cpu-$host_os || exit $?
+    	echo 'argp configured.'
+    	echo
+    ) || exit $?
     USE_WVSTREAMS_ARGP=1
 fi
 
