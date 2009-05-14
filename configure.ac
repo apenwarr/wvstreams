@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(WvStreams, 4.5.1, wvstreams-devel@googlegroups.com, wvstreams)
-SO_VERSION=4.5
+AC_INIT(WvStreams, 4.6, wvstreams-devel@googlegroups.com, wvstreams)
+SO_VERSION=4.6
 
 # append to a variable without introducing superfluous white space
 AC_DEFUN([WV_APPEND],[
