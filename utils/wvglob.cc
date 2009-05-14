@@ -115,7 +115,7 @@ WvString WvGlob::glob_to_regex(const char *src, size_t &src_used,
         switch (state)
         {
             case NORMAL:
-                if (quit_chars[src[src_used]])
+                if (quit_chars[(unsigned char)src[src_used]])
                 {
                     quit_now = true;
                     break;

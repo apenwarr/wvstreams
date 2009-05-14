@@ -190,8 +190,8 @@ void WvStream::debugger_streams_maybe_display_one_stream(WvStream *s,
         }
         else
         {
-            if (s->wsname() && contains_insensitive(s->wsname(), *arg)
-                    || s->wstype() && contains_insensitive(s->wstype(), *arg))
+            if ((s->wsname() && contains_insensitive(s->wsname(), *arg))
+	     || (s->wstype() && contains_insensitive(s->wstype(), *arg)))
             {
                 show = true;
                 break;

@@ -585,9 +585,9 @@ void WvArgsData::remove(char short_option, WvStringParm long_option)
 	if (!long_option.isnull() && i->long_option == long_option)
 	    matches_long = true;
 
-	if (matches_short && matches_long
-	    || matches_short && i->long_option.isnull()
-	    || matches_long && i->short_option == '\0')
+	if ((matches_short && matches_long)
+	 || (matches_short && i->long_option.isnull())
+	 || (matches_long && i->short_option == '\0'))
 	{
 	    // Delete this item from the data-structures
 	    options_dict.remove(i.ptr());
