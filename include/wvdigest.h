@@ -8,6 +8,7 @@
 #define __WVDIGEST_H
 
 #include "wvencoder.h"
+#include <stdint.h>
 
 struct env_md_st;
 struct env_md_ctx_st;
