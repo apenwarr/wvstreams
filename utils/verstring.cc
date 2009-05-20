@@ -147,7 +147,7 @@ bool is_new_ver(unsigned int ver)
 
 bool is_new_verstr(const char *str)
 {
-    char *p = strchr(str, '.');
+    const char *p = strchr(str, '.');
     if (p && strchr(p+1, '.'))
         return true;
 

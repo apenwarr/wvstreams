@@ -23,7 +23,7 @@ int main()
     
     WvString a("hello a\n");
     WvFastString b("bellow b\n");
-    char *c = "yellow c\n";
+    const char *c = "yellow c\n";
     
     QString z("mellow z\n");
     QCString y("yellow y\n");

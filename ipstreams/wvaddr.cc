@@ -541,7 +541,7 @@ WvIPNet::WvIPNet(const WvIPNet &_net)
 // If the netmask is not specified, it will default to all 1's.
 void WvIPNet::string_init(const char string[])
 {
-    char *maskptr;
+    const char *maskptr;
     int bits;
     uint32_t imask;
 

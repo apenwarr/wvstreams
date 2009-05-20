@@ -61,7 +61,7 @@ endif
 include $(WVSTREAMS_SRC)/wvrules-$(COMPILER_STANDARD).mk
 
 ifeq (${WVTESTRUN},)
-  WVTESTRUN=$(WVSTREAMS_BIN)/wvtestrunner.pl
+  WVTESTRUN=$(WVSTREAMS_BIN)/wvtestrun
 endif
 
 # macros that expand to the object files in the given directories
@@ -133,13 +133,12 @@ endef
 %.so: SONAME=$@$(if $(SO_VERSION),.$(SO_VERSION))
 
 wvsoname=$(if $($1-SONAME),$($1-SONAME),$(if $(SONAME),$(SONAME),$1))
+
 ifdef _WIN32
   define wvlink_so
 	@echo "Skipping $@ on win32 (can't build shared libraries)"
   endef
-endif
-
-ifdef _SOLARIS
+else ifdef _SOLARIS
   define wvlink_so
 	@echo "Solaris Link!"
 	$(LINK_MSG)$(WVLINK_CC) $(LDFLAGS) $($1-LDFLAGS) -shared -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
@@ -174,7 +173,7 @@ endif
 %.E: %.cc;	$(call wvcxx,$@,$<,$*,,-E)
 %.E: %.cpp;	$(call wvcxx,$@,$<,$*,,-E)
 
-%.moc: %.h;	moc -o $@ $<
+%.moc: %.h;	$(MOC) -o $@ $<
 
 %: %.o;		$(call wvlink,$@,$^) 
 %.t: %.t.o;	$(call wvlink,$@,$(call reverse,$(filter %.o,$^)) $(filter-out %.o,$^) $(LIBWVTEST))

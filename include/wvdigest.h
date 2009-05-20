@@ -8,6 +8,7 @@
 #define __WVDIGEST_H
 
 #include "wvencoder.h"
+#include <stdint.h>
 
 struct env_md_st;
 struct env_md_ctx_st;
@@ -137,7 +138,7 @@ private:
  */
 class WvCrc32Digest : public WvDigest
 {
-    unsigned long int crc;
+    uint32_t crc;
 
 public:
     WvCrc32Digest();
@@ -157,7 +158,7 @@ public:
  */
 class WvAdler32Digest : public WvDigest
 {
-    unsigned long int crc;
+    uint32_t crc;
 
 public:
     WvAdler32Digest();

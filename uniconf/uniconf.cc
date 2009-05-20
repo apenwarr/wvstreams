@@ -8,6 +8,8 @@
 #include "uniconfroot.h"
 #include "uniconfgen.h"
 #include "wvstream.h"
+#include <climits>
+#include <algorithm>
 #include <assert.h>
 
 

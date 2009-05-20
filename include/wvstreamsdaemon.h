@@ -26,34 +26,7 @@ using the WvStreamsDaemon::add_stream, WvStreamsDaemon::add_die_stream
 and WvStreamsDaemon::add_restart_stream members, the last two
 governing what happens to the daemon when the stream is !isok().
 
-Sample usage:
-
-@code
-#include <wvstreams/wvdaemon.h>
-
-void client_cb(WvStream &stream, void *)
-{
-    // Echo everything back
-    const char *line = stream.getline();
-    if (line)
-        stream.print("You said: %s\n", line);
-}     
-
-void startup(WvStreamsDaemon &daemon, void *)
-{
-    WvUnixListener *listener = new WvUnixListener("/tmp/socket", 0700);
-    listener->auto_accept(&WvIStreamList::globallist, client_cb); 
-    daemon.add_die_stream(listener, true, "Listener");
-}
-
-int main(int argc, char **argv)
-{
-    WvStreamsDaemon daemon("Sample Daemon", "0.1", startup);
-
-    return daemon.run(argc, argv);
-}
-@endcode
-!*/
+*/
 class WvStreamsDaemon : public WvDaemon
 {
 private:

@@ -105,7 +105,7 @@ static void spin(WvIStreamList &l)
 
 static void appendbuf(WvStream &s, void *_buf)
 {
-    printf("append!\n");
+    wvcon->print("append!\n");
     WvDynBuf *buf = (WvDynBuf *)_buf;
     s.read(*buf, 10240);
 }
@@ -115,7 +115,7 @@ static void linecmp(WvIStreamList &sl, WvBuf &buf,
 		    const char *w1, const char *w2 = NULL,
 		    const char *w3 = NULL)
 {
-    printf("%s", WvString("Awaiting '%s' '%s' '%s'\n", w1, w2, w3).cstr());
+    wvcon->print("Awaiting '%s' '%s' '%s'\n", w1, w2, w3);
     spin(sl);
     
     WvString line = wvtcl_getword(buf, "\r\n");
@@ -216,18 +216,17 @@ WVTEST_MAIN("daemon multimount")
 
     WvIStreamList::globallist.append(&conn, false, "connection");
     WvIStreamList::globallist.append(&daemon, false, "daemon");
-    printf("You are about to enter the no spin zone\n");
+    wvcon->print("You are about to enter the no spin zone\n");
     while (!WvIStreamList::globallist.isempty() && 
            conn.isok() && daemon.isok())
     {
-        printf("Spinning: streams left: %i\n", 
+        wvcon->print("Spinning: streams left: %s\n", 
                WvIStreamList::globallist.count());
         WvIStreamList::globallist.runonce();
     }
 
     WVPASS(daemon.isok());
     WvIStreamList::globallist.zap();
-    fprintf(stderr, "we're here\n");
 }
 
 
@@ -267,11 +266,11 @@ WVTEST_MAIN("daemon quit")
 
     WvIStreamList::globallist.append(&conn, false, "conn");
     WvIStreamList::globallist.append(&daemon, false, "daemon");
-    printf("You are about to enter the no spin zone\n");
+    wvcon->print("You are about to enter the no spin zone\n");
     while (!WvIStreamList::globallist.isempty() && 
            conn.isok() && daemon.isok())
     {
-        printf("Spinning: streams left: %i\n", 
+        wvcon->print("Spinning: streams left: %s\n", 
                WvIStreamList::globallist.count());
         WvIStreamList::globallist.runonce();
     }
@@ -290,7 +289,7 @@ static WvPipe * setup_master_daemon(bool implicit_root,
         WvString &masterpipename, WvString &ininame)
 {
     ininame = wvtmpfilename("uniconfd.t-ini");
-    WvString pidfile = wvtmpfilename("uiconfd.t-mpid");
+    WvString pidfile = wvtmpfilename("uniconfd.t-mpid");
 
     WvFile stuff(ininame, (O_CREAT | O_WRONLY));
     stuff.print("pickles/apples/foo=1\n");
@@ -309,10 +308,11 @@ static WvPipe * setup_master_daemon(bool implicit_root,
         mount2 = inimount;
     }
 
+    WvString lmoniker("unix:%s", masterpipename);
     const char * const uniconfd_args[] = {
         "uniconf/daemon/uniconfd",
         "-d", "--pid-file", pidfile.cstr(),
-        "-l", WvString("unix:%s", masterpipename).cstr(),
+        "-l", lmoniker.cstr(),
         mount1.cstr(),
         mount2.cstr(),
         NULL
@@ -334,10 +334,11 @@ static WvPipe * setup_slave_daemon(bool implicit_root, WvStringParm masterpipena
     else
         rootmount.append("/=retry:cache:unix:%s", masterpipename);
 
+    WvString lmoniker("unix:%s", slavepipename);
     const char * const uniconfd_args[] = {
         "uniconf/daemon/uniconfd",
-        "-d", "--pid-file", pidfile.cstr(),
-        "-l", WvString("unix:%s", slavepipename).cstr(),
+        "--pid-file", pidfile.cstr(),
+        "-l", lmoniker,
         rootmount.cstr(),
         NULL
     };
@@ -362,18 +363,20 @@ static void wait_for_pipe_ready(WvStringParm pipename)
         line = sock->getline(100);
     }
     WVRELEASE(sock);
-    fprintf(stderr, "Pipe ready! (%s)\n", line.cstr());
+    wvcon->print("Pipe ready! (%s)\n", line);
 }
 
 
 static void daemon_proxy_test(bool implicit_root)
 {
+    wvcon->print("Setting up master daemon.\n");
     WvString masterpipename, ininame;
     WvPipe *master = setup_master_daemon(implicit_root, masterpipename, ininame);
     master->setcallback(wv::bind(WvPipe::ignore_read, wv::ref(*master)));
     master->nowrite();
     wait_for_pipe_ready(masterpipename);
     
+    wvcon->print("Setting up slave daemon.\n");
     WvString slavepipename;
     WvPipe *slave = setup_slave_daemon(implicit_root, masterpipename, slavepipename);
     slave->setcallback(wv::bind(WvPipe::ignore_read, wv::ref(*slave)));
@@ -401,12 +404,12 @@ static void daemon_proxy_test(bool implicit_root)
     
     WvIStreamList::globallist.append(&conn, false, "conn");
 
-    printf("Spinning: streams left: %i\n", 
+    wvcon->print("Spinning: streams left: %s\n", 
            WvIStreamList::globallist.count());
     while (!WvIStreamList::globallist.isempty() && 
             conn.isok())
     {
-        printf("Spinning: streams left: %i\n", 
+        wvcon->print("Spinning: streams left: %s\n", 
                WvIStreamList::globallist.count());
         WvIStreamList::globallist.runonce();
     }

@@ -449,19 +449,6 @@ IWvStream *WvTCPListener::accept()
 }
 
 
-void WvTCPListener::auto_accept(WvIStreamList *list,
-				wv::function<void(IWvStream*)> cb)
-{
-    onaccept(wv::bind(&WvTCPListener::accept_callback, this, list,
-			 cb, _1));
-}
-
-void WvTCPListener::auto_accept(wv::function<void(IWvStream*)> cb)
-{
-    auto_accept(&WvIStreamList::globallist, cb);
-}
-
-
 void WvTCPListener::accept_callback(WvIStreamList *list,
 				    wv::function<void(IWvStream*)> cb,
 				    IWvStream *_conn)

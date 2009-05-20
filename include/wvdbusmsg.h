@@ -24,13 +24,6 @@ struct DBusMessage;
 class WvDBusMsg;
 class WvDBusConn;
 
-// see wvdbusmarshal_c.c
-extern "C" {
-    size_t wvdbus_message_length(const void *buf, size_t len);
-    DBusMessage *wvdbus_demarshal(const void *buf, size_t len, size_t *used);
-    int wvdbus_marshal(DBusMessage *msg, char **cbuf, size_t *len);
-}
-
 
 class WvDBusMsg
 {

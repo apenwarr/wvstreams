@@ -2,6 +2,7 @@
 #include "wvstringmask.h"
 
 #include <stdio.h>
+#include <climits>
 
 WVTEST_MAIN("wvstringmask")
 {

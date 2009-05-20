@@ -385,10 +385,10 @@ void wvcrash_add_signal(int sig)
 #if WVCRASH_USE_SIGALTSTACK
     struct sigaction act;
     
+    memset(&act,0,sizeof(act));
     act.sa_handler = wvcrash;
     sigfillset(&act.sa_mask);
     act.sa_flags = SA_ONSTACK | SA_RESTART;
-    act.sa_restorer = NULL;
     
     if (sigaction(sig, &act, NULL))
         fprintf(stderr, "Failed to setup wvcrash handler for signal %d: %s\n",

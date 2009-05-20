@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(WvStreams, 4.5, wvstreams-devel@googlegroups.com, wvstreams)
-SO_VERSION=4.5
+AC_INIT(WvStreams, 4.6, wvstreams-devel@googlegroups.com, wvstreams)
+SO_VERSION=4.6
 
 # append to a variable without introducing superfluous white space
 AC_DEFUN([WV_APPEND],[
@@ -63,6 +63,7 @@ AC_ARG_WITH(pam, AC_HELP_STRING([--with-pam], [PAM]))
 AC_ARG_WITH(tcl, AC_HELP_STRING([--with-tcl], [Tcl]))
 AC_ARG_WITH(qt, AC_HELP_STRING([--with-qt], [Qt]))
 AC_ARG_WITH(zlib, AC_HELP_STRING([--with-zlib], [zlib (required)]))
+AC_ARG_WITH(valgrind, AC_HELP_STRING([--with-valgrind], [Valgrind]))
 
 AC_ARG_VAR(MOC, [Qt meta object compiler])
 AC_ARG_VAR(WEAVER_BUILD_INFO, [Extra version info])
@@ -92,7 +93,7 @@ case "$target" in
 	ac_libs="-lstdc++ -lgcc_s -ldl -lm -lc"
 	OS="SOLARIS"
 	;;
-    *-win*)
+    *-win*|*-mingw32*)
     	ARCH_SUBDIRS="win32"
     	OS="WIN32"
     	;;
@@ -144,7 +145,18 @@ AC_CHECK_HEADERS(argp.h)
 AC_CHECK_FUNC(argp_parse)
 if test "$ac_cv_func_argp_parse" != yes \
     -o "$ac_cv_header_argp_h" != yes ; then
+<<<<<<< HEAD:configure.ac
     (cd argp && ./configure "$@")
+=======
+    (
+    	echo
+    	echo 'configuring argp...'
+    	cd argp
+    	./configure --host=$host_cpu-$host_os || exit $?
+    	echo 'argp configured.'
+    	echo
+    ) || exit $?
+>>>>>>> da0f399d1fb72771828874044f8a811e942e504a:configure.ac
     USE_WVSTREAMS_ARGP=1
 fi
 
@@ -358,29 +370,33 @@ if test "$enable_delete_detector" = "yes"; then
 fi
 
 # dbus
-if test "$with_dbus" != "no"; then
-    WV_APPEND(CPPFLAGS, -DDBUS_API_SUBJECT_TO_CHANGE -Iinclude/dbus-upstream)
-    if test "$with_dbus" = ""; then
-        DBUS_LIBDIR="$(pkg-config --libs-only-L dbus-1 | sed 's/^-L//' | awk '{print $1}')"
-	if test -z "$DBUS_LIBDIR"; then
-	    DBUS_LIBDIR=/usr/lib  # Default path for static linking
+if test "$with_dbus" != "no"; then        
+    if test "$with_dbus" = "" -o "$with_dbus" = "yes"; then
+        AC_MSG_CHECKING([Checking that D-Bus version greater than 1.2.14 installed.])
+        if pkg-config --atleast-version 1.2.14 dbus-1; then
+	    WV_APPEND(CPPFLAGS, [`pkg-config --cflags dbus-1`])
+            WV_APPEND(LDFLAGS, [`pkg-config --libs dbus-1`])
+	    AC_MSG_RESULT([yes])
+        else
+	    with_dbus=no
+	    AC_MSG_RESULT([no])
 	fi
-        WV_APPEND(CPPFLAGS, [`pkg-config --cflags dbus-1`])
-        WV_APPEND(LDFLAGS, [`pkg-config --libs-only-L dbus-1`])
     else
+        # no version check when doing --with-dbus
         DBUS_LIBDIR=$with_dbus/dbus/.libs
     	WV_APPEND(CPPFLAGS, -I$with_dbus)
     	WV_APPEND(LDFLAGS, -L$DBUS_LIBDIR)
+    	WV_APPEND(LIBS, -ldbus-1)
     fi
 
-    AC_CHECK_HEADERS(dbus/dbus.h,, [with_dbus=no])
-    LIBS_save="$LIBS"
-    LIBS="$LIBS $DBUS_LIBDIR/libdbus-1.a"
-    with_dbus=no
-    AC_TRY_LINK([extern "C" void dbus_message_new(); ],
-                [dbus_message_new(); ],
-                [with_dbus=])
-    LIBS="$LIBS_save"
+    # double check that we actually have D-Bus
+    if test "$with_dbus" != "no"; then
+        AC_CHECK_HEADERS(dbus/dbus.h,, [with_dbus=no])
+	with_dbus=no
+	AC_TRY_LINK([extern "C" void dbus_message_new(); ],
+                    [dbus_message_new(); ],
+                    [with_dbus=])
+    fi
 
     if test "$with_dbus" != "no"; then
         AC_DEFINE(WITH_DBUS,,
@@ -480,7 +496,7 @@ if test "$with_qt" != "no"; then
         CPPFLAGS_save="$CPPFLAGS"
         LDFLAGS_save="$LDFLAGS"
         LIBS_save="$LIBS"
-        for wv_qtdir in $with_qt $QTDIR $QT_SEARCH_PATH; do
+        for wv_qtdir in $with_qt $QTDIR $QT_SEARCH_PATH $(pkg-config --variable=prefix qt-mt); do
             eval wv_qtdir="$wv_qtdir"
             CPPFLAGS="$CPPFLAGS_save -I$wv_qtdir/include -I$wv_qtdir/include/qt3"
             LDFLAGS="$LDFLAGS_save -L$wv_qtdir/lib"
@@ -496,7 +512,7 @@ if test "$with_qt" != "no"; then
     with_qt=$wv_cv_with_qt
     if test "$with_qt" != no; then
         WV_APPEND(CPPFLAGS, -I$with_qt/include -I$with_qt/include/qt3)
-        if [ "$wv_qtdir" != "/usr" ]; then
+        if test "$wv_qtdir" != "/usr" ; then
                 # never explicitly include /usr/lib
 	        WV_APPEND(LDFLAGS, -L$with_qt/lib)
 	fi
@@ -506,8 +522,10 @@ if test "$with_qt" != "no"; then
 fi
 
 # valgrind
-AC_CHECK_PROG(VALGRIND, valgrind, valgrind)
-AC_CHECK_HEADERS(valgrind/memcheck.h)
+if test "$with_valgrind" != "no"; then
+    AC_CHECK_PROG(VALGRIND, valgrind, valgrind)
+    AC_CHECK_HEADERS(valgrind/memcheck.h)
+fi
 
 # zlib
 if test "$with_zlib" != "no"; then

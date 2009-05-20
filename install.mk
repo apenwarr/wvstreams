@@ -1,5 +1,5 @@
 ifeq ("$(with_readline)", "no")
-install: install-shared install-dev install-xplc install-uniconfd
+install: install-shared install-dev install-uniconfd
 else
 install: install-shared install-dev install-uniconfd install-wsd
 endif
@@ -27,7 +27,7 @@ install-dev: $(TARGETS_SO) $(TARGETS_A)
 	$(INSTALL) -d $(DESTDIR)$(libdir)/pkgconfig
 	$(INSTALL_DATA) $(filter-out %-uninstalled.pc, $(wildcard pkgconfig/*.pc)) $(DESTDIR)$(libdir)/pkgconfig
 	$(INSTALL) -d $(DESTDIR)$(bindir)
-	$(INSTALL) wvtestrunner.pl $(DESTDIR)$(bindir)
+	$(INSTALL) wvtestrun $(DESTDIR)$(bindir)
 	$(INSTALL) -d $(DESTDIR)$(libdir)/valgrind
 	$(INSTALL) wvstreams.supp $(DESTDIR)$(libdir)/valgrind
 
