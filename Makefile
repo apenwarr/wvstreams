@@ -68,7 +68,7 @@ BASEOBJS = \
 	utils/wvattrs.o \
 	utils/wvstring.o utils/wvstringlist.o \
 	utils/wvstringmask.o \
-	utils/strutils.o \
+	utils/wvstrutils.o \
 	utils/wvtask.o \
 	utils/wvtimeutils.o \
 	streams/wvistreamlist.o \
