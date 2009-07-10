@@ -2,6 +2,7 @@
 #ifndef __WVWIN32TASK_H
 #define __WVWIN32TASK_H
 
+#include "wvxplc.h"
 #include "wvstring.h"
 #include "wvlinklist.h"
 

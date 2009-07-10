@@ -20,6 +20,7 @@
 #include "wvistreamlist.h"
 #include "wvlinkerhack.h"
 #include "wvmoniker.h"
+#include "wvneeds-sockets.h"
 
 #ifdef _WIN32
 #define ENOBUFS WSAENOBUFS
