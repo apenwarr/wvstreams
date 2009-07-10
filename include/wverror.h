@@ -102,6 +102,8 @@ public:
         { seterr(WvString(WVSTRING_FORMAT_CALL)); }
     void set_both(int _errnum, WvStringParm specialerr)
         { seterr_both(_errnum, specialerr); }
+    void set_both(int _errnum, WVSTRING_FORMAT_DECL)
+        { seterr_both(_errnum, WvString(WVSTRING_FORMAT_CALL)); }
     void set(const WvErrorBase &err)
         { seterr(err); }
 
