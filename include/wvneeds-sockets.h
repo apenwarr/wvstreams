@@ -1,4 +1,5 @@
 #ifndef __WVNEEDS_SOCKETS_H
+#define __WVNEEDS_SOCKETS_H
 
 #ifdef _WIN32
 
@@ -11,4 +12,4 @@ static void *_wvinitialize_local = _wvinitialize;
 
 #endif // _WIN32
 
-#endif // __WVWIN32_SOCK_H
+#endif // __WVNEEDS_SOCKETS_H
