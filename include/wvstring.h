@@ -293,6 +293,12 @@ public:
     /** returns either this string, or, if isnull(), the given string. */
     const WvFastString &ifnull(WvStringParm defval) const
         { return isnull() ? defval : *this; }
+    
+    /** returns true if this string ends with the given string */
+    bool endswith(WvStringParm ending) const;
+    
+    /** returns true if this string starts with the given string */
+    bool startswith(WvStringParm starting) const;
 };
 
 
