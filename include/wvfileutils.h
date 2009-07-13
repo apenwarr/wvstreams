@@ -80,12 +80,19 @@ bool wvfnmatch(WvStringList &patterns, WvStringParm name, int flags = 0);
  */
 FILE *wvtmpfile();
 
-/* Returns a unique filename suitable for a temporary file. Obviously there is
+/**
+ * Returns a unique filename suitable for a temporary file. Obviously there is
  * the caveat that someone else may claim this file name before you open it:
  * do not use this routine where that race may be a real concern (this would
  * apply only to security-sensitive code)
  */
 WvString wvtmpfilename(WvStringParm prefix);
+
+/**
+ * Returns the full pathname corresponding to the given filename.  For example,
+ * "../foo.txt" might turn into "/home/fuzzy/../foo.txt"
+ */
+WvString wvfullpath(WvStringParm fname);
 
 #ifndef _WIN32
 /**
