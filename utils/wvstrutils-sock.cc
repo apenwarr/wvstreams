@@ -1,5 +1,9 @@
 #include "wvstrutils.h"
 #include "wvneeds-sockets.h"
+#include <errno.h>
+#ifndef _WIN32
+#include <netdb.h>
+#endif
 
 WvString encode_hostname_as_DN(WvStringParm hostname)
 {
