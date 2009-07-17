@@ -53,8 +53,6 @@ ifdef _WIN32
   AR=i586-mingw32msvc-ar
   LIBS += -lssl -lcrypto -lz -lole32 -lrpcrt4 -lwsock32 -lgdi32 -limagehlp \
   	  -lstdc++
-  CFLAGS += -mthreads
-  CXXFLAGS += -mthreads
 else
   CFLAGS += -fPIC
   CXXFLAGS += -fPIC
