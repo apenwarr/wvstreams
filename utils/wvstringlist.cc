@@ -50,6 +50,16 @@ void WvStringList::append(WvString *strp, bool autofree, char *id)
 }
 
 
+bool WvStringList::contains(WvStringParm str)
+{
+    WvStringList::Iter i(*this);
+    for (i.rewind(); i.next(); )
+	if (*i == str)
+	    return true;
+    return false;
+}
+
+
 // get the first string in the list, or an empty string if the list is empty.
 // Removes the returned string from the list.
 WvString WvStringList::popstr()

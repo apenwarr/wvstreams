@@ -75,7 +75,7 @@ public:
     void split(WvStringParm s, const WvRegex &regex, int limit = 0);
 #endif
     
-    /*
+    /**
      * populate the list from an array of strings
      */
     void fill(const char * const *array);
@@ -84,6 +84,11 @@ public:
     void append(WVSTRING_FORMAT_DECL)
         { append(WvString(WVSTRING_FORMAT_CALL)); }
     void append(WvString *strp, bool autofree, char *id = NULL);
+    
+    /**
+     * Returns true if 'str' is in the list.
+     */
+    bool contains(WvStringParm str);
 
     /** 
      * get the first string in the list, or an empty string if the list is empty.
