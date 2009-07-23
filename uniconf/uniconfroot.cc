@@ -8,8 +8,6 @@
 #include "uniconfroot.h"
 #include "wvlinkerhack.h"
 
-WV_LINK_TO(UniGenHack);
-
 
 UniConfRoot::UniConfRoot():
     UniConf(this),
