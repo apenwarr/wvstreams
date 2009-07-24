@@ -26,7 +26,7 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
       pipeline_incompatible(_pipeline_incompatible),
       in_doneurl(false)
 {
-    log("Opening server connection.\n");
+    log(WvLog::Debug4, "Opening server connection.\n");
     http_response = "";
     encoding = Unknown;
     bytes_remaining = 0;
@@ -49,40 +49,40 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
 
 WvHttpStream::~WvHttpStream()
 {
-    log(WvLog::Debug2, "Deleting.\n");
+    log(WvLog::Debug4, "Deleting.\n");
 
 #if 0
 #ifdef HAVE_EXECINFO_H
     void* trace[10];
     int count = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
     char** tracedump = backtrace_symbols(trace, count);
-    log(WvLog::Debug, "TRACE");
+    log(WvLog::Debug5, "TRACE");
     for (int i = 0; i < count; ++i)
-        log(WvLog::Debug, ":%s", tracedump[i]);
-    log(WvLog::Debug, "\n");
+        log(WvLog::Debug5, ":%s", tracedump[i]);
+    log(WvLog::Debug5, "\n");
     free(tracedump);
 #endif
 #endif
 
     if (geterr())
-        log("Error was: %s\n", errstr());
+        log(WvLog::Debug4, "Error was: %s\n", errstr());
     close();
 }
 
 
 void WvHttpStream::close()
 {
-    log("close called\n");
+    log(WvLog::Debug4, "close called\n");
 
 #if 0    
 #ifdef HAVE_EXECINFO_H
     void *trace[10];
     int count = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
     char** tracedump = backtrace_symbols(trace, count);
-    log(WvLog::Debug, "TRACE");
+    log(WvLog::Debug5, "TRACE");
     for (int i = 0; i < count; ++i)
         log(WvLog::Debug, ":%s", tracedump[i]);
-    log(WvLog::Debug, "\n");
+    log(WvLog::Debug5, "\n");
     free(tracedump);
 #endif
 #endif
@@ -95,7 +95,7 @@ void WvHttpStream::close()
         pipelining_is_broken(2);
 
     if (isok())
-        log("Closing.\n");
+        log(WvLog::Debug4, "Closing.\n");
     WvStreamClone::close();
 
     if (geterr())
@@ -110,7 +110,8 @@ void WvHttpStream::close()
 
         if (msgurl)
         {
-            log("URL '%s' is FAILED (%s (%s))\n", msgurl->url, geterr(),
+            log(WvLog::Debug3,
+		"URL '%s' is FAILED (%s (%s))\n", msgurl->url, geterr(),
                 errstr());        
             curl = msgurl;
             doneurl();
@@ -119,10 +120,10 @@ void WvHttpStream::close()
     waiting_urls.zap();
     if (curl)
     {
-        log("curl is %s\n", curl->url);
+        log(WvLog::Debug4, "curl is %s\n", curl->url);
         doneurl();
     }
-    log("close done\n");
+    log(WvLog::Debug4, "close done\n");
 }
 
 
@@ -139,7 +140,7 @@ void WvHttpStream::doneurl()
 
     assert(curl != NULL);
     WvString last_response(http_response);
-    log("Done URL: %s\n", curl->url);
+    log(WvLog::Debug4, "Done URL: %s\n", curl->url);
 
     http_response = "";
     encoding = Unknown;
@@ -238,7 +239,7 @@ WvString WvHttpStream::request_str(WvUrlRequest *url, bool keepalive)
 void WvHttpStream::send_request(WvUrlRequest *url)
 {
     request_count++;
-    log("Request #%s: %s\n", request_count, url->url);
+    log(WvLog::Debug4, "Request #%s: %s\n", request_count, url->url);
     write(request_str(url, url->pipeline_test
                 || request_count < max_requests));
     write(putstream_data);
@@ -293,7 +294,8 @@ void WvHttpStream::pipelining_is_broken(int why)
     if (!pipeline_incompatible[target.remaddr])
     {
         pipeline_incompatible.add(new WvIPPortAddr(target.remaddr), true);
-        log("Pipelining is broken on this server (%s)!  Disabling.\n", why);
+        log(WvLog::Debug2,
+	    "Pipelining is broken on this server (%s)!  Disabling.\n", why);
     }
 }
 
@@ -451,7 +453,7 @@ void WvHttpStream::execute()
 
             if (urls.isempty())
             {
-                log("got unsolicited data.\n");
+                log(WvLog::Debug3, "got unsolicited data.\n");
                 seterr("unsolicited data from server!");
                 return;
             }
@@ -509,7 +511,7 @@ void WvHttpStream::execute()
 
                 if (curl->method == "HEAD")
                 {
-                    log("Got all headers.\n");
+                    log(WvLog::Debug4, "Got all headers.\n");
 		    if (!enable_pipelining)
 			doneurl();
 

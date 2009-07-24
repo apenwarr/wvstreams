@@ -99,14 +99,14 @@ WvHttpPool::WvHttpPool()
     : log("HTTP Pool", WvLog::Debug), conns(10),
       pipeline_incompatible(50)
 {
-    log("Pool initializing.\n");
+    log(WvLog::Debug2, "Pool initializing.\n");
     num_streams_created = 0;
 }
 
 
 WvHttpPool::~WvHttpPool()
 {
-    log("Created %s individual session%s during this run.\n",
+    log(WvLog::Debug2, "Created %s individual session%s during this run.\n",
             num_streams_created, num_streams_created == 1 ? "" : "s");
     if (geterr())
         log("Error was: %s\n", errstr());
@@ -267,10 +267,10 @@ WvBufUrlStream *WvHttpPool::addurl(WvStringParm _url, WvStringParm _method,
 void WvHttpPool::unconnect(WvUrlStream *s)
 {
     if (!s->target.username)
-        log("Unconnecting stream to %s.\n", s->target.remaddr);
+        log(WvLog::Debug3, "Unconnecting stream to %s.\n", s->target.remaddr);
     else
-        log("Unconnecting stream to %s@%s.\n", s->target.username,
-                s->target.remaddr);
+        log(WvLog::Debug3, "Unconnecting stream to %s@%s.\n",
+	    s->target.username, s->target.remaddr);
 
     WvUrlRequestList::Iter i(urls);
     for (i.rewind(); i.next(); )
