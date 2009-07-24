@@ -36,9 +36,6 @@ WvFile::WvFile(int rwfd) : WvFDStream(rwfd)
 
 WvFile::WvFile(WvStringParm filename, int mode, int create_mode)
 {
-#ifdef _WIN32
-    mode |= O_BINARY; // WvStreams users aren't expecting crlf mangling
-#endif
     open(filename, mode, create_mode);
 }
 
@@ -65,6 +62,9 @@ static WvMoniker<IWvStream> reg3("file", creator);
 
 bool WvFile::open(WvStringParm filename, int mode, int create_mode)
 {
+#ifdef _WIN32
+    mode |= O_BINARY; // WvStreams users aren't expecting crlf mangling
+#endif
     noerr();
     
     /* We have to do it this way since O_RDONLY is defined as 0
