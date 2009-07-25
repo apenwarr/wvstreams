@@ -216,13 +216,13 @@ WvString WvHttpStream::request_str(WvUrlRequest *url, bool keepalive)
 
     request = fixnl(
         WvString(
-            "%s %s HTTP/1.1\r\n"
-            "Host: %s:%s\r\n"
-            "Connection: %s\r\n"
+            "%s %s HTTP/1.1\n"
+            "Host: %s:%s\n"
+            "Connection: %s\n"
             "%s"
-            "%s\r\n"
+            "%s\n"
             "%s%s"
-            "\r\n",
+            "\n",
             url->method,
             url->url.getfile(),
             url->url.gethost(), url->url.getport(),
@@ -231,7 +231,7 @@ WvString WvHttpStream::request_str(WvUrlRequest *url, bool keepalive)
             url->method == "GET" ? "" :
 		WvString("Content-Length: %s", putstream_data.used()),
             trim_string(url->headers.edit()),
-            !!url->headers ? "\r\n" : ""));
+            !!url->headers ? "\n" : ""));
     return request;
 }
 
