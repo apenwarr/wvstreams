@@ -220,7 +220,7 @@ WvString WvHttpStream::request_str(WvUrlRequest *url, bool keepalive)
             "Host: %s:%s\n"
             "Connection: %s\n"
             "%s"
-            "%s\n"
+            "%s"
             "%s%s"
             "\n",
             url->method,
@@ -229,7 +229,7 @@ WvString WvHttpStream::request_str(WvUrlRequest *url, bool keepalive)
             keepalive ? "keep-alive" : "close",
             auth,
             url->method == "GET" ? "" :
-		WvString("Content-Length: %s", putstream_data.used()),
+		WvString("Content-Length: %s\n", putstream_data.used()),
             trim_string(url->headers.edit()),
             !!url->headers ? "\n" : ""));
     return request;
