@@ -229,7 +229,7 @@ WvString WvHttpStream::request_str(WvUrlRequest *url, bool keepalive)
             keepalive ? "keep-alive" : "close",
             auth,
             url->method == "GET" ? "" :
-		WvString("Content-Length: %s\n", putstream_data.used()),
+		WvString("Content-Length: %s\n", url->putstream_data.used()),
             trim_string(url->headers.edit()),
             !!url->headers ? "\n" : ""));
     return request;
@@ -242,7 +242,7 @@ void WvHttpStream::send_request(WvUrlRequest *url)
     log(WvLog::Debug4, "Request #%s: %s\n", request_count, url->url);
     write(request_str(url, url->pipeline_test
                 || request_count < max_requests));
-    write(putstream_data);
+    write(url->putstream_data);
     sent_url_request = true;
     alarm(60000);
 }
@@ -263,9 +263,6 @@ void WvHttpStream::start_pipeline_test(WvUrl *url)
 
 void WvHttpStream::request_next()
 {
-    // Clear the putstream buffer before we start any new requests
-    putstream_data.zap();
-
     // don't do a request if we've done too many already or we have none
     // waiting.
     if (request_count >= max_requests || waiting_urls.isempty())
@@ -399,7 +396,7 @@ void WvHttpStream::execute()
             {
                 int len = 0;
                 if(url->putstream->isok())
-                    len = url->putstream->read(putstream_data, 1024);
+                    len = url->putstream->read(url->putstream_data, 1024);
 
                 if(!url->putstream->isok() || len == 0)
                 {
