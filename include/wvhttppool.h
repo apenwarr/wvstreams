@@ -48,6 +48,7 @@ public:
     WvUrlStream *instream;
     WvBufUrlStream *outstream;
     WvStream *putstream;
+    WvDynBuf putstream_data;
 
     bool pipeline_test;
     bool inuse;
@@ -171,7 +172,6 @@ private:
     bool sent_url_request;      // Have we sent a request to the server yet?
     WvIPPortAddrTable &pipeline_incompatible;
     WvString http_response, pipeline_test_response;
-    WvDynBuf putstream_data;
     
     enum { Unknown, Chunked, ContentLength, Infinity,
 	   PostHeadInfinity, PostHeadChunked, PostHeadStream,
