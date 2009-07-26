@@ -944,15 +944,16 @@ int WvStream::_do_select(SelectInfo &si)
     tv.tv_sec = si.msec_timeout / 1000;
     tv.tv_usec = (si.msec_timeout % 1000) * 1000;
     
+    // block
+    int sel = 0;
 #ifdef _WIN32
     // selecting on an empty set of sockets doesn't cause a delay in win32.
-    SOCKET fakefd = socket(PF_INET, SOCK_STREAM, 0);
-    FD_SET(fakefd, &si.except);
-#endif    
-    
-    // block
-    int sel = ::select(si.max_fd+1, &si.read, &si.write, &si.except,
-        si.msec_timeout >= 0 ? &tv : (timeval*)NULL);
+    if (si.max_fd < 0)
+	Sleep(si.msec_timeout >= 0 ? si.msec_timeout : 1000000000);
+    else
+#endif
+    sel = ::select(si.max_fd+1, &si.read, &si.write, &si.except,
+		   si.msec_timeout >= 0 ? &tv : (timeval*)NULL);
 
     // handle errors.
     //   EAGAIN and EINTR don't matter because they're totally normal.
@@ -967,9 +968,6 @@ int WvStream::_do_select(SelectInfo &si)
     {
         seterr(errno);
     }
-#ifdef _WIN32
-    ::close(fakefd);
-#endif
     TRACE("select() returned %d\n", sel);
     return sel;
 }
