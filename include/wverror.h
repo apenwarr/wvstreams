@@ -94,18 +94,18 @@ public:
     WvString str() const
         { return errstr(); }
     
-    void set(int _errnum)
-        { seterr(_errnum); }
-    void set(WvStringParm specialerr)
-        { seterr(specialerr); }
-    void set(WVSTRING_FORMAT_DECL)
-        { seterr(WvString(WVSTRING_FORMAT_CALL)); }
-    void set_both(int _errnum, WvStringParm specialerr)
-        { seterr_both(_errnum, specialerr); }
-    void set_both(int _errnum, WVSTRING_FORMAT_DECL)
-        { seterr_both(_errnum, WvString(WVSTRING_FORMAT_CALL)); }
-    void set(const WvErrorBase &err)
-        { seterr(err); }
+    const WvError &set(int _errnum)
+        { seterr(_errnum); return *this; }
+    const WvError &set(WvStringParm specialerr)
+        { seterr(specialerr); return *this; }
+    const WvError &set(WVSTRING_FORMAT_DECL)
+        { seterr(WvString(WVSTRING_FORMAT_CALL)); return *this; }
+    const WvError &set_both(int _errnum, WvStringParm specialerr)
+        { seterr_both(_errnum, specialerr); return *this; }
+    const WvError &set_both(int _errnum, WVSTRING_FORMAT_DECL)
+        { seterr_both(_errnum, WvString(WVSTRING_FORMAT_CALL)); return *this; }
+    const WvError &set(const WvErrorBase &err)
+        { seterr(err); return *this; }
 
     void reset()
         { noerr(); }
