@@ -19,9 +19,12 @@
 #include <stdlib.h> // for alloca() on non-Linux platforms?
 
 int WvTask::taskcount, WvTask::numtasks, WvTask::numrunning;
-
-WvTaskMan *WvTaskMan::singleton = NULL;
-int WvTaskMan::links = 1; // never delete singleton
+struct WvTaskManSingleton {
+    DWORD threadid;
+    WvTaskMan *taskman;
+    int links; // never delete singleton
+};
+static WvTaskManSingleton singletons[10];
 
 int WvTaskMan::magic_number;
 WvTaskList WvTaskMan::free_tasks;
@@ -96,12 +99,38 @@ void WvTask::recycle()
     }
 }
 
+// FIXME: this is mildly racy, although only if the *first* call to get() on
+// a particular thread is at the same time as on another thread.  Since any
+// sane WvStreams program will only have one thread using WvTaskMan anyway,
+// except in a few obscure test situations, I don't consider this a big problem.
 WvTaskMan *WvTaskMan::get()
 {
-    if (!singleton)
-	singleton = new WvTaskMan;
-    links++;
-    return singleton;
+    DWORD tid = GetCurrentThreadId();
+    fprintf(stderr, "WvTaskMan::get: tid=%ld\n", tid);
+    
+    for (unsigned i = 0; i < sizeof(singletons) / sizeof(singletons[0]); i++)
+    {
+	if (singletons[i].threadid == tid)
+	{
+	    singletons[i].taskman->links++;
+	    return singletons[i].taskman;
+	}
+    }
+    
+    // none found?
+    fprintf(stderr, "NEW SINGLETON TASKMAN\n");
+    for (unsigned i = 0; i < sizeof(singletons) / sizeof(singletons[0]); i++)
+    {
+	if (!singletons[i].taskman) // empty slot
+	{
+	    singletons[i].taskman = new WvTaskMan;
+	    singletons[i].threadid = tid;
+	    return singletons[i].taskman;
+	}
+    }
+
+    assert(0); // no slots available
+    return NULL;
 }
 
 
@@ -110,13 +139,21 @@ void WvTaskMan::unlink()
     links--;
     if (links == 0)
     {
-	delete singleton;
-	singleton = NULL;
+	for (unsigned i = 0; i < sizeof(singletons) / sizeof(singletons[0]); i++)
+	{
+	    if (singletons[i].taskman == this)
+	    {
+		delete this;
+		singletons[i].taskman = NULL;
+		singletons[i].threadid = 0;
+	    }
+	}
     }
 }
 
 WvTaskMan::WvTaskMan()
 {
+    links = 1;
     stack_target = NULL;
     current_task = NULL;
     magic_number = -WVTASK_MAGIC;
