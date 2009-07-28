@@ -89,6 +89,17 @@ public:
 class WvError : public WvErrorBase
 {
 public:
+    WvError() 
+        { }
+    WvError(const WvErrorBase &e)
+        { set(e); }
+    WvError(int _errnum)
+        { set(_errnum); }
+    WvError(int _errnum, WvStringParm _specialerr)
+        { set_both(_errnum, _specialerr); }
+    WvError(WvStringParm prefix, const WvErrorBase &e)
+        { set(prefix, e); }
+    
     int get() const
         { return geterr(); }
     WvString str() const
@@ -100,6 +111,13 @@ public:
         { seterr(specialerr); return *this; }
     const WvError &set(WVSTRING_FORMAT_DECL)
         { seterr(WvString(WVSTRING_FORMAT_CALL)); return *this; }
+    const WvError &set(WvStringParm prefix, const WvErrorBase &e)
+        {
+	    if (!e.isok())
+		seterr_both(e.geterr(),
+			    WvString("%s: %s", prefix, e.errstr())); 
+	    return *this;
+	}
     const WvError &set_both(int _errnum, WvStringParm specialerr)
         { seterr_both(_errnum, specialerr); return *this; }
     const WvError &set_both(int _errnum, WVSTRING_FORMAT_DECL)
