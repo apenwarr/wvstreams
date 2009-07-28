@@ -169,10 +169,11 @@ void WvErrorBase::seterr(WvStringParm specialerr)
 
 void WvErrorBase::seterr(const WvErrorBase &err)
 {
-    if (err.geterr() > 0)
+    if (!errnum)
+    {
+	if (!!err.errstring) errstring = err.errstr();
 	seterr(err.geterr());
-    else if (err.geterr() < 0)
-	seterr(err.errstr());
+    }
 }
 
 
