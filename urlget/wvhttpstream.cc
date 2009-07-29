@@ -86,23 +86,27 @@ void WvHttpStream::close()
     free(tracedump);
 #endif
 #endif
+    bool is_pipelining_failure = false;
 
     // assume pipelining is broken if we're closing without doing at least
     // one successful pipelining test and a following non-test request.
     if (enable_pipelining && max_requests > 1
             && (pipeline_test_count < 1
             || (pipeline_test_count == 1 && last_was_pipeline_test)))
+    {
         pipelining_is_broken(2);
+	is_pipelining_failure = true;
+    }
 
     if (isok())
         log(WvLog::Debug4, "Closing.\n");
     WvStreamClone::close();
 
-    if (geterr())
+    if (geterr() && !is_pipelining_failure)
     {
         // if there was an error, count the first URL as done.  This prevents
         // retrying indefinitely.
-        WvUrlRequest *msgurl = curl;
+	WvUrlRequest *msgurl = curl;
         if (!msgurl && !urls.isempty())
             msgurl = urls.first();
         if (!msgurl && !waiting_urls.isempty())
