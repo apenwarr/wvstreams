@@ -143,6 +143,7 @@ void WvTaskMan::unlink()
 	{
 	    if (singletons[i].taskman == this)
 	    {
+		fprintf(stderr, "FREEING TASKMAN (links=0)\n");
 		delete this;
 		singletons[i].taskman = NULL;
 		singletons[i].threadid = 0;
