@@ -160,6 +160,12 @@ WvTaskMan::WvTaskMan()
     magic_number = -WVTASK_MAGIC;
     
     toplevel = ::ConvertThreadToFiber(0);
+    // On XP 64, we're already a fiber... somehow (??).  Instead of
+    // erroring out, though, just get the current fiber.
+    // Error codes here:
+    // http://msdn.microsoft.com/en-us/library/ms681383(VS.85).aspx
+    if (!toplevel && GetLastError() == 0x500)  // 0x500 == already a fiber
+	toplevel = GetCurrentFiber();
     assert(toplevel);
 }
 
