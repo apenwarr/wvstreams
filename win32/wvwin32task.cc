@@ -164,7 +164,7 @@ WvTaskMan::WvTaskMan()
     // erroring out, though, just get the current fiber.
     // Error codes here:
     // http://msdn.microsoft.com/en-us/library/ms681383(VS.85).aspx
-    if (!toplevel && GetLastError() == 0x500)  // 0x500 == already a fiber
+    if (!toplevel && GetLastError() == ERROR_ALREADY_FIBER)
 	toplevel = GetCurrentFiber();
     assert(toplevel);
 }
