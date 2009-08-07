@@ -80,6 +80,8 @@ DeclareWvList(WvUrlLink);
 
 class WvBufUrlStream : public WvBufStream
 {
+    int err;
+    
 public:
     WvString url;
     WvString proto;
@@ -88,12 +90,27 @@ public:
     // HTTP stuff...
     WvString version;
     int status;
-    WvHTTPHeaderDict headers; 
+    WvHTTPHeaderDict headers;
 
     WvBufUrlStream() : status(0), headers(10)
         {}
     virtual ~WvBufUrlStream()
         {}
+
+    // Nearly completely meaningless for this stream, but...
+    // - First of all, note that the stream is still isok() even given an
+    //   error.  As we're using it purely for its buffering capabilities,
+    //   we really don't need to die just because the underlying stream got
+    //   some kind of error condition.
+    // - Note also we can override the error, as WvBufUrlStreams are terribly
+    //   shared possibly repeatedly by WvHttpRequests which might error them.
+    // - Third; if you see an error, but you got a status code of 200 from the
+    //   web server and you're !isok(), you're in golden territory, it's not
+    //   relevant, don't bother with it.
+    virtual void seterr(int _err)
+	{ err = _err; }
+    virtual int geterr() const
+	{ return err; }
 
 public:
     const char *wstype() const { return "WvBufUrlStream"; }
