@@ -347,12 +347,12 @@ void WvHttpStream::execute()
     WvStreamClone::execute();
 
     // make connections timeout after some idleness
-    if (alarm_was_ticking)
+    if (alarm_was_ticking && !isreadable())
     {
         log(WvLog::Debug4, "urls count: %s\n", urls.count());
         if (!urls.isempty())
         {
-            seterr(ETIMEDOUT);
+            seterr_both(ETIMEDOUT, "Connection timed out (client side)");
 
 	    // Must check again here since seterr()
 	    // will close our stream and if we only 
@@ -361,7 +361,7 @@ void WvHttpStream::execute()
 	    {
                 WvUrlRequest *url = urls.first();
                 if (url->outstream)
-                    url->outstream->seterr(ETIMEDOUT);
+                    url->outstream->seterr_both(ETIMEDOUT, "Connection timed out (client side)");
 	    }
         }
         else
