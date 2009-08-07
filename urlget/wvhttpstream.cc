@@ -43,7 +43,7 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
 
     sent_url_request = false;
 
-    alarm(60000); // timeout if no connection, or something goes wrong
+    alarm(120000); // timeout if no connection, or something goes wrong
 }
 
 
@@ -248,7 +248,7 @@ void WvHttpStream::send_request(WvUrlRequest *url)
                 || request_count < max_requests));
     write(url->putstream_data);
     sent_url_request = true;
-    alarm(60000);
+    alarm(120000);
 }
 
 
@@ -659,5 +659,5 @@ void WvHttpStream::execute()
     if (urls.isempty())
         alarm(5000); // just wait a few seconds before closing connection
     else
-        alarm(60000); // give the server a minute to respond, if we're waiting
+        alarm(120000); // give the server two minutes to respond, if we're waiting
 }
