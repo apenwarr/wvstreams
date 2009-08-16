@@ -73,22 +73,14 @@ UniRegistryGen::UniRegistryGen(WvString _moniker) :
     UniConfKey key = _moniker;
     WvString hive = key.first().printable();
     if (strcmp("HKEY_CLASSES_ROOT", hive) == 0)
-    {
 	m_hRoot = HKEY_CLASSES_ROOT;
-    } 
     else if (strcmp("HKEY_CURRENT_USER", hive) == 0)
-    {
 	m_hRoot = HKEY_CURRENT_USER;
-    }
     else if (strcmp("HKEY_LOCAL_MACHINE", hive) == 0)
-    {
 	m_hRoot = HKEY_LOCAL_MACHINE;
-    }
     else if (strcmp("HKEY_USERS", hive) == 0)
-    {
 	m_hRoot = HKEY_USERS;
-    }
-
+    
     m_hRoot = follow_path(m_hRoot, key.range(1, key.numsegments()), true, NULL);
 
 #if 0
@@ -341,6 +333,4 @@ static IUniConfGen *creator(WvStringParm s, IObject*)
     return new UniRegistryGen(s);
 }
 
-#pragma warning(disable : 4073)
-#pragma init_seg(lib)
 WvMoniker<IUniConfGen> UniRegistryGenMoniker("registry", creator);
