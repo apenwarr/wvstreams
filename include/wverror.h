@@ -8,6 +8,13 @@
 #define __WVERROR_H
 
 #include "wvstring.h"
+#include "wvtr1.h"
+
+class WvErrorBase;
+
+/** The type of a callback returned by WvErrorBase::onerror(). */
+typedef wv::function<void(WvErrorBase&)> WvErrorCallback;
+
 
 /**
  * A class for managing error numbers and strings.
@@ -22,6 +29,7 @@
  */
 class WvErrorBase
 {
+    WvErrorCallback onerror_cb;
 protected:
     int errnum;
     WvString errstring;
@@ -29,6 +37,12 @@ protected:
 public:
     WvErrorBase()
         { noerr(); }
+    WvErrorBase(WvErrorCallback _onerror_cb) : onerror_cb(_onerror_cb)
+        { noerr(); }
+    WvErrorBase(const WvErrorBase &e)
+        { noerr(); seterr(e); }
+    WvErrorBase &operator= (const WvErrorBase &e)
+        { noerr(); seterr(e); return *this; }
     virtual ~WvErrorBase();
 
     /**
@@ -77,6 +91,14 @@ public:
     /** Reset our error state - there's no error condition anymore. */
     void noerr()
         { errnum = 0; errstring = WvString::null; }
+    
+    /** 
+     * Assign a function to be called when an error is set.  The function
+     * is only called if there was no previous error (ie. the very first
+     * error after noerr()).
+     */
+    void onerror(WvErrorCallback _onerror_cb)
+        { onerror_cb = _onerror_cb; }
 };
 
 
@@ -91,14 +113,23 @@ class WvError : public WvErrorBase
 public:
     WvError() 
         { }
-    WvError(const WvErrorBase &e)
-        { set(e); }
+    WvError(WvErrorCallback _ecb) : WvErrorBase(_ecb)
+        { }
+    WvError(const WvErrorBase &e) : WvErrorBase(e)
+        { }
+    WvError(const WvError &e) : WvErrorBase(e)
+        { }
     WvError(int _errnum)
         { set(_errnum); }
     WvError(int _errnum, WvStringParm _specialerr)
         { set_both(_errnum, _specialerr); }
     WvError(WvStringParm prefix, const WvErrorBase &e)
         { set(prefix, e); }
+    
+    WvError &operator= (const WvError &e)
+        { noerr(); set(e); return *this; }
+    WvError &operator= (const WvErrorBase &e)
+        { noerr(); set(e); return *this; }
     
     int get() const
         { return geterr(); }
