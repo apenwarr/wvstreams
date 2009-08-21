@@ -161,4 +161,11 @@ public:
 };
 
 
+/**
+ * For the lazy typists.  Err is pretty much no less informative than Error,
+ * and people call all their WvError objects err anyway.
+ */
+typedef WvError WvErr;
+
+
 #endif // __WVERROR_H
