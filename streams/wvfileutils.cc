@@ -317,7 +317,7 @@ WvString wvfullpath(WvStringParm fname)
     WvString buf;
     buf.setsize(len);
     long ret = GetFullPathName(fname, len, buf.edit(), NULL);
-    assert(ret < len);
+    assert(ret <= len);
     return buf;
 #else
     if (!fname || fname[0] == '/' || fname[0] == '\\')

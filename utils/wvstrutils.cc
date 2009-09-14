@@ -443,6 +443,7 @@ int strcount(WvStringParm s, const char c)
 
 WvString getfilename(WvStringParm fullname)
 {
+    if (!fullname) return fullname;
     WvString tmp(fullname);
     char *cptr = strrchr(tmp.edit(), '/');
     
@@ -460,6 +461,7 @@ WvString getfilename(WvStringParm fullname)
 
 WvString getdirname(WvStringParm fullname)
 {
+    if (!fullname) return fullname;
     WvString tmp(fullname);
     char *cptr = strrchr(tmp.edit(), '/');
     
