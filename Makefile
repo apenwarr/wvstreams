@@ -240,7 +240,7 @@ REAL_TESTS = $(filter-out $(TEST_SKIP_OBJS), $(TESTS))
 $(addsuffix .o,$(REAL_TESTS)):
 tests: $(REAL_TESTS)
 
-test: all tests qtest
+test: all autodep-test tests qtest
 
 qtest: all wvtestmain
 	LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(shell pwd)" $(WVTESTRUN) $(MAKE) runtests
@@ -258,6 +258,33 @@ TEST_TARGETS = 	$(filter-out $(TEST_SKIP_OBJS), $(call objects, $(filter-out win
 
 wvtestmain-LIBS += $(LIBS) $(LIBS_DBUS) 
 wvtestmain: $(TEST_TARGETS) $(LIBWVDBUS) $(LIBUNICONF) $(LIBWVSTREAMS) $(LIBWVTEST)
+
+# self test for wvrules.mk autodependencies, since people keep @$@#! breaking
+# them.
+autodep-prog: autodep-prog.o
+autodep-test:
+	rm -f autodep-prog*
+	echo 'int main() { return 0; }' >autodep-prog-stupid.cc
+	( \
+		echo '#include "autodep-prog.h"'; \
+		echo 'int main() { return AUTODEP_VAL; }'; \
+	) >autodep-prog.cc
+	echo '#define AUTODEP_VAL 0' >autodep-prog.h
+	$(MAKE) autodep-prog
+	$(MAKE) autodep-prog-stupid
+	if ! ./autodep-prog; then exit 1; fi  # should return 0 == ok
+	sleep 1  # ensure timestamp has changed
+	echo '#define AUTODEP_VAL 1' >autodep-prog.h
+	$(MAKE) autodep-prog
+	$(MAKE) autodep-prog-stupid
+	if ./autodep-prog; then exit 1; fi  # should return 1 == not-ok
+	rm -f autodep-prog.h
+	sleep 1  # ensure timestamp has changed
+	echo 'int main() { return 0; }' >autodep-prog.cc
+	$(MAKE) autodep-prog  # autodep should recover from missing header
+	$(MAKE) autodep-prog-stupid
+	if ! ./autodep-prog; then exit 1; fi  # should return 0 == ok
+	rm -f autodep-prog*
 
 distclean: clean
 	rm -f uniconf/daemon/uniconfd.8 uniconf/tests/uni
