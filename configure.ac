@@ -384,6 +384,8 @@ if test "$with_dbus" != "no"; then
     	WV_APPEND(CPPFLAGS, -I$with_dbus)
     	WV_APPEND(LDFLAGS, -L$DBUS_LIBDIR)
         LIBS_DBUS=-ldbus-1
+        OLD_LIBS="$LIBS"
+        WV_APPEND(LIBS, $LIBS_DBUS)
 	# ... but double check that we actually have D-Bus
 	if test "$with_dbus" != "no"; then
            AC_CHECK_HEADERS(dbus/dbus.h,, [with_dbus=no])
@@ -392,6 +394,7 @@ if test "$with_dbus" != "no"; then
                        [dbus_message_new(); ],
                        [with_dbus=])
         fi
+        LIBS=$OLD_LIBS
     fi
 
     if test "$with_dbus" != "no"; then
