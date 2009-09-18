@@ -181,6 +181,7 @@ class WvHttpStream : public WvUrlStream
 {
 public:
     static bool global_enable_pipelining;
+    static WvString pipeline_check_filename;
     bool enable_pipelining, expect_keep_alive;
     
 private:

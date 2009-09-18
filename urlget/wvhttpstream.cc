@@ -229,8 +229,9 @@ void WvHttpStream::send_request(WvUrlRequest *url)
 void WvHttpStream::start_pipeline_test(WvUrl *url)
 {
     WvUrl location(WvString(
-                "%s://%s:%s/wvhttp-pipeline-check-should-not-exist/",
-                url->getproto(), url->gethost(), url->getport()));
+                "%s://%s:%s%s",
+                url->getproto(), url->gethost(), url->getport(),
+		pipeline_check_filename));
     WvUrlRequest *testurl = new WvUrlRequest(location, "HEAD", "", NULL,
                                              false, true);
     testurl->instream = this;

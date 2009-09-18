@@ -14,6 +14,8 @@
 #include "strutils.h"
 
 bool WvHttpStream::global_enable_pipelining = true;
+WvString WvHttpStream::pipeline_check_filename
+    = "/wvhttp-pipeline-check-should-not-exist/";
 int WvUrlStream::max_requests = 100;
 
 unsigned WvHash(const WvUrlStream::Target &n)
