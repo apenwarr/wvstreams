@@ -36,6 +36,7 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
 
     enable_pipelining = global_enable_pipelining 
         && !pipeline_incompatible[target.remaddr];
+    expect_keep_alive = true;
     ssl = _ssl;
 
     if (ssl)
@@ -395,6 +396,10 @@ void WvHttpStream::execute()
             if (!http_response)
             {
                 http_response = line;
+		if (http_response.startswith("HTTP/1.0"))
+		    expect_keep_alive = false;
+		else
+		    expect_keep_alive = true;
 
                 // there are never two pipeline test requests in a row, so
                 // a second response string exactly like the pipeline test
@@ -442,6 +447,10 @@ void WvHttpStream::execute()
             {
                 encoding = Chunked;
             }
+	    else if (!strncasecmp(line, "Connection: keep-alive", 22))
+		expect_keep_alive = true;
+	    else if (!strncasecmp(line, "Connection: close", 17))
+		expect_keep_alive = false;
 
             if (line[0])
             {
@@ -485,16 +494,16 @@ void WvHttpStream::execute()
 
                 if (curl->method == "HEAD")
                 {
-                    log(WvLog::Debug4, "Rcv got all headers.\n");
-		    if (!enable_pipelining)
-			doneurl();
-
-		    if (encoding == Infinity)
-			encoding = PostHeadInfinity;
-		    else if (encoding == Chunked)
-			encoding = PostHeadChunked;
-		    else
-			encoding = PostHeadStream;
+		    if (http_response.startswith("HTTP/1.0"))
+		    {
+			log(WvLog::Debug4, "HTTP/1.0 HEAD response: wait for possible body.\n");
+			if (encoding == Infinity)
+			    encoding = PostHeadInfinity;
+			else if (encoding == Chunked)
+			    encoding = PostHeadChunked;
+			else
+			    encoding = PostHeadStream;
+		    }
                 }
             }
         }
@@ -509,8 +518,7 @@ void WvHttpStream::execute()
 	// If there is more data available right away, and it isn't an
 	// HTTP header from another request, then it's a stupid web
 	// server that likes to send bodies with HEAD requests.
-	if (len && strncmp(reinterpret_cast<const char *>(chkbuf.peek(0, 5)),
-			   "HTTP/", 5))
+	if (len && strncmp((const char *)chkbuf.peek(0, 5), "HTTP/", 5) != 0)
 	{
 	    if (encoding == PostHeadInfinity)
 		encoding = ChuckInfinity;
@@ -521,8 +529,12 @@ void WvHttpStream::execute()
 	    else
 		log(WvLog::Warning, "WvHttpStream: inconsistent state.\n");
 	}
-	else
+	if (expect_keep_alive)
+	{
+	    // we can't just wait forever, and HTTP/1.1 servers aren't really
+	    // allowed to be that dumb.
 	    doneurl();
+	}
 
 	unread(chkbuf, len);
     }
