@@ -142,7 +142,7 @@ public:
 protected:
     WvLog log;
     WvUrlRequestList urls, waiting_urls;
-    int request_count;
+    int request_count, done_count;
     WvUrlRequest *curl; // current url
     virtual void doneurl() = 0;
     virtual void request_next() = 0;
@@ -153,7 +153,7 @@ public:
 	: WvStreamClone(new WvTCPConn(_remaddr)), target(_remaddr, _username),
 	  log(logname, WvLog::Debug)
     {
-    	request_count = 0;
+    	request_count = done_count = 0;
     	curl = NULL;
     }
 
@@ -161,10 +161,10 @@ public:
 
     virtual void close() = 0;
     void addurl(WvUrlRequest *url);
-    void delurl(WvUrlRequest *url);
+    void delurl(WvUrlRequest *url, WvStringParm reason);
     // only implemented in WvHttpStream
     virtual size_t remaining()
-    { return 0; }
+        { return 0; }
     
     virtual void execute() = 0;
     
@@ -187,7 +187,7 @@ private:
     int pipeline_test_count;
     bool ssl;
     bool sent_url_request;      // Have we sent a request to the server yet?
-    WvIPPortAddrTable &pipeline_incompatible;
+    WvIPPortAddrTable &pipeline_incompatible; // points to the one in WvHttpPool
     WvString http_response, pipeline_test_response;
     
     enum { Unknown, Chunked, ContentLength, Infinity,
@@ -213,7 +213,7 @@ public:
     virtual bool post_select(SelectInfo &si);
     virtual void execute();
     virtual size_t remaining()
-    { return bytes_remaining; }
+        { return bytes_remaining; }
     
 public:
     const char *wstype() const { return "WvHttpStream"; }
@@ -243,7 +243,7 @@ class WvFtpStream : public WvUrlStream
     WvString parse_for_links(char *line);
 
     WvCont cont;
-    void* real_execute(void*);
+    void *real_execute(void*);
 
 public:
     WvFtpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,

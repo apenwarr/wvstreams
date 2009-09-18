@@ -72,21 +72,19 @@ void WvUrlRequest::done()
 
 void WvUrlStream::addurl(WvUrlRequest *url)
 {
-    log(WvLog::Debug4, "Adding a new url: '%s'\n", url->url);
+    log(WvLog::Debug4, "Enqueue: %s\n", url->url);
 
     assert(url->outstream);
-
     if (!url->url.isok())
         return;
-
     waiting_urls.append(url, false, "waiting_url");
     request_next();
 }
 
 
-void WvUrlStream::delurl(WvUrlRequest *url)
+void WvUrlStream::delurl(WvUrlRequest *url, WvStringParm reason)
 {
-    log(WvLog::Debug4, "Removing an url: '%s'\n", url->url);
+    log(WvLog::Debug4, "%s: '%s'\n", reason, url->url);
 
     if (url == curl)
         doneurl();
@@ -156,7 +154,7 @@ bool WvHttpPool::post_select(SelectInfo &si)
     {
         if (!ci->isok())
         {
-            log(WvLog::Debug4, "Selecting true because of a dead stream.\n");
+            log(WvLog::Debug4, "Stream died: %s\n", *ci->src());
             unconnect(ci.ptr());
             ci.rewind();
             sure = true;
@@ -168,18 +166,19 @@ bool WvHttpPool::post_select(SelectInfo &si)
     {
         if ((!i->outstream && !i->inuse) || !i->url.isok())
         {
-            //log("'%s' is dead: %s/%s\n", 
-            //	i->url, i->url.isok(), i.outstream->isok());
+	    WvString reason;
             if (!i->url.isok())
             {
-                log("URL not okay: '%s'\n", i->url);
+		reason = "URL failed";
                 i->done();
             }
+	    else
+		reason = "URL done";
             // nicely delete the url request
             WvUrlStream::Target target(i->url.getaddr(), i->url.getuser());
             WvUrlStream *s = conns[target];
             if (s)
-                s->delurl(i.ptr());
+                s->delurl(i.ptr(), reason);
             i.xunlink();
             continue;
         }
@@ -189,7 +188,7 @@ bool WvHttpPool::post_select(SelectInfo &si)
             log(WvLog::Debug4, "Checking dns for '%s'\n", i->url.gethost());
             if (i->url.resolve() || dns.post_select(i->url.gethost(), si))
             {
-                log(WvLog::Debug4, "Selecting true because of '%s'\n", i->url);
+                log(WvLog::Debug4, "DNS check done: %s\n", i->url);
                 sure = true;
             }
         }
@@ -213,11 +212,7 @@ void WvHttpPool::execute()
 
         WvUrlStream::Target target(i->url.getaddr(), i->url.getuser());
 
-        //log(WvLog::Info, "remaddr is %s; username is %s\n", target.remaddr,
-        //    target.username);
         s = conns[target];
-        //if (!s) log("conn for '%s' is not found.\n", ip);
-
         if (s && !s->isok())
         {
             unconnect(s);
@@ -255,7 +250,7 @@ void WvHttpPool::execute()
 WvBufUrlStream *WvHttpPool::addurl(WvStringParm _url, WvStringParm _method,
         WvStringParm _headers, WvStream *content_source, bool create_dirs)
 {
-    log(WvLog::Debug4, "Adding a new url to pool: '%s'\n", _url);
+    log(WvLog::Debug4, "Enqueue: '%s'\n", _url);
     WvUrlRequest *url = new WvUrlRequest(_url, _method, _headers, content_source,
                                          create_dirs, false);
     urls.append(url, true, "addurl");

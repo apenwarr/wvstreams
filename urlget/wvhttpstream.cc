@@ -50,20 +50,6 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
 WvHttpStream::~WvHttpStream()
 {
     log(WvLog::Debug4, "Deleting.\n");
-
-#if 0
-#ifdef HAVE_EXECINFO_H
-    void* trace[10];
-    int count = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
-    char** tracedump = backtrace_symbols(trace, count);
-    log(WvLog::Debug5, "TRACE");
-    for (int i = 0; i < count; ++i)
-        log(WvLog::Debug5, ":%s", tracedump[i]);
-    log(WvLog::Debug5, "\n");
-    free(tracedump);
-#endif
-#endif
-
     if (geterr())
         log(WvLog::Debug4, "Error was: %s\n", errstr());
     close();
@@ -72,20 +58,6 @@ WvHttpStream::~WvHttpStream()
 
 void WvHttpStream::close()
 {
-    log(WvLog::Debug4, "close called\n");
-
-#if 0    
-#ifdef HAVE_EXECINFO_H
-    void *trace[10];
-    int count = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
-    char** tracedump = backtrace_symbols(trace, count);
-    log(WvLog::Debug5, "TRACE");
-    for (int i = 0; i < count; ++i)
-        log(WvLog::Debug, ":%s", tracedump[i]);
-    log(WvLog::Debug5, "\n");
-    free(tracedump);
-#endif
-#endif
     bool is_pipelining_failure = false;
 
     // assume pipelining is broken if we're closing without doing at least
@@ -124,27 +96,28 @@ void WvHttpStream::close()
     waiting_urls.zap();
     if (curl)
     {
-        log(WvLog::Debug4, "curl is %s\n", curl->url);
+        log(WvLog::Debug4, "Active URL was: %s\n", curl->url);
         doneurl();
     }
-    log(WvLog::Debug4, "close done\n");
 }
 
 
 void WvHttpStream::doneurl()
 {
-    // There is a slight chance that we might receive an error during or just before
-    // this function is called, which means that the write occuring during
-    // start_pipeline_test() would be called, which would call close() because of the
-    // error, which would call doneurl() again.  We don't want to execute doneurl()
-    // a second time when we're already in the middle.
+    // There is a slight chance that we might receive an error during or
+    // just before this function is called, which means that the write
+    // occuring during start_pipeline_test() would be called, which would
+    // call close() because of the error, which would call doneurl() again.
+    // We don't want to execute doneurl() a second time when we're already
+    // in the middle.
     if (in_doneurl)
         return;
     in_doneurl = true;
 
     assert(curl != NULL);
     WvString last_response(http_response);
-    log(WvLog::Debug4, "Done URL: %s\n", curl->url);
+    done_count++;
+    log(WvLog::Debug4, "Done #%s: %s\n", done_count, curl->url);
 
     http_response = "";
     encoding = Unknown;
@@ -243,7 +216,7 @@ WvString WvHttpStream::request_str(WvUrlRequest *url, bool keepalive)
 void WvHttpStream::send_request(WvUrlRequest *url)
 {
     request_count++;
-    log(WvLog::Debug4, "Request #%s: %s\n", request_count, url->url);
+    log(WvLog::Debug4, "Writing #%s: %s\n", request_count, url->url);
     write(request_str(url, url->pipeline_test
                 || request_count < max_requests));
     write(url->putstream_data);
@@ -418,7 +391,7 @@ void WvHttpStream::execute()
         if (line)
         {
             line = trim_string(line);
-            log(WvLog::Debug4, "Header: '%s'\n", line);
+            log(WvLog::Debug4, "#%s Header: '%s'\n", done_count+1, line);
             if (!http_response)
             {
                 http_response = line;
@@ -504,15 +477,15 @@ void WvHttpStream::execute()
                 // blank line is the beginning of data section
                 curl = urls.first();
                 in_chunk_trailer = false;
-                log(WvLog::Debug4,
-                        "Starting data: %s (enc=%s)\n", bytes_remaining, encoding);
+                log(WvLog::Debug4, "Rcv data start: %s (enc=%s)\n",
+		    bytes_remaining, encoding);
 
                 if (encoding == Unknown)
                     encoding = Infinity; // go until connection closes itself
 
                 if (curl->method == "HEAD")
                 {
-                    log(WvLog::Debug4, "Got all headers.\n");
+                    log(WvLog::Debug4, "Rcv got all headers.\n");
 		    if (!enable_pipelining)
 			doneurl();
 
@@ -590,7 +563,7 @@ void WvHttpStream::execute()
             if (in_chunk_trailer)
             {
                 // in the trailer section of a chunked encoding
-                log(WvLog::Debug4, "Trailer: '%s'\n", line);
+                log(WvLog::Debug4, "Rcv trailer: '%s'\n", line);
 
                 // a blank line means we're finally done!
                 if (!line[0])
@@ -604,7 +577,7 @@ void WvHttpStream::execute()
                     bytes_remaining = (size_t)strtoul(line, NULL, 16);
                     if (!bytes_remaining)
                         in_chunk_trailer = true;
-                    log(WvLog::Debug4, "Chunk length is %s ('%s').\n",
+                    log(WvLog::Debug4, "Rcv chunk length is %s ('%s').\n",
                             bytes_remaining, line);
                 }
             }
@@ -620,7 +593,7 @@ void WvHttpStream::execute()
 	    return;
 
         if (len)
-            log(WvLog::Debug5, "Infinity: read %s bytes.\n", len);
+            log(WvLog::Debug5, "Rcv infinity: read %s bytes.\n", len);
         if (curl && curl->outstream)
             curl->outstream->write(buf, len);
 
