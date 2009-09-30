@@ -434,13 +434,14 @@ bool WvFastString::operator! () const
 bool WvFastString::endswith(WvStringParm ending) const
 {
     int mylen = len(), elen = ending.len();
-    return mylen >= elen && !strncmp(str+(mylen-elen), ending, elen);
+    return *this && ending 
+	&& mylen >= elen && !strncmp(str+(mylen-elen), ending, elen);
 }
     
 
 bool WvFastString::startswith(WvStringParm starting) const
 {
-    return !strncmp(*this, starting, starting.len());
+    return *this && starting && !strncmp(*this, starting, starting.len());
 }
 
 
