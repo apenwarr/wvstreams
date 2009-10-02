@@ -497,7 +497,9 @@ void WvHttpStream::execute()
                 {
 		    if (http_response.startswith("HTTP/1.0"))
 		    {
-			log(WvLog::Debug4, "HTTP/1.0 HEAD response: wait for possible body.\n");
+			log(WvLog::Debug4,
+			    "HTTP/1.0 HEAD response: wait for "
+			    "possible body.\n");
 			if (encoding == Infinity)
 			    encoding = PostHeadInfinity;
 			else if (encoding == Chunked)
@@ -505,6 +507,8 @@ void WvHttpStream::execute()
 			else
 			    encoding = PostHeadStream;
 		    }
+		    else
+			doneurl();
                 }
             }
         }

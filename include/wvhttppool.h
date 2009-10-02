@@ -92,7 +92,7 @@ public:
     int status;
     WvHTTPHeaderDict headers;
 
-    WvBufUrlStream() : status(0), headers(10)
+    WvBufUrlStream() : err(0), status(0), headers(10)
         {}
     virtual ~WvBufUrlStream()
         {}
