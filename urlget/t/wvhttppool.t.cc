@@ -29,10 +29,11 @@ WVTEST_MAIN("WvHttpPool GET")
 	WVPASS(buf->isok());
 	buf->autoforward(*wvcon);
 	buf->setclosecallback(wv::bind(close_callback, wv::ref(*buf)));
-	l.append(buf, true, "buf stream");
+	l.append(buf, false, "buf stream");
 	while (buf->isok() && (wvcon->isok() || !pool.idle()))
 	    l.runonce();
 	WVPASS(!(buf->isok()));
+	WVRELEASE(buf);
 
 	WVPASSEQ(l.count(), 2);
     }
