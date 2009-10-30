@@ -18,3 +18,4 @@ include/wvautoconf.h.in
 /CC
 /CXX
 -MP
+lib*.list

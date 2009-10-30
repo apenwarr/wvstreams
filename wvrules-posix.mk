@@ -58,28 +58,27 @@ define wvlink_ar
 	$(LINK_MSG)set -e; rm -f $1 $(patsubst %.a,%.libs,$1); \
 	echo $2 $($1-EXTRA) >$(patsubst %.a,%.libs,$1); \
 	$(AR) q $1 $(filter %.o,$2 $($1-EXTRA)); \
-	for d in "" $(filter %.libs,$2 $($1-EXTRA)); do \
-	    if [ "$$d" == "" ]; then \
-		continue; \
-	    fi; \
+	echo $(patsubst %,$(shell pwd)/%,$(filter %.o,$2 $($1-EXTRA))) \
+	     >$(patsubst %.a,%.list,$1); \
+	for d in $(filter %.libs,$2 $($1-EXTRA)); do \
 	    cd $$(dirname "$$d"); \
 	    for c in $$(cat $$(basename "$$d")); do \
 		if echo $$c | grep -q "\.list$$"; then \
 		    for i in $$(cat $$c); do \
 			$(AR) q $(shell pwd)/$1 $$i; \
+			echo $$i >>$(patsubst %.a,$(shell pwd)/%.list,$1); \
 		    done; \
 		else \
 		    $(AR) q $(shell pwd)/$1 $$c; \
+		    echo $$(pwd)/$$c >>$(patsubst %.a,$(shell pwd)/%.list,$1); \
 		fi; \
 	    done; \
 	    cd $(shell pwd); \
 	done; \
-	for l in "" $(filter %.list,$2 $($1-EXTRA)); do \
-	    if [ "$$l" == "" ]; then \
-		continue; \
-	    fi; \
+	for l in $(filter %.list,$2 $($1-EXTRA)); do \
 	    for i in $$(cat $$l); do \
-		$(AR) q $1 $$(dirname "$$l")/$$i; \
+		$(AR) q $1 $$i; \
+		echo $$i >>$(patsubst %.a,%.list,$1); \
 	    done; \
 	done; \
 	$(AR) s $1
