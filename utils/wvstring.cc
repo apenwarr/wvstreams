@@ -265,8 +265,9 @@ void WvFastString::link(WvStringBuf *_buf, const char *_str)
 
 WvStringBuf *WvFastString::alloc(size_t size)
 { 
-    WvStringBuf *abuf = (WvStringBuf *)malloc(
-		      (WVSTRINGBUF_SIZE(buf) + size + WVSTRING_EXTRA) | 3);
+    WvStringBuf *abuf = (WvStringBuf *)calloc(
+		      (WVSTRINGBUF_SIZE(buf) + size + WVSTRING_EXTRA) | 3,
+		      sizeof(char));
     abuf->links = 0;
     abuf->size = size;
     return abuf;
@@ -362,7 +363,7 @@ WvString &WvString::operator= (const WvFastString &s2)
 	    {
 		// If the two strings overlap, we'll just need to
 		// shift s2.str over to here.
-		memmove(buf->data, s2.str, buf->size);
+		memmove(buf->data, s2.str, buf->size - (s2.str - str));
 		return *this;
 	    }
 	}

@@ -275,7 +275,7 @@ libargp.a: $(libargp_a_OBJECTS) $(libargp_a_DEPENDENCIES)
 	$(RANLIB) libargp.a
 
 libargp.list: libargp.a
-	$(AR) t $^ > libargp.list
+	@echo $(patsubst %,$(shell pwd)/%,$(shell $(AR) t $^)) > libargp.list
 
 clean-noinstPROGRAMS:
 	-test -z "$(noinst_PROGRAMS)" || rm -f $(noinst_PROGRAMS)
