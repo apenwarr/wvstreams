@@ -16,7 +16,7 @@
 .PHONY: default all
 default: all
 
-all: CC CXX
+all:
 
 # if WVSTREAMS_SRC is set assume everything else is set.
 # For packages that use WvStreams use WVSTREAMS_SRC=. for distribution.
@@ -122,12 +122,18 @@ wvln=$(SYMLINK_MSG)$(LN) -f $1 $2
 # usage: $(wvcc,outfile,infile,stem,extra_cflags,mode)
 #    eg: $(wvcc,foo.o,foo.cc,foo,-fPIC,-c)
 
+define compile
+	$(COMPILE_MSG)$1 $2 -o $3.o $3.$4 -MMD -MF \
+	  $(shell dirname $3)/.$(shell basename $3 .o).d -MP -MQ $3.o \
+	  $(CPPFLAGS) $5 $6 $7 $8
+endef
+
 define wvcc
-	./CC $(if $5,$5,-c) $3 $($1-CFLAGS) $($1-CPPFLAGS) $4
+	$(call compile,$(CC),$(if $5,$5,-c),$3,c,$(CFLAGS),$($1-CFLAGS),$($1-CPPFLAGS),$4)
 endef
 
 define wvcxx
-	./CXX $(if $5,$5,-c) $3 $($1-CXXFLAGS) $($1-CPPFLAGS) $4
+	$(call compile,$(CXX),$(if $5,$5,-c),$3,cc,$(CXXFLAGS),$($1-CXXFLAGS),$($1-CPPFLAGS),$4)
 endef
 
 %.so: SONAME=$@$(if $(SO_VERSION),.$(SO_VERSION))
@@ -244,7 +250,6 @@ _wvclean:
 	@echo '--> Cleaning $(shell pwd)...'
 	@rm -f *~ *.tmp *.o *.a *.so *.so.* *.libs *.dll *.lib *.moc *.d .*.d .depend \
 		 .\#* .tcl_paths pkgIndex.tcl gmon.out core build-stamp \
-		 CC CXX \
 		 wvtestmain
 	@rm -f $(patsubst %.t.cc,%.t,$(wildcard *.t.cc) $(wildcard t/*.t.cc)) \
 		t/*.o t/*~ t/.*.d t/.\#*
