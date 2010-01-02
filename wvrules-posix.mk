@@ -84,12 +84,4 @@ define wvlink_ar
 	$(AR) s $1
 endef
 
-CC: FORCE
-	@CC="$(CC)" CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" \
-	  $(WVSTREAMS)/gen-cc CC c
-
-CXX: FORCE
-	@CC="$(CXX)" CFLAGS="$(CXXFLAGS)" CPPFLAGS="$(CPPFLAGS)" \
-	  $(WVSTREAMS)/gen-cc CXX cc
-
 wvlink=$(LINK_MSG)$(WVLINK_CC) $(LDFLAGS) $($1-LDFLAGS) -o $1 $(filter %.o %.a %.so, $2) $($1-LIBS) $(XX_LIBS) $(LDLIBS) $(PRELIBS) $(LIBS)
