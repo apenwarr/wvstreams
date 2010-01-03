@@ -123,17 +123,18 @@ wvln=$(SYMLINK_MSG)$(LN) -f $1 $2
 #    eg: $(wvcc,foo.o,foo.cc,foo,-fPIC,-c)
 
 define compile
-	$(COMPILE_MSG)$1 $2 -o $3.o $3.$4 -MMD -MF \
-	  $(shell dirname $3)/.$(shell basename $3 .o).d -MP -MQ $3.o \
-	  $(CPPFLAGS) $5 $6 $7 $8
+	$(COMPILE_MSG)$($(if $(subst C,,$6),$6,CC)) $(if $5,$5,-c) -o $1 $2 \
+	  -MMD -MF \
+	  $(shell dirname $3)/.$(shell basename $3 .o).d -MP -MQ $1 \
+	  $(CPPFLAGS) $($6FLAGS) $($1-$6FLAGS) $($1-CPPFLAGS) $4
 endef
 
 define wvcc
-	$(call compile,$(CC),$(if $5,$5,-c),$3,c,$(CFLAGS),$($1-CFLAGS),$($1-CPPFLAGS),$4)
+	$(call compile,$1,$2,$3,$4,$5,C)
 endef
 
 define wvcxx
-	$(call compile,$(CXX),$(if $5,$5,-c),$3,cc,$(CXXFLAGS),$($1-CXXFLAGS),$($1-CPPFLAGS),$4)
+	$(call compile,$1,$2,$3,$4,$5,CXX)
 endef
 
 %.so: SONAME=$@$(if $(SO_VERSION),.$(SO_VERSION))
