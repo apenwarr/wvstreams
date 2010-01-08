@@ -20,18 +20,27 @@ all:
 
 # if WVSTREAMS_SRC is set assume everything else is set.
 # For packages that use WvStreams use WVSTREAMS_SRC=. for distribution.
+ifneq ($(WVSTREAMSOBJ),)
+  WVSTREAMS_LIB=$(WVSTREAMSOBJ)/
+  WVSTREAMS_BIN=$(WVSTREAMSOBJ)
+  WVSTREAMS_INC=$(WVSTREAMSOBJ)/include
+  WVSTREAMS_OUT=$(WVSTREAMSOBJ)
+else
+  WVSTREAMS_LIB=
+  WVSTREAMS_BIN=.
+  WVSTREAMS_INC=./include
+  WVSTREAMS_OUT=.
+endif
 ifneq ($(WVSTREAMS),)
   WVSTREAMS_SRC=$(WVSTREAMS)
-  WVSTREAMS_LIB=$(WVSTREAMS)
-  WVSTREAMS_INC=$(WVSTREAMS)/include
-  WVSTREAMS_BIN=$(WVSTREAMS)
+  WVSTREAMS_INC+=$(WVSTREAMS)/include
 endif
-export WVSTREAMS WVSTREAMS_SRC WVSTREAMS_LIB WVSTREAMS_INC WVSTREAMS_BIN
+export WVSTREAMS WVSTREAMSOBJD WVSTREAMS_SRC WVSTREAMS_LIB WVSTREAMS_INC WVSTREAMS_BIN
 
 SHELL=/bin/bash
 
 include $(WVSTREAMS_SRC)/config.defaults.mk
--include $(WVSTREAMS_SRC)/config.mk
+-include $(WVSTREAMS_OUT)/config.mk
 -include $(WVSTREAMS_SRC)/config.overrides.mk
 -include $(WVSTREAMS_SRC)/local.mk
 
@@ -61,17 +70,17 @@ endif
 include $(WVSTREAMS_SRC)/wvrules-$(COMPILER_STANDARD).mk
 
 ifeq (${WVTESTRUN},)
-  WVTESTRUN=$(WVSTREAMS_BIN)/wvtestrun
+  WVTESTRUN=$(WVSTREAMS_SRC)/wvtestrun
 endif
 
 # macros that expand to the object files in the given directories
 objects=$(sort $(foreach type,c cc,$(call objects_$(type),$1)))
 objects_c=$(filter-out $(WV_EXCLUDES), \
-		$(patsubst %.c,%.o,$(wildcard $(addsuffix /*.c,$1))))
+		$(patsubst $S%.c,%.o,$(wildcard $(addprefix $S,$(addsuffix /*.c,$1)))))
 objects_cc=$(filter-out $(WV_EXCLUDES), \
-		$(patsubst %.cc,%.o,$(wildcard $(addsuffix /*.cc,$1))))
+		$(patsubst $S%.cc,%.o,$(wildcard $(addprefix $S,$(addsuffix /*.cc,$1)))))
 tests_cc=$(filter-out $(WV_EXCLUDES), \
-		$(patsubst %.cc,%,$(wildcard $(addsuffix /*.cc,$1))))
+		$(patsubst $S%.cc,%,$(wildcard $(addprefix $S,$(addsuffix /*.cc,$1)))))
 
 # default "test" rule does nothing...
 .PHONY: test runtests
@@ -125,8 +134,9 @@ wvln=$(SYMLINK_MSG)$(LN) -f $1 $2
 define compile
 	$(COMPILE_MSG)$($(if $(subst C,,$6),$6,CC)) $(if $5,$5,-c) -o $1 $2 \
 	  -MMD -MF \
-	  $(shell dirname $3)/.$(shell basename $3 .o).d -MP -MQ $1 \
-	  $(CPPFLAGS) $($6FLAGS) $($1-$6FLAGS) $($1-CPPFLAGS) $4
+	  $(shell dirname $1)/.$(shell basename $1 .o).d -MP -MQ $1 \
+	  $(CPPFLAGS) $($6FLAGS) $($1-$6FLAGS) \
+	  $($1-CPPFLAGS) $4
 endef
 
 define wvcc
@@ -165,20 +175,22 @@ endif
 ../%.o:;	@echo "Object $@ does not exist!"; exit 1
 /%.a:;		@echo "Library $@ does not exist!"; exit 1
 
-%.o: %.c;	$(call wvcc ,$@,$<,$*)
-%.fpic.o: %.c;	$(call wvcc ,$@,$<,$*,-fPIC)
-%.o: %.cc;	$(call wvcxx,$@,$<,$*)
-%.fpic.o: %.cc;	$(call wvcxx,$@,$<,$*,-fPIC)
-%.o: %.cpp;	$(call wvcxx,$@,$<,$*)
-%.fpic.o:%.cpp; $(call wvcxx,$@,$<,$*,-fPIC)
-%.s: %.c;	$(call wvcc ,$@,$<,$*,,-S)
-%.s: %.cc;	$(call wvcxx,$@,$<,$*,,-S)
-%.s: %.cpp;	$(call wvcxx,$@,$<,$*,,-S)
-%.E: %.c;	$(call wvcc,$@,$<,$*,,-E)
-%.E: %.cc;	$(call wvcxx,$@,$<,$*,,-E)
-%.E: %.cpp;	$(call wvcxx,$@,$<,$*,,-E)
+VPATH=$S
 
-%.moc: %.h;	$(MOC) -o $@ $<
+$O%.o: %.c;		$(call wvcc ,$@,$<,$*)
+$O%.fpic.o: %.c;	$(call wvcc ,$@,$<,$*,-fPIC)
+$O%.o: %.cc;		$(call wvcxx,$@,$<,$*)
+$O%.fpic.o: %.cc;	$(call wvcxx,$@,$<,$*,-fPIC)
+$O%.o: %.cpp;		$(call wvcxx,$@,$<,$*)
+$O%.fpic.o: %.cpp;	$(call wvcxx,$@,$<,$*,-fPIC)
+$O%.s: %.c;		$(call wvcc ,$@,$<,$*,,-S)
+$O%.s: %.cc;		$(call wvcxx,$@,$<,$*,,-S)
+$O%.s: %.cpp;		$(call wvcxx,$@,$<,$*,,-S)
+$O%.E: %.c;		$(call wvcc,$@,$<,$*,,-E)
+$O%.E: %.cc;		$(call wvcxx,$@,$<,$*,,-E)
+$O%.E: %.cpp;		$(call wvcxx,$@,$<,$*,,-E)
+
+$O%.moc: %.h;	$(MOC) -o $@ $<
 
 %: %.o;		$(call wvlink,$@,$^) 
 %.t: %.t.o;	$(call wvlink,$@,$(call reverse,$(filter %.o,$^)) $(filter-out %.o,$^) $(LIBWVTEST))
