@@ -1,10 +1,11 @@
 WVSTREAMS:=.
 
-include wvrules.mk
-include install.mk
+-include config-build.mk
+include $(WVSTREAMS)/wvrules.mk
+include $(WVSTREAMS)/install.mk
 
 ifdef _WIN32
-    include win32.mk
+    include $(WVSTREAMS)/win32.mk
 endif
 
 ifdef _SOLARIS
@@ -32,7 +33,7 @@ endif
 LIBS += -lm
 
 ifeq ($(USE_WVSTREAMS_ARGP),1)
-  utils/wvargs.o-CPPFLAGS += -Iargp
+  utils/wvargs.o-CPPFLAGS += -I$(WVSTREAMS)/argp
   libwvutils.so-LIBS += -Largp -largp
 
 # argp does its own dependency checking, so let's call it once per wvstreams

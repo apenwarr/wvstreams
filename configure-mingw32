@@ -1,7 +1,8 @@
 #!/bin/bash
-PORTS=$PWD/../wvports
-./configure \
-	--build=$(./config.guess) \
+MYDIR=$(cd `dirname -- $0` && pwd)
+PORTS=$MYDIR/../wvports
+$MYDIR/configure \
+	--build=$($MYDIR/config.guess) \
 	--host=i586-mingw32msvc \
 	--enable-exceptions \
 	CPPFLAGS="-mno-cygwin \

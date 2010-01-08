@@ -27,6 +27,18 @@ $datadir/qt
 /usr/share/qt
 "
 
+MYDIR=$(cd `dirname -- $0` && pwd)
+if test $MYDIR = `pwd`; then
+    echo "WvStreams must be built in a directory outside of the sourcedir."
+    echo "Please create a different directory, and run configure/make from"
+    echo "within it, for example:"
+    echo "  mkdir foo"
+    echo "  cd foo"
+    echo "  ../wvstreams/configure"
+    echo "  make"
+    exit 1
+fi
+
 AC_CONFIG_SRCDIR(streams/wvstream.cc)
 
 AC_ARG_ENABLE(debug,
@@ -148,8 +160,10 @@ if test "$ac_cv_func_argp_parse" != yes \
     (
     	echo
     	echo 'configuring argp...'
+	mkdir -p argp
     	cd argp
-    	./configure --host=$host_cpu-$host_os || exit $?
+	rm -f $MYDIR/argp/config.status
+    	$MYDIR/argp/configure --host=$host_cpu-$host_os --srcdir=$MYDIR/argp || exit $?
     	echo 'argp configured.'
     	echo
     ) || exit $?
@@ -617,6 +631,20 @@ AC_SUBST(LIBS_TCL)
 AC_SUBST(ac_libs)
 AC_SUBST(COMPILER_STANDARD)
 
+if test x$MYDIR != x$PWD; then
+    WVSRCDIR=$MYDIR
+    for i in Makefile; do
+	rm -f $i
+	ln -s $MYDIR/$i .
+    done
+    mkdir -p $(cd $MYDIR && find . -type d)
+    WVSRCDIR_SLASH=$WVSRCDIR/
+else
+    WVSRCDIR=.
+fi
+AC_SUBST(WVSRCDIR)
+AC_SUBST(WVSRCDIR_SLASH)
+
 AC_DEFINE_UNQUOTED([VERBOSE_PACKAGE_VERSION],["$PACKAGE_VERSION$WEAVER_BUILD_INFO"],[Verbose package version])
 
 AC_CONFIG_FILES(config.mk)
@@ -634,6 +662,7 @@ AC_CONFIG_FILES([pkgconfig/libuniconf.pc
 		 pkgconfig/libwvutils-uninstalled.pc
 		 pkgconfig/libwvtest.pc
                  pkgconfig/libwvtest-uninstalled.pc])
+AC_CONFIG_FILES(config-build.mk)
 
 AC_CONFIG_HEADERS(include/wvautoconf.h)
 
