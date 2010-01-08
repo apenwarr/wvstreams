@@ -633,10 +633,6 @@ AC_SUBST(COMPILER_STANDARD)
 
 if test x$MYDIR != x$PWD; then
     WVSRCDIR=$MYDIR
-    for i in Makefile; do
-	rm -f $i
-	ln -s $MYDIR/$i .
-    done
     mkdir -p $(cd $MYDIR && find . -type d)
     WVSRCDIR_SLASH=$WVSRCDIR/
 else
