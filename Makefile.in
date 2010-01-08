@@ -1,6 +1,6 @@
-WVSTREAMS:=.
+WVSTREAMS:=@WVSRCDIR@
+S:=@WVSRCDIR_SLASH@
 
--include config-build.mk
 include $(WVSTREAMS)/wvrules.mk
 include $(WVSTREAMS)/install.mk
 
@@ -257,7 +257,7 @@ TEST_TARGETS = 	$(filter-out $(TEST_SKIP_OBJS), $(call objects, $(filter-out win
 
 wvtestmain: $(TEST_TARGETS) $(LIBWVDBUS) $(LIBUNICONF) $(LIBWVSTREAMS) $(LIBWVTEST)
 
-# self test for wvrules.mk autodependencies, since people keep @$@#! breaking
+# self test for wvrules.mk autodependencies, since people keep f$@#! breaking
 # them.
 autodep-prog: autodep-prog.o
 autodep-test:

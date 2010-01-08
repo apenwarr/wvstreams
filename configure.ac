@@ -662,7 +662,7 @@ AC_CONFIG_FILES([pkgconfig/libuniconf.pc
 		 pkgconfig/libwvutils-uninstalled.pc
 		 pkgconfig/libwvtest.pc
                  pkgconfig/libwvtest-uninstalled.pc])
-AC_CONFIG_FILES(config-build.mk)
+AC_CONFIG_FILES(Makefile)
 
 AC_CONFIG_HEADERS(include/wvautoconf.h)
 
