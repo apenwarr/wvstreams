@@ -46,6 +46,8 @@ void print_details(WvX509 *x509)
     for (i.rewind(); i.next();)
         wvcon->print("%s -> %s\n", i().issuer_domain, i().subject_domain);
 #endif
+
+    wvcon->print("Subject Alternative Names:\n%s\n", x509->get_altsubject());
 }
 
 
@@ -66,22 +68,19 @@ int main(int argc, char **argv)
         return -1;
     }
     // FIXME: not working yet
-#if 0
     WvX509 x509;
+
     if (certtype == "der")
-        x509.load(WvX509Mgr::CertDER, remaining_args.popstr());   
+        x509.decode(WvX509::CertFileDER, remaining_args.popstr());
     else if (certtype == "pem")
-        x509.load(WvX509Mgr::CertPEM, remaining_args.popstr());
+        x509.decode(WvX509::CertFilePEM, remaining_args.popstr());
     else
     {
         wverr->print("Invalid certificate type '%s'\n", certtype);
         return -1;
     }
 
-    if (x509.isok())
-        print_details(&x509);
-    else
-        wverr->print("X509 certificate not valid\n");
-#endif    
+    print_details(&x509);
+
     return 0;
 }
