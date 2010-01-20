@@ -31,6 +31,12 @@ void print_details(WvX509 *x509)
     list.zap();
     x509->get_policies(list);
     wvcon->print("Certificate Policy OIDs:\n%s\n", list.join("\n"));
+    bool ca=false;
+    int pathlen=-1;
+    if (x509->get_basic_constraints(ca, pathlen))
+    {
+        wvcon->print("Basic constraints: CA=%s, pathlen=%s\n", ca, pathlen);
+    }
 
 #ifdef HAVE_OPENSSL_POLICY_MAPPING
     int requireExplicitPolicy, inhibitPolicyMapping;
