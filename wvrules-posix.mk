@@ -56,7 +56,7 @@ endif
 
 define wvlink_ar
 	$(LINK_MSG)set -e; rm -f $1 $(patsubst %.a,%.libs,$1); \
-	echo $2 $($1-EXTRA) >$(patsubst %.a,%.libs,$1); \
+	echo $(patsubst $O%,%,$2 $($1-EXTRA)) >$(patsubst %.a,%.libs,$1); \
 	$(AR) q $1 $(filter %.o,$2 $($1-EXTRA)); \
 	echo $(patsubst %,$(shell pwd)/%,$(filter %.o,$2 $($1-EXTRA))) \
 	     >$(patsubst %.a,%.list,$1); \
