@@ -34,20 +34,18 @@ LIBS += -lm
 
 ifeq ($(USE_WVSTREAMS_ARGP),1)
   utils/wvargs.o-CPPFLAGS += -I$(WVSTREAMS)/argp
-  libwvutils.so-LIBS += -Largp -largp
 
 # argp does its own dependency checking, so let's call it once per wvstreams
 # build, in case some system dependencies have changed and argp should be
 # recompiled
   ARGP_TARGET=argp/libargp.list
-  TARGETS += $(ARGP_TARGET)
+  ARGP_LIB=argp/libargp.a
 .PHONY: argp/all
 argp/all:
 	$(MAKE) -C argp
-# Warning!  Crucial!  KEEP THIS SEMICOLON HERE!  Without it, if you blow away
-# $(ARGP_TARGET), $(MAKE) will get confused.
-$(ARGP_TARGET): argp/all;
+$(ARGP_TARGET) $(ARGP_LIB): argp/all;
 else
+  ARGP_LIB=
   ARGP_TARGET=
 endif
 
@@ -111,22 +109,22 @@ BASEOBJS = \
 TARGETS += libwvbase.so
 libwvbase_OBJS += $(filter-out uniconf/unigenhack.o $(WV_EXCLUDES),$(BASEOBJS))
 libwvbase.so: $(libwvbase_OBJS) uniconf/unigenhack.o
-libwvbase.so-LIBS += $(LIBXPLC)
 
 #
 # libwvutils: handy utility library for C++
 #
 TARGETS += libwvutils.so
-TESTS += $(call tests_cc,utils/tests)
+UTILS_TESTS = $(call tests_cc,utils/tests)
+TESTS += $(UTILS_TESTS)
 libwvutils_OBJS += $(filter-out $(BASEOBJS) $(TESTOBJS),$(call objects,utils))
-libwvutils.so: $(libwvutils_OBJS) $(LIBWVBASE) $(ARGP_TARGET)
+libwvutils.so: $(libwvutils_OBJS) $(LIBWVBASE) $(ARGP_LIB)
 ifndef _MACOS
 libwvutils.so-LIBS += -lz -lcrypt $(LIBS_PAM)
 else
 libwvutils.so-LIBS += -lz $(LIBS_PAM)
 endif
 
-utils/tests/%: PRELIBS+=$(LIBWVSTREAMS)
+$(UTILS_TESTS): $(LIBWVSTREAMS)
 
 #
 # libwvstreams: stream/event handling library
@@ -146,26 +144,27 @@ else
   TEST_SKIP_OBJS += ipstreams/tests/wsd
 endif
 
-TESTS += $(call tests_cc,configfile/tests)
-TESTS += $(call tests_cc,streams/tests)
-TESTS += $(call tests_cc,ipstreams/tests)
-TESTS += $(call tests_cc,crypto/tests)
-TESTS += $(call tests_cc,urlget/tests)
-TESTS += $(call tests_cc,linuxstreams/tests)
+WVSTREAMS_TESTS = $(call tests_cc,configfile/tests)
+WVSTREAMS_TESTS += $(call tests_cc,streams/tests)
+WVSTREAMS_TESTS += $(call tests_cc,ipstreams/tests)
+WVSTREAMS_TESTS += $(call tests_cc,crypto/tests)
+WVSTREAMS_TESTS += $(call tests_cc,urlget/tests)
+WVSTREAMS_TESTS += $(call tests_cc,linuxstreams/tests)
+TESTS += $(WVSTREAMS_TESTS)
 libwvstreams_OBJS += $(filter-out $(BASEOBJS), \
 	$(call objects,configfile crypto ipstreams \
 		$(ARCH_SUBDIRS) streams urlget))
 libwvstreams.so: $(libwvstreams_OBJS) $(LIBWVUTILS)
 libwvstreams.so-LIBS += -lz -lssl -lcrypto $(LIBS_PAM)
-configfile/tests/% streams/tests/% ipstreams/tests/% crypto/tests/% \
-  urlget/tests/% linuxstreams/tests/%: PRELIBS+=$(LIBWVSTREAMS)
+$(WVSTREAMS_TESTS): $(LIBWVSTREAMS)
 
 #
 # libuniconf: unified configuration system
 #
 TARGETS += libuniconf.so
 TARGETS += uniconf/daemon/uniconfd uniconf/tests/uni
-TESTS += $(call tests_cc,uniconf/tests) uniconf/tests/uni
+UNICONF_TESTS = $(call tests_cc,uniconf/tests) uniconf/tests/uni
+TESTS += $(UNICONF_TESTS)
 libuniconf_OBJS += $(filter-out $(BASEOBJS) uniconf/daemon/uniconfd.o, \
 	$(call objects,uniconf uniconf/daemon))
 libuniconf.so: $(libuniconf_OBJS) $(LIBWVSTREAMS)
@@ -173,7 +172,7 @@ uniconf/daemon/uniconfd uniconf/tests/uni: $(LIBUNICONF)
 uniconf/daemon/uniconfd: uniconf/daemon/uniconfd.o $(LIBUNICONF)
 uniconf/daemon/uniconfd: uniconf/daemon/uniconfd.ini \
           uniconf/daemon/uniconfd.8
-uniconf/tests/%: PRELIBS+=$(LIBUNICONF)
+$(UNICONF_TESTS): $(LIBUNICONF)
 
 #
 # libwvdbus: C++ DBus library based on wvstreams
@@ -181,11 +180,12 @@ uniconf/tests/%: PRELIBS+=$(LIBUNICONF)
 ifneq ("$(with_dbus)", "no")
   TARGETS += libwvdbus.so
   TARGETS += dbus/tests/wvdbus dbus/tests/wvdbusd
-  TESTS += $(call tests_cc,dbus/tests)
+  DBUS_TESTS = $(call tests_cc,dbus/tests)
+  TESTS += $(DBUS_TESTS)
   libwvdbus_OBJS += $(call objects,dbus)
   libwvdbus.so: $(libwvdbus_OBJS) $(LIBWVSTREAMS)
   libwvdbus.so-LIBS += $(LIBS_DBUS)
-  dbus/tests/%: PRELIBS+=$(LIBWVDBUS)
+  $(DBUS_TESTS): $(LIBWVDBUS)
 else
   TEST_SKIP_OBJS += dbus/t/%
 endif
@@ -196,11 +196,12 @@ endif
 ifndef _MACOS
 ifneq ("$(with_qt)", "no")
   TARGETS += libwvqt.so
-  TESTS += $(patsubst %.cc,%,$(wildcard qt/tests/*.cc))
+  QT_TESTS = $(patsubst %.cc,%,$(wildcard qt/tests/*.cc))
+  TESTS += $(QT_TESTS)
   libwvqt_OBJS += $(call objects,qt)
   libwvqt.so: $(libwvqt_OBJS) $(LIBWVSTREAMS)
   libwvqt.so-LIBS += $(LIBS_QT)
-  qt/tests/%: PRELIBS+=$(LIBWVQT)
+  $(QT_TESTS): $(LIBWVQT)
 
   qt/wvqtstreamclone.o: include/wvqtstreamclone.moc
   qt/wvqthook.o: include/wvqthook.moc
