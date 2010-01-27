@@ -1,5 +1,4 @@
 *.cache
-/configure
 include/wvautoconf.h.in
 *.[oa]
 *.so
