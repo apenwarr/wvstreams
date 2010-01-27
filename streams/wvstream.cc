@@ -954,6 +954,13 @@ int WvStream::_do_select(SelectInfo &si)
 #endif
     sel = ::select(si.max_fd+1, &si.read, &si.write, &si.except,
 		   si.msec_timeout >= 0 ? &tv : (timeval*)NULL);
+#ifdef _WIN32
+    // On Windows, if all 3 fd_sets are empty, select returns SOCKET_ERROR.
+    // WSAEINVAL tells us this was the case.
+    // http://msdn.microsoft.com/en-us/library/ms740141(VS.85).aspx
+    if (sel == SOCKET_ERROR && WSAGetLastError() == WSAEINVAL)
+	sel = 0;
+#endif
 
     // handle errors.
     //   EAGAIN and EINTR don't matter because they're totally normal.

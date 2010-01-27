@@ -1,0 +1,18 @@
+#!/bin/sh
+
+set -e
+OUTDIR=$(cd -- ${OUTDIR:-$(pwd)} && pwd)
+INDIR=$(cd `dirname -- $0` && pwd)
+cd -- $INDIR
+if [ ! -f include/wvautoconf.h.in ] || [ ! -f configure.real ]; then
+    ./autogen.sh
+fi
+
+if [ $OUTDIR = $INDIR ]; then
+    mkdir -p obj;
+    cd obj;
+    OUTDIR=$OUTDIR/obj
+fi
+
+cd -- $OUTDIR
+exec $INDIR/configure.real "$@"

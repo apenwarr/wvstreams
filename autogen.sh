@@ -1,5 +1,6 @@
 #!/bin/sh
 set -e
-autoheader
-autoconf
+autoheader config.ac
+autoconf config.ac > configure.real
+chmod 755 configure.real
 (cd argp && autoconf)
