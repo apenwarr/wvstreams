@@ -29,14 +29,9 @@ $datadir/qt
 
 MYDIR=$(cd `dirname -- $0` && pwd)
 if test $MYDIR = `pwd`; then
-    echo "WvStreams must be built in a directory outside of the sourcedir."
-    echo "Please create a different directory, and run configure/make from"
-    echo "within it, for example:"
-    echo "  mkdir foo"
-    echo "  cd foo"
-    echo "  ../wvstreams/configure"
-    echo "  make"
-    exit 1
+    rm -f lib;
+    mkdir lib || exit 1;
+    cd lib && exec ../configure
 fi
 
 AC_CONFIG_SRCDIR(streams/wvstream.cc)
@@ -663,6 +658,13 @@ AC_CONFIG_FILES(Makefile)
 AC_CONFIG_HEADERS(include/wvautoconf.h)
 
 AC_OUTPUT
+
+if test -L $MYDIR/lib; then
+    rm -f $MYDIR/lib;
+fi
+if ! test -d $MYDIR/lib; then
+    ln -s $(pwd) $MYDIR/lib;
+fi
 
 # Now convert PACKAGE_* macros into WVPACKAGE_* in include/wvautoconf.h
 sed 's,\(\#define.*\)PACKAGE,\1WVPACKAGE,' include/wvautoconf.h > include/wvautoconf.h.new
