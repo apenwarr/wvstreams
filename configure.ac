@@ -31,7 +31,7 @@ MYDIR=$(cd `dirname -- $0` && pwd)
 if test $MYDIR = `pwd`; then
     rm -f lib;
     mkdir lib || exit 1;
-    cd lib && exec ../configure
+    cd lib && exec ../configure "$@"
 fi
 
 AC_CONFIG_SRCDIR(streams/wvstream.cc)
