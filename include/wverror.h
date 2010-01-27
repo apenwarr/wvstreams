@@ -8,6 +8,13 @@
 #define __WVERROR_H
 
 #include "wvstring.h"
+#include "wvtr1.h"
+
+class WvErrorBase;
+
+/** The type of a callback returned by WvErrorBase::onerror(). */
+typedef wv::function<void(WvErrorBase&)> WvErrorCallback;
+
 
 /**
  * A class for managing error numbers and strings.
@@ -22,6 +29,7 @@
  */
 class WvErrorBase
 {
+    WvErrorCallback onerror_cb;
 protected:
     int errnum;
     WvString errstring;
@@ -29,6 +37,12 @@ protected:
 public:
     WvErrorBase()
         { noerr(); }
+    WvErrorBase(WvErrorCallback _onerror_cb) : onerror_cb(_onerror_cb)
+        { noerr(); }
+    WvErrorBase(const WvErrorBase &e)
+        { noerr(); seterr(e); }
+    WvErrorBase &operator= (const WvErrorBase &e)
+        { noerr(); seterr(e); return *this; }
     virtual ~WvErrorBase();
 
     /**
@@ -77,6 +91,14 @@ public:
     /** Reset our error state - there's no error condition anymore. */
     void noerr()
         { errnum = 0; errstring = WvString::null; }
+    
+    /** 
+     * Assign a function to be called when an error is set.  The function
+     * is only called if there was no previous error (ie. the very first
+     * error after noerr()).
+     */
+    void onerror(WvErrorCallback _onerror_cb)
+        { onerror_cb = _onerror_cb; }
 };
 
 
@@ -89,25 +111,61 @@ public:
 class WvError : public WvErrorBase
 {
 public:
+    WvError() 
+        { }
+    WvError(WvErrorCallback _ecb) : WvErrorBase(_ecb)
+        { }
+    WvError(const WvErrorBase &e) : WvErrorBase(e)
+        { }
+    WvError(const WvError &e) : WvErrorBase(e)
+        { }
+    WvError(int _errnum)
+        { set(_errnum); }
+    WvError(int _errnum, WvStringParm _specialerr)
+        { set_both(_errnum, _specialerr); }
+    WvError(WvStringParm prefix, const WvErrorBase &e)
+        { set(prefix, e); }
+    
+    WvError &operator= (const WvError &e)
+        { noerr(); set(e); return *this; }
+    WvError &operator= (const WvErrorBase &e)
+        { noerr(); set(e); return *this; }
+    
     int get() const
         { return geterr(); }
     WvString str() const
         { return errstr(); }
     
-    void set(int _errnum)
-        { seterr(_errnum); }
-    void set(WvStringParm specialerr)
-        { seterr(specialerr); }
-    void set(WVSTRING_FORMAT_DECL)
-        { seterr(WvString(WVSTRING_FORMAT_CALL)); }
-    void set_both(int _errnum, WvStringParm specialerr)
-        { seterr_both(_errnum, specialerr); }
-    void set(const WvErrorBase &err)
-        { seterr(err); }
+    const WvError &set(int _errnum)
+        { seterr(_errnum); return *this; }
+    const WvError &set(WvStringParm specialerr)
+        { seterr(specialerr); return *this; }
+    const WvError &set(WVSTRING_FORMAT_DECL)
+        { seterr(WvString(WVSTRING_FORMAT_CALL)); return *this; }
+    const WvError &set(WvStringParm prefix, const WvErrorBase &e)
+        {
+	    if (!e.isok())
+		seterr_both(e.geterr(),
+			    WvString("%s: %s", prefix, e.errstr())); 
+	    return *this;
+	}
+    const WvError &set_both(int _errnum, WvStringParm specialerr)
+        { seterr_both(_errnum, specialerr); return *this; }
+    const WvError &set_both(int _errnum, WVSTRING_FORMAT_DECL)
+        { seterr_both(_errnum, WvString(WVSTRING_FORMAT_CALL)); return *this; }
+    const WvError &set(const WvErrorBase &err)
+        { seterr(err); return *this; }
 
     void reset()
         { noerr(); }
 };
+
+
+/**
+ * For the lazy typists.  Err is pretty much no less informative than Error,
+ * and people call all their WvError objects err anyway.
+ */
+typedef WvError WvErr;
 
 
 #endif // __WVERROR_H

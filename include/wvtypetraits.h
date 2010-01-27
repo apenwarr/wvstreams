@@ -7,7 +7,7 @@
 #ifndef __WVTYPETRAITS_H
 #define __WVTYPETRAITS_H
 
-#include "wvxplc.h"
+class IObject;
 
 template<class T, bool b>
 struct WvTraits_Helper

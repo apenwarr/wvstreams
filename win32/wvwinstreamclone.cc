@@ -65,8 +65,10 @@ DWORD WvWinStreamClone::Initialize()
 }
 
 WvWinStreamClone::WvWinStreamClone(WvStream * _cloned) :
-    WvStreamClone(_cloned), m_pending_callback(false), m_select_in_progress(false),
-    m_msec_timeout(500)
+    WvStreamClone(_cloned),
+    m_msec_timeout(500),
+    m_pending_callback(false),
+    m_select_in_progress(false)
 {
     memset(&m_si, 0, sizeof(m_si));
     m_hWnd = alloc_wnd();

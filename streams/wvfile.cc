@@ -36,9 +36,6 @@ WvFile::WvFile(int rwfd) : WvFDStream(rwfd)
 
 WvFile::WvFile(WvStringParm filename, int mode, int create_mode)
 {
-#ifdef _WIN32
-    mode |= O_BINARY; // WvStreams users aren't expecting crlf mangling
-#endif
     open(filename, mode, create_mode);
 }
 
@@ -65,6 +62,9 @@ static WvMoniker<IWvStream> reg3("file", creator);
 
 bool WvFile::open(WvStringParm filename, int mode, int create_mode)
 {
+#ifdef _WIN32
+    mode |= O_BINARY; // WvStreams users aren't expecting crlf mangling
+#endif
     noerr();
     
     /* We have to do it this way since O_RDONLY is defined as 0
@@ -128,14 +128,28 @@ bool WvFile::open(int _rwfd)
 // are never writable.
 void WvFile::pre_select(SelectInfo &si)
 {
+#ifdef _WIN32
+    WvStream::pre_select(si); // not WvFDStream
+    if ((si.wants.readable && readable) || (si.wants.writable && writable))
+	si.msec_timeout = 0;
+#else
+    SelectRequest oldwant = si.wants;
     if (!readable) si.wants.readable = false;
     if (!writable) si.wants.writable = false;
-
-    WvFDStream::pre_select(si);    
+    WvFDStream::pre_select(si);
+    si.wants = oldwant;
+#endif
 }
 
 
 bool WvFile::post_select(SelectInfo &si)
 {
+#ifdef _WIN32
+    bool ret = WvStream::post_select(si); // not WvFDStream
+    if ((si.wants.readable && readable) || (si.wants.writable && writable))
+	return true;
+    return ret;
+#else
     return WvFDStream::post_select(si);
+#endif
 }

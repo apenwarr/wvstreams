@@ -309,6 +309,25 @@ WvString wvtmpfilename(WvStringParm prefix)
 }
 
 
+WvString wvfullpath(WvStringParm fname)
+{
+#ifdef _WIN32
+    long len = GetFullPathName(fname, 0, NULL, NULL);
+    assert(len >= 0);
+    WvString buf;
+    buf.setsize(len);
+    long ret = GetFullPathName(fname, len, buf.edit(), NULL);
+    assert(ret <= len);
+    return buf;
+#else
+    if (!fname || fname[0] == '/' || fname[0] == '\\')
+	return fname; // already a full path
+    else
+	return WvString("%s/%s", wvgetcwd(), fname);
+#endif
+}
+
+
 mode_t get_umask()
 {
     mode_t rv = umask(0);

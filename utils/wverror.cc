@@ -71,7 +71,6 @@ static WvErrMap wverrmap[] = {
 
 static const char *wv_errmap(int errnum)
 {
-    
     for (WvErrMap *i = wverrmap; i->num; i++)
 	if (i->num == errnum)
 	    return i->str;
@@ -152,34 +151,36 @@ void WvErrorBase::seterr(int _errnum)
 	    _errnum = WSAECONNREFUSED; // work around WINE bug
 #endif
 	errnum = _errnum;
+	
+	if (errnum && onerror_cb)
+	    onerror_cb(*this);
     }
 }
 
 
 void WvErrorBase::seterr(WvStringParm specialerr)
 {
-    assert(!!specialerr);
-    if (!errnum)
-    {
-	errstring = specialerr;
-	seterr(-1);
-    }
+    seterr_both(-1, specialerr);
 }
 
 
 void WvErrorBase::seterr(const WvErrorBase &err)
 {
-    if (err.geterr() > 0)
+    if (!errnum) // don't do it if an error is already set
+    {
+	// careful! we only want to copy err.errstr() if it's the non-default
+	// string.  errstr() always returns a valid string even if errstring
+	// isn't set.  We want the true value of errstring, not errstr().
+	if (!!err.errstring) errstring = err.errstr();
 	seterr(err.geterr());
-    else if (err.geterr() < 0)
-	seterr(err.errstr());
+    }
 }
 
 
 void WvErrorBase::seterr_both(int _errnum, WvStringParm specialerr)
 {
     assert(!!specialerr);
-    if (!errnum)
+    if (!errnum) // don't do it if an error is already set
     {
 	errstring = specialerr;
 	seterr(_errnum);

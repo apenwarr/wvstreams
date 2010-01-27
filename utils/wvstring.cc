@@ -431,6 +431,20 @@ bool WvFastString::operator! () const
 }
 
 
+bool WvFastString::endswith(WvStringParm ending) const
+{
+    int mylen = len(), elen = ending.len();
+    return *this && ending 
+	&& mylen >= elen && !strncmp(str+(mylen-elen), ending, elen);
+}
+    
+
+bool WvFastString::startswith(WvStringParm starting) const
+{
+    return *this && starting && !strncmp(*this, starting, starting.len());
+}
+
+
 /** 
  * parse a 'percent' operator from a format string.  For example:
  *        cptr      out:  zeropad  justify   maxlen argnum  return pointer
@@ -623,5 +637,3 @@ void WvFastString::do_format(WvFastString &output, const char *format,
     }
     *optr = 0;
 }
-
-

@@ -48,6 +48,7 @@ public:
     WvUrlStream *instream;
     WvBufUrlStream *outstream;
     WvStream *putstream;
+    WvDynBuf putstream_data;
 
     bool pipeline_test;
     bool inuse;
@@ -79,6 +80,8 @@ DeclareWvList(WvUrlLink);
 
 class WvBufUrlStream : public WvBufStream
 {
+    int err;
+    
 public:
     WvString url;
     WvString proto;
@@ -87,12 +90,27 @@ public:
     // HTTP stuff...
     WvString version;
     int status;
-    WvHTTPHeaderDict headers; 
+    WvHTTPHeaderDict headers;
 
-    WvBufUrlStream() : status(0), headers(10)
+    WvBufUrlStream() : err(0), status(0), headers(10)
         {}
     virtual ~WvBufUrlStream()
         {}
+
+    // Nearly completely meaningless for this stream, but...
+    // - First of all, note that the stream is still isok() even given an
+    //   error.  As we're using it purely for its buffering capabilities,
+    //   we really don't need to die just because the underlying stream got
+    //   some kind of error condition.
+    // - Note also we can override the error, as WvBufUrlStreams are terribly
+    //   shared possibly repeatedly by WvHttpRequests which might error them.
+    // - Third; if you see an error, but you got a status code of 200 from the
+    //   web server and you're !isok(), you're in golden territory, it's not
+    //   relevant, don't bother with it.
+    virtual void seterr(int _err)
+	{ err = _err; }
+    virtual int geterr() const
+	{ return err; }
 
 public:
     const char *wstype() const { return "WvBufUrlStream"; }
@@ -124,7 +142,7 @@ public:
 protected:
     WvLog log;
     WvUrlRequestList urls, waiting_urls;
-    int request_count;
+    int request_count, done_count;
     WvUrlRequest *curl; // current url
     virtual void doneurl() = 0;
     virtual void request_next() = 0;
@@ -135,7 +153,7 @@ public:
 	: WvStreamClone(new WvTCPConn(_remaddr)), target(_remaddr, _username),
 	  log(logname, WvLog::Debug)
     {
-    	request_count = 0;
+    	request_count = done_count = 0;
     	curl = NULL;
     }
 
@@ -143,10 +161,10 @@ public:
 
     virtual void close() = 0;
     void addurl(WvUrlRequest *url);
-    void delurl(WvUrlRequest *url);
+    void delurl(WvUrlRequest *url, WvStringParm reason);
     // only implemented in WvHttpStream
     virtual size_t remaining()
-    { return 0; }
+        { return 0; }
     
     virtual void execute() = 0;
     
@@ -163,15 +181,15 @@ class WvHttpStream : public WvUrlStream
 {
 public:
     static bool global_enable_pipelining;
-    bool enable_pipelining;
+    static WvString pipeline_check_filename;
+    bool enable_pipelining, expect_keep_alive;
     
 private:
     int pipeline_test_count;
     bool ssl;
     bool sent_url_request;      // Have we sent a request to the server yet?
-    WvIPPortAddrTable &pipeline_incompatible;
+    WvIPPortAddrTable &pipeline_incompatible; // points to the one in WvHttpPool
     WvString http_response, pipeline_test_response;
-    WvDynBuf putstream_data;
     
     enum { Unknown, Chunked, ContentLength, Infinity,
 	   PostHeadInfinity, PostHeadChunked, PostHeadStream,
@@ -196,7 +214,7 @@ public:
     virtual bool post_select(SelectInfo &si);
     virtual void execute();
     virtual size_t remaining()
-    { return bytes_remaining; }
+        { return bytes_remaining; }
     
 public:
     const char *wstype() const { return "WvHttpStream"; }
@@ -226,7 +244,7 @@ class WvFtpStream : public WvUrlStream
     WvString parse_for_links(char *line);
 
     WvCont cont;
-    void* real_execute(void*);
+    void *real_execute(void*);
 
 public:
     WvFtpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,

@@ -2,6 +2,7 @@
 #ifndef __WVWIN32TASK_H
 #define __WVWIN32TASK_H
 
+#include "wvxplc.h"
 #include "wvstring.h"
 #include "wvlinklist.h"
 
@@ -52,10 +53,8 @@ class WvTaskMan
 {
     friend class WvTask;
 
-    static WvTaskMan *singleton;
-    static int links;
-
     static int magic_number;
+    int links;
     static WvTaskList free_tasks;
     
     static void get_stack(WvTask &task, size_t size);
@@ -74,7 +73,7 @@ class WvTaskMan
 public:
     /// get/dereference the singleton global WvTaskMan
     static WvTaskMan *get();
-    static void unlink();
+    void unlink();
   
     WvTask *start(WvStringParm name,
 		  WvTask::TaskFunc *func, void *userdata,

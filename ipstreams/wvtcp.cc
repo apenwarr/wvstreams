@@ -378,6 +378,14 @@ bool WvTCPConn::isok() const
 }
 
 
+size_t WvTCPConn::uread(void *buf, size_t count)
+{
+    if (!connected)
+	return 0;
+    return WvFDStream::uread(buf, count);
+}
+
+
 size_t WvTCPConn::uwrite(const void *buf, size_t count)
 {
     if (connected)

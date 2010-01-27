@@ -49,13 +49,4 @@ int fsync(int fd);
 }
 #endif
 
-// refer to _wvinitialize to ensure that we suck in some stuff that makes
-// wvstreams actually work properly.
-#ifdef __cplusplus
-extern void *_wvinitialize;
-static void *_wvinitialize_local = _wvinitialize;
-#endif
-
-// #define _alloca(x) alloca(x)
-
 #endif // __WIN32_SANITIZE_H

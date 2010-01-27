@@ -118,22 +118,32 @@ WvString hexdump_buffer(const void *buf, size_t len, bool charRep = true);
 bool isnewline(char c);
 
 /**
- * Converts escaped characters (things like %20 etc.) from web URLS
- * into their normal ASCII representations. If you happen to be
- * decoding PEM encoded stuff, or anything that has + signs in it that
- * you don't want encoded as spaces, then set no_space to true, and
- * it should "just work" for you.
+ * Unescapes URL-encoded strings (with escape sequences such as %20, etc),
+ * such as ones created by url_encode().
+ * 
+ * If no_space is false, "+" characters will be decoded to spaces, as
+ * web servers typically do.  If no_space is true, "+" characters are decoded
+ * as "+", and only %-escapes are done.
  */
 WvString url_decode(WvStringParm str, bool no_space = false);
 
 
 /**
- * Converts all those pesky spaces, colons, and other nasties into nice 
- * unreadable Quasi-Unicode codes. The 'unsafe' parameter is a list of 
- * characters that are unsafe and should be escaped. If unspecified,
- * all characters which are not part of the uric character class defined
- * in RFC 2396 will be escaped. Note: The '%' character is always escaped, as 
- * otherwise the string would not be decodable.
+ * Escapes strings in "URL style" with %xx sequences for any characters
+ * not considered "safe" in a URL.
+ * 
+ * The default (blank) value of "unsafe" is very paranoid and only allows
+ * basic ASCII alphanumerics and a few known-URL-safe punctuation marks.
+ * This is even more conservative than RFC 2396, but will still be compatible
+ * with any valid URL decoder.
+ * 
+ * If you specify a non-empty string for the 'unsafe' list, only the
+ * characters in the list will be escaped.  You can use this if you want
+ * to use URL-style encoding for something other than a URL, such as a
+ * filename.
+ * 
+ * Note: The '%' character is always escaped, as otherwise the string would
+ * not be decodable.
  */
 WvString url_encode(WvStringParm str, WvStringParm unsafe = "");
  
