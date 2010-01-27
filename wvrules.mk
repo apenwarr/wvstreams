@@ -170,9 +170,6 @@ else
   endef
 endif
 
-../%.so:;	@echo "Shared library $@ does not exist!"; exit 1
-../%.a:;	@echo "Library $@ does not exist!"; exit 1
-../%.o:;	@echo "Object $@ does not exist!"; exit 1
 /%.a:;		@echo "Library $@ does not exist!"; exit 1
 
 VPATH=$S
