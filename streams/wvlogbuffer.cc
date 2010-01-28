@@ -106,7 +106,7 @@ void WvLogBuffer::dump(WvStream &s)
     for (i.rewind(); i.next(); )
     {
 	Msg &m = *i;
-	s.print("%s %s<%s>: %s+\n",
+	s.print("%s %s<%s>: %s\n",
 		m.timestamp, m.source, loglevels[m.level], m.message);
     }
 }

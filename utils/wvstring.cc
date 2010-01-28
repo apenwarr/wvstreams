@@ -264,11 +264,11 @@ void WvFastString::link(WvStringBuf *_buf, const char *_str)
     
 
 WvStringBuf *WvFastString::alloc(size_t size)
-{ 
-    WvStringBuf *abuf = (WvStringBuf *)malloc(
-		      (WVSTRINGBUF_SIZE(buf) + size + WVSTRING_EXTRA) | 3);
+{
+    const size_t s = (WVSTRINGBUF_SIZE(buf) + size + WVSTRING_EXTRA) | 3;
+    WvStringBuf *abuf = (WvStringBuf *)calloc(s, sizeof(char));
+    abuf->size = s;
     abuf->links = 0;
-    abuf->size = size;
     return abuf;
 }
 
@@ -307,8 +307,9 @@ WvString &WvString::unique()
 {
     if (!is_unique() && str)
     {
-	WvStringBuf *newb = alloc(len() + 1);
-	memcpy(newb->data, str, newb->size);
+	size_t mylen = len();
+	WvStringBuf *newb = alloc(mylen);
+	memcpy(newb->data, str, mylen);
 	unlink();
 	link(newb, newb->data);
     }
@@ -354,15 +355,16 @@ WvString &WvString::operator= (const WvFastString &s2)
 	// We have a string, and we're about to free() it.
 	if (str && buf && buf->links == 1)
 	{
-	    // Set buf->size, if we don't already know it.
-	    if (buf->size == 0)
-		buf->size = strlen(str);
+	    // FIXME:  This assert has to go, but I'm not sure why the previous
+	    // code (which just set buf->size) was actually here, so I'll keep
+	    // it here for now and remove it if I find no issues.
+	    assert(buf->size > 0);
 
 	    if (str < s2.str && s2.str <= (str + buf->size))
 	    {
 		// If the two strings overlap, we'll just need to
 		// shift s2.str over to here.
-		memmove(buf->data, s2.str, buf->size);
+		memmove(buf->data, s2.str, strlen(s2.str) + 1);
 		return *this;
 	    }
 	}
@@ -566,7 +568,7 @@ void WvFastString::do_format(WvFastString &output, const char *format,
 	}
     }
     
-    output.setsize(total + 1);
+    output.setsize(total);
     
     // actually render the final string
     iptr = format;

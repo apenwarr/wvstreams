@@ -1,5 +1,4 @@
 *.cache
-/configure
 include/wvautoconf.h.in
 *.[oa]
 *.so
@@ -18,3 +17,4 @@ include/wvautoconf.h.in
 /CC
 /CXX
 -MP
+lib*.list
