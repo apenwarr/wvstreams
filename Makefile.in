@@ -188,6 +188,7 @@ ifneq ("$(with_dbus)", "no")
   dbus/tests/wvdbus-LIBS += $(LIBS_DBUS)
   dbus/tests/wvdbusd-LIBS += $(LIBS_DBUS)
   $(DBUS_TESTS): $(LIBWVDBUS)
+  $(DBUS_TESTS): LIBS+=$(LIBS_DBUS)
 else
   TEST_SKIP_OBJS += dbus/t/%
 endif
