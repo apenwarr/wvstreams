@@ -10,6 +10,8 @@ include/wvautoconf.h.in
 /config.status
 *.so.*
 /reconfigure
+/configure.real
+/lib
 */tests/*test
 /wvtestmain
 /tmp*.ini
