@@ -98,6 +98,16 @@ int write(int fd, const void *buf, size_t count)
     int ret;
     if (is_socket(fd))
     {
+	// WinXP (at least) seems to let you write huge amounts to a TCP
+	// socket in a single send(), and then buffers it all up for you.
+	// But oddly, if you only write a bit at a time, and select for
+	// writable before each send(), the socket buffer maxes out at
+	// about 32-64k.  WvStreams apps try to control their writing by
+	// expecting the underlying stream to not accept huge amounts of data,
+	// so let's act more like Unix by limiting the max we can write in a
+	// single cycle.
+	if (count > 65536) count = 65536;
+	
 	ret = send(fd, (char *)buf, count, 0);
 	errcode(GetLastError());
     }
