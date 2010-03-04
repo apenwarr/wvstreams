@@ -27,9 +27,10 @@ $datadir/qt
 /usr/share/qt
 "
 
-MYDIR=$(cd `dirname -- $0` && pwd)
+MYDIR=`dirname -- $0`
+MYFULLDIR=`cd $MYDIR && pwd`
 OUTDIR=`pwd`
-if test $MYDIR = $OUTDIR; then
+if test $MYFULLDIR = $OUTDIR; then
     echo "WvStreams must be built in a directory outside of the sourcedir."
     echo "Please create a different directory, and run configure/make from"
     echo "within it, for example:"
@@ -39,6 +40,10 @@ if test $MYDIR = $OUTDIR; then
     echo "  make"
     exit 1
 fi
+
+WVSRCDIR=wvsrcdir
+rm -f wvsrcdir
+ln -s $MYDIR wvsrcdir
 
 AC_CONFIG_SRCDIR(streams/wvstream.cc)
 
@@ -163,8 +168,9 @@ if test "$ac_cv_func_argp_parse" != yes \
     	echo 'configuring argp...'
 	mkdir -p argp
     	cd argp
-	rm -f $MYDIR/argp/config.status
-    	$MYDIR/argp/configure --host=$host_cpu-$host_os --srcdir=$MYDIR/argp || exit $?
+	MYARGPDIR="../wvsrcdir/argp"
+	rm -f $MYARGPDIR/config.status
+    	$MYARGPDIR/configure --host=$host_cpu-$host_os --srcdir=$MYARGPDIR || exit $?
     	echo 'argp configured.'
     	echo
     ) || exit $?
@@ -632,15 +638,8 @@ AC_SUBST(LIBS_TCL)
 AC_SUBST(ac_libs)
 AC_SUBST(COMPILER_STANDARD)
 
-if test x$MYDIR != x$PWD; then
-    WVSRCDIR=$MYDIR
-    mkdir -p $(cd $MYDIR && find . -type d)
-    WVSRCDIR_SLASH=$WVSRCDIR/
-else
-    WVSRCDIR=.
-fi
+mkdir -p $(cd $MYDIR && find . -type d)
 AC_SUBST(WVSRCDIR)
-AC_SUBST(WVSRCDIR_SLASH)
 
 AC_DEFINE_UNQUOTED([VERBOSE_PACKAGE_VERSION],["$PACKAGE_VERSION$WEAVER_BUILD_INFO"],[Verbose package version])
 

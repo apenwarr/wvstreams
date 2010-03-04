@@ -1,5 +1,4 @@
 WVSTREAMS:=@WVSRCDIR@
-S:=@WVSRCDIR_SLASH@
 
 include $(WVSTREAMS)/wvrules.mk
 include $(WVSTREAMS)/install.mk
