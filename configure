@@ -2,16 +2,18 @@
 
 set -e
 OUTDIR=$(cd -- ${OUTDIR:-$(pwd)} && pwd)
-INDIR=$(cd `dirname -- $0` && pwd)
+INDIR=`dirname -- "$0"`
+FULLINDIR=$(cd -- "$INDIR" && pwd)
 cd -- $INDIR
 if [ ! -f include/wvautoconf.h.in ] || [ ! -f configure.real ]; then
     ./autogen.sh
 fi
 
-if [ $OUTDIR = $INDIR ]; then
+if [ $OUTDIR = $FULLINDIR ]; then
     mkdir -p obj;
     cd obj;
     OUTDIR=$OUTDIR/obj
+    INDIR=..
 fi
 
 cd -- $OUTDIR
