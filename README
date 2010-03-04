@@ -1,0 +1,21 @@
+
+This branch is special: it contains a series of older branches, each merged
+into this one using:
+
+	git merge -s ours --no-ff $BRANCH
+	
+You can look at which branches we merged by doing this:
+
+	git log --first-parent
+	
+The purpose is not to actually combine the content of each branch, as you'd
+normally do with a merge.  The purpose is just to take the history from all
+those extra branches and cram them together into a single name, so that we
+don't have to clutter up the branch namespace.
+
+If you ever need to extract the branches back out, you should be able to
+determine which one by looking at the commit message (which contains the
+branch name) and using the second merge parent (which points at the branch's
+complete history).
+
+-- apenwarr, 2010/03/04
