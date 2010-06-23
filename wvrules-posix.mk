@@ -76,7 +76,7 @@ define wvlink_ar
 	    cd $(shell pwd); \
 	done; \
 	for l in $(filter %.list,$2 $($1-EXTRA)); do \
-	    for i in $$(cat $$l); do \
+	    for i in $$(cat $$l | grep -vE '__.SYMDEF|SORTED'); do \
 		$(AR) q $1 $$i; \
 		echo $$i >>$(patsubst %.a,%.list,$1); \
 	    done; \
