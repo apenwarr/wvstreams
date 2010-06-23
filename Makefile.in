@@ -133,13 +133,9 @@ TARGETS += libwvstreams.so
 TARGETS += crypto/tests/ssltest ipstreams/tests/unixtest
 TARGETS += crypto/tests/printcert
 
-ifndef _MACOS
-  ifneq ("$(with_readline)", "no")
-    TARGETS += ipstreams/tests/wsd
-    ipstreams/tests/wsd-LIBS += -lreadline
-  else
-    TEST_SKIP_OBJS += ipstreams/tests/wsd
-  endif
+ifneq ("$(with_readline)", "no")
+  TARGETS += ipstreams/tests/wsd
+  ipstreams/tests/wsd-LIBS += -lreadline
 else
   TEST_SKIP_OBJS += ipstreams/tests/wsd
 endif

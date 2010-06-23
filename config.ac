@@ -446,7 +446,7 @@ fi
 # readline
 if test "$with_readline" != "no"; then
     AC_CHECK_HEADERS(readline/readline.h,, [with_readline=no])
-    AC_CHECK_LIB(readline, readline,, [with_readline=no])
+    AC_CHECK_LIB(readline, rl_show_char,, [with_readline=no])
 fi
 
 # pam
