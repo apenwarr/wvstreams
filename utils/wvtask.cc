@@ -37,6 +37,10 @@ char *alloca ();
 #include <unistd.h>
 #include <sys/resource.h>
 
+#ifndef MAP_ANON
+# define MAP_ANON MAP_ANONYMOUS  // supposedly uclibc needs this
+#endif
+
 #ifdef HAVE_VALGRIND_MEMCHECK_H
 #include <valgrind/memcheck.h>
 // Compatibility for Valgrind 3.1 and previous
@@ -360,11 +364,7 @@ void WvTaskMan::get_stack(WvTask &task, size_t size)
         
             task.stack = mmap(next_stack_addr, task.stacksize,
                 PROT_READ | PROT_WRITE,
-#ifndef MACOS 
-                MAP_PRIVATE | MAP_ANONYMOUS,
-#else
-                MAP_PRIVATE,
-#endif
+                MAP_PRIVATE | MAP_ANON,
                 -1, 0);
         }
 	
@@ -512,7 +512,7 @@ void WvTaskMan::do_task()
                 {
                     assert(getcontext(&task->func_call) == 0);
                     task->func_call.uc_stack.ss_size = task->stacksize;
-                    task->func_call.uc_stack.ss_sp = task->stack;
+                    task->func_call.uc_stack.ss_sp = (char *)task->stack;
                     task->func_call.uc_stack.ss_flags = 0;
                     task->func_call.uc_link = &task->func_return;
                     Dprintf("WvTaskMan: makecontext #%d (%s)\n",
