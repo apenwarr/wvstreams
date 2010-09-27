@@ -43,7 +43,8 @@ static HKEY follow_path(HKEY from, const UniConfKey &key,
 	    WvString xsub(subkey=="." ? WvString::null : subkey);
 	    
 	    // maybe the last segment is a value name
-	    if (RegQueryValueEx(hLastKey, xsub, 0, NULL, NULL, NULL) == ERROR_SUCCESS)
+	    result = RegQueryValueEx(hLastKey, xsub, 0, NULL, NULL, NULL);
+	    if (result == ERROR_SUCCESS)
 	    {
 		// ... it is a value
 		if (isValue) *isValue = true;
@@ -133,7 +134,7 @@ WvString UniRegistryGen::get(const UniConfKey &key)
     
     DWORD type;
     TCHAR data[1024];
-    DWORD size = sizeof(data) / sizeof(data[0]);
+    DWORD size = sizeof(data) / sizeof(data[0]) - 1;
     LONG result = RegQueryValueEx(
 	hKey, 
 	value.cstr(), 
@@ -152,9 +153,15 @@ WvString UniRegistryGen::get(const UniConfKey &key)
 	    itoa(*((int *) data), retval.edit(), 10);
 	    break;
 	case REG_SZ:
+	case REG_EXPAND_SZ:
+	case REG_MULTI_SZ:
+	case REG_BINARY:
+	    data[size] = 0;
 	    retval = data;
 	    break;
 	default:
+	    fprintf(stderr, "uniregistrygen: unknown data type 0x%08X\n",
+		    (int)type);
 	    break;
 	};
     }
