@@ -88,7 +88,7 @@ public:
     /**
      * Returns true if 'str' is in the list.
      */
-    bool contains(WvStringParm str);
+    bool contains(WvStringParm str) const;
 
     /** 
      * get the first string in the list, or an empty string if the list is empty.

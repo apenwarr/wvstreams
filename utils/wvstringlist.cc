@@ -50,7 +50,7 @@ void WvStringList::append(WvString *strp, bool autofree, char *id)
 }
 
 
-bool WvStringList::contains(WvStringParm str)
+bool WvStringList::contains(WvStringParm str) const
 {
     WvStringList::Iter i(*this);
     for (i.rewind(); i.next(); )

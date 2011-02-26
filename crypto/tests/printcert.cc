@@ -31,12 +31,6 @@ void print_details(WvX509 *x509)
     list.zap();
     x509->get_policies(list);
     wvcon->print("Certificate Policy OIDs:\n%s\n", list.join("\n"));
-    bool ca=false;
-    int pathlen=-1;
-    if (x509->get_basic_constraints(ca, pathlen))
-    {
-        wvcon->print("Basic constraints: CA=%s, pathlen=%s\n", ca, pathlen);
-    }
 
 #ifdef HAVE_OPENSSL_POLICY_MAPPING
     int requireExplicitPolicy, inhibitPolicyMapping;
@@ -52,8 +46,6 @@ void print_details(WvX509 *x509)
     for (i.rewind(); i.next();)
         wvcon->print("%s -> %s\n", i().issuer_domain, i().subject_domain);
 #endif
-
-    wvcon->print("Subject Alternative Names:\n%s\n", x509->get_altsubject());
 }
 
 
@@ -74,19 +66,22 @@ int main(int argc, char **argv)
         return -1;
     }
     // FIXME: not working yet
+#if 0
     WvX509 x509;
-
     if (certtype == "der")
-        x509.decode(WvX509::CertFileDER, remaining_args.popstr());
+        x509.load(WvX509Mgr::CertDER, remaining_args.popstr());   
     else if (certtype == "pem")
-        x509.decode(WvX509::CertFilePEM, remaining_args.popstr());
+        x509.load(WvX509Mgr::CertPEM, remaining_args.popstr());
     else
     {
         wverr->print("Invalid certificate type '%s'\n", certtype);
         return -1;
     }
 
-    print_details(&x509);
-
+    if (x509.isok())
+        print_details(&x509);
+    else
+        wverr->print("X509 certificate not valid\n");
+#endif    
     return 0;
 }

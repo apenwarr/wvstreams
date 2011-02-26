@@ -95,6 +95,6 @@ if test x$GCC = xyes ; then
  -Wpointer-arith -Wbad-function-cast -Wnested-externs"
 fi
 
-CPPFLAGS="$CPPFLAGS -I$srcdir"
+CPPFLAGS="$CPPFLAGS -I$srcdir -I../$srcdir"
 
 AC_OUTPUT(Makefile testsuite/Makefile)

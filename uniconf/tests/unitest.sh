@@ -45,7 +45,7 @@ RECONFIG()
         # because it *also* does chdir("/") as part of that, which happens
         # before opening the ini file, which is expected to be in the current
         # directory.  Anyway, same bug: chdir and fork *after* setup.
-	uniconfd -lunix:$PWD/unisocket "$@" &
+	../daemon/uniconfd -lunix:$PWD/unisocket "$@" &
 	sleep 1
 	UNICONF="unix:$PWD/unisocket"
     fi

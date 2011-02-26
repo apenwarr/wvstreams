@@ -76,11 +76,11 @@ endif
 # macros that expand to the object files in the given directories
 objects=$(sort $(foreach type,c cc,$(call objects_$(type),$1)))
 objects_c=$(filter-out $(WV_EXCLUDES), \
-		$(patsubst $S%.c,%.o,$(wildcard $(addprefix $S,$(addsuffix /*.c,$1)))))
+		$(patsubst $(WVSTREAMS)/%.c,%.o,$(wildcard $(addprefix $(WVSTREAMS)/,$(addsuffix /*.c,$1)))))
 objects_cc=$(filter-out $(WV_EXCLUDES), \
-		$(patsubst $S%.cc,%.o,$(wildcard $(addprefix $S,$(addsuffix /*.cc,$1)))))
+		$(patsubst $(WVSTREAMS)/%.cc,%.o,$(wildcard $(addprefix $(WVSTREAMS)/,$(addsuffix /*.cc,$1)))))
 tests_cc=$(filter-out $(WV_EXCLUDES), \
-		$(patsubst $S%.cc,%,$(wildcard $(addprefix $S,$(addsuffix /*.cc,$1)))))
+		$(patsubst $(WVSTREAMS)/%.cc,%,$(wildcard $(addprefix $(WVSTREAMS)/,$(addsuffix /*.cc,$1)))))
 
 # default "test" rule does nothing...
 .PHONY: test runtests
@@ -172,7 +172,7 @@ endif
 
 /%.a:;		@echo "Library $@ does not exist!"; exit 1
 
-VPATH=$S
+VPATH=$(WVSTREAMS)/
 
 $O%.o: %.c;		$(call wvcc ,$@,$<,$*)
 $O%.fpic.o: %.c;	$(call wvcc ,$@,$<,$*,-fPIC)

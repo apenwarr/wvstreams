@@ -11,6 +11,15 @@
 WV_LINK(UniRegistryGen);
 
 
+static LONG openregkey(HKEY hLastKey, WvStringParm subkey,
+		       REGSAM samDesired, HKEY *phNextKey, bool create)
+{
+    if (create)
+	return RegCreateKeyEx(hLastKey, subkey, 0, NULL, 0, samDesired, 
+	    NULL, phNextKey, NULL);
+    return RegOpenKeyEx(hLastKey, subkey, 0, samDesired, phNextKey);
+}
+
 // returns a handle to the key specified by key, or, if key specifies a value,
 // a handle to the key containing that value (and setting isValue = true)
 static HKEY follow_path(HKEY from, const UniConfKey &key,
@@ -27,23 +36,23 @@ static HKEY follow_path(HKEY from, const UniConfKey &key,
     {
 	WvString subkey = key.segment(i).printable();
 	HKEY hNextKey;
-	
-	if (create)
-	{
-	    result = RegCreateKeyEx(hLastKey, subkey, 0, NULL, 0, samDesired, 
-		NULL, &hNextKey, NULL);
-	}
-	else
-	{
-	    result = RegOpenKeyEx(hLastKey, subkey, 0, samDesired, &hNextKey);
-	}
+
+	result = openregkey(hLastKey, subkey, samDesired, &hNextKey, create);
+	// In Windows Vista, you can't seemingly get KEY_WRITE permissions on
+	// HKEY_LOCAL_MACHINE/Software (and likely others) if running from
+	// within certain processes (presumably ones that set some magic
+	// incantation).  We don't care, of course, since we don't intend to
+	// write this key, and this wonderful fix fixes all.
+	if (result == ERROR_ACCESS_DENIED)
+	    result = openregkey(hLastKey, subkey, KEY_READ, &hNextKey, create);
 
 	if ((result == ERROR_FILE_NOT_FOUND) && (i == n-1))
 	{
 	    WvString xsub(subkey=="." ? WvString::null : subkey);
 	    
 	    // maybe the last segment is a value name
-	    if (RegQueryValueEx(hLastKey, xsub, 0, NULL, NULL, NULL) == ERROR_SUCCESS)
+	    result = RegQueryValueEx(hLastKey, xsub, 0, NULL, NULL, NULL);
+	    if (result == ERROR_SUCCESS)
 	    {
 		// ... it is a value
 		if (isValue) *isValue = true;
@@ -133,7 +142,7 @@ WvString UniRegistryGen::get(const UniConfKey &key)
     
     DWORD type;
     TCHAR data[1024];
-    DWORD size = sizeof(data) / sizeof(data[0]);
+    DWORD size = sizeof(data) / sizeof(data[0]) - 1;
     LONG result = RegQueryValueEx(
 	hKey, 
 	value.cstr(), 
@@ -152,9 +161,15 @@ WvString UniRegistryGen::get(const UniConfKey &key)
 	    itoa(*((int *) data), retval.edit(), 10);
 	    break;
 	case REG_SZ:
+	case REG_EXPAND_SZ:
+	case REG_MULTI_SZ:
+	case REG_BINARY:
+	    data[size] = 0;
 	    retval = data;
 	    break;
 	default:
+	    fprintf(stderr, "uniregistrygen: unknown data type 0x%08X\n",
+		    (int)type);
 	    break;
 	};
     }

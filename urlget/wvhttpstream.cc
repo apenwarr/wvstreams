@@ -20,6 +20,11 @@
 #define ETIMEDOUT WSAETIMEDOUT
 #endif
 
+#define CONNECT_TIMEOUT 120000
+#define ACTIVITY_TIMEOUT 900000
+#define IDLE_TIMEOUT 5000
+
+
 WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
                 bool _ssl, WvIPPortAddrTable &_pipeline_incompatible)
     : WvUrlStream(_remaddr, _username, WvString("HTTP %s", _remaddr)),
@@ -44,7 +49,7 @@ WvHttpStream::WvHttpStream(const WvIPPortAddr &_remaddr, WvStringParm _username,
 
     sent_url_request = false;
 
-    alarm(120000); // timeout if no connection, or something goes wrong
+    alarm(CONNECT_TIMEOUT);
 }
 
 
@@ -222,7 +227,7 @@ void WvHttpStream::send_request(WvUrlRequest *url)
                 || request_count < max_requests));
     write(url->putstream_data);
     sent_url_request = true;
-    alarm(120000);
+    alarm(ACTIVITY_TIMEOUT);
 }
 
 
@@ -283,6 +288,8 @@ void WvHttpStream::pre_select(SelectInfo &si)
 
     WvUrlStream::pre_select(si);
 
+    // we want to read the putstream as soon as it's ready, even if the
+    // http stream isn't
     if (!urls.isempty())
     {
         url = urls.first();
@@ -301,7 +308,9 @@ bool WvHttpStream::post_select(SelectInfo &si)
 
     if (WvUrlStream::post_select(si))
         return true;
-
+    
+    // we want to read the putstream as soon as it's ready, even if the
+    // http stream isn't
     if (!urls.isempty())
     {
         url = urls.first();
@@ -366,18 +375,18 @@ void WvHttpStream::execute()
     else if (curl)
         curl->inuse = true;
 
-    if(!sent_url_request && !urls.isempty())
+    if (!sent_url_request && !urls.isempty())
     {
         WvUrlRequest *url = urls.first();
-        if(url)
+        if (url)
         {
-            if(url->putstream)
+            if (url->putstream)
             {
-                int len = 0;
-                if(url->putstream->isok())
-                    len = url->putstream->read(url->putstream_data, 1024);
+                int len = -1;
+                while (len && url->putstream->isok())
+                    len = url->putstream->read(url->putstream_data, 102400);
 
-                if(!url->putstream->isok() || len == 0)
+                if (!url->putstream->isok())
                 {
                     url->putstream = NULL;
                     send_request(url);
@@ -647,7 +656,7 @@ void WvHttpStream::execute()
     }
 
     if (urls.isempty())
-        alarm(5000); // just wait a few seconds before closing connection
+        alarm(IDLE_TIMEOUT);
     else
-        alarm(120000); // give the server two minutes to respond, if we're waiting
+        alarm(ACTIVITY_TIMEOUT);
 }
