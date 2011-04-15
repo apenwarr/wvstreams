@@ -11,9 +11,7 @@
 #include "wvfileutils.h"
 #include "wvstrutils.h"
 
-#ifdef MACOS
 #include <sys/stat.h>
-#endif
 
 WvAtomicFile::WvAtomicFile(WvStringParm filename, int flags, mode_t create_mode)
     : tmp_file(WvString::null)
