@@ -1,0 +1,18 @@
+#!/bin/sh
+#
+# If you have a git checkout of the wvstreams project, some of the ancient
+# history will be a bit confused because of the way we originally imported
+# it from svn.  You can fix it by running this script, which reattaches some
+# of the history.
+#
+# FIXME: someone who's feeling energetic might have a good time by attaching
+# all the old svn merges to each other, but that sounds a bit painful.
+#
+touch .git/info/grafts
+(
+	cat .git/info/grafts - <<-EOF
+		17085388a723081806b2325557ec9a43841d02fc 6e9e756361a92fe17ff39e5f3d686ac20c436e95
+	EOF
+) | sort | uniq >.git/info/grafts.new &&
+mv .git/info/grafts.new .git/info/grafts &&
+echo ".git/info/grafts file configured."

@@ -140,12 +140,10 @@ ifdef _WIN32
   endef
 else ifdef _SOLARIS
   define wvlink_so
-	@echo "Solaris Link!"
 	$(LINK_MSG)$(WVLINK_CC) $(LDFLAGS) $($1-LDFLAGS) -shared -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
   endef
 else ifdef _MACOS
   define wvlink_so
-	@echo "MacOS Link!"
 	$(LINK_MSG)$(WVLINK_CC) $(LDFLAGS) $($1-LDFLAGS) -dynamiclib -o $1 $(filter %.o %.a %.so,$2) $($1-LIBS) $(LIBS) $(XX_LIBS)
   endef
 else

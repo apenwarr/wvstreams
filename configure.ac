@@ -371,7 +371,8 @@ if test "$with_dbus" != "no"; then
         AC_MSG_CHECKING([Checking that D-Bus version greater than 1.2.14 installed.])
         if pkg-config --atleast-version 1.2.14 dbus-1; then
 	    WV_APPEND(CPPFLAGS, [`pkg-config --cflags dbus-1`])
-            WV_APPEND(LDFLAGS, [`pkg-config --libs dbus-1`])
+            WV_APPEND(LDFLAGS, [`pkg-config --libs-only-L dbus-1`])
+	    LIBS_DBUS=`pkg-config --libs-only-l dbus-1`
 	    AC_MSG_RESULT([yes])
         else
 	    with_dbus=no
@@ -382,22 +383,23 @@ if test "$with_dbus" != "no"; then
         DBUS_LIBDIR=$with_dbus/dbus/.libs
     	WV_APPEND(CPPFLAGS, -I$with_dbus)
     	WV_APPEND(LDFLAGS, -L$DBUS_LIBDIR)
-    	WV_APPEND(LIBS, -ldbus-1)
-    fi
-
-    # double check that we actually have D-Bus
-    if test "$with_dbus" != "no"; then
-        AC_CHECK_HEADERS(dbus/dbus.h,, [with_dbus=no])
-	with_dbus=no
-	AC_TRY_LINK([extern "C" void dbus_message_new(); ],
-                    [dbus_message_new(); ],
-                    [with_dbus=])
+        LIBS_DBUS=-ldbus-1
+        OLD_LIBS="$LIBS"
+        WV_APPEND(LIBS, $LIBS_DBUS)
+	# ... but double check that we actually have D-Bus
+	if test "$with_dbus" != "no"; then
+           AC_CHECK_HEADERS(dbus/dbus.h,, [with_dbus=no])
+	   with_dbus=no
+	   AC_TRY_LINK([extern "C" void dbus_message_new(); ],
+                       [dbus_message_new(); ],
+                       [with_dbus=])
+        fi
+        LIBS=$OLD_LIBS
     fi
 
     if test "$with_dbus" != "no"; then
         AC_DEFINE(WITH_DBUS,,
                   [Define to enable DBUS support.])
-        LIBS_DBUS=$DBUS_LIBDIR/libdbus-1.a
     fi
 fi
 
