@@ -1,6 +1,8 @@
 #include "wvocsp.h"
 #include "wvsslhacks.h"
 
+#include <openssl/ocsp.h>
+
 static const int OCSP_MAX_VALIDITY_PERIOD = (5 * 60); // 5 min: openssl default
 
 

@@ -14,12 +14,13 @@
 
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
-#include <openssl/ocsp.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
     
+typedef struct ocsp_request_st OCSP_REQUEST;
+
 RSA *wv_d2i_RSAPublicKey(RSA **a, const unsigned char **pp, long length);
 RSA *wv_d2i_RSAPrivateKey(RSA **a, const unsigned char **pp, long length);
 DSA *wv_d2i_DSAPublicKey(DSA **a, const unsigned char **pp, long length);

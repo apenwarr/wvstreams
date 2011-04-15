@@ -10,6 +10,8 @@
  */
 #include "wvsslhacks.h"
 
+#include "openssl/ocsp.h"
+
 RSA *wv_d2i_RSAPublicKey(RSA **a, const unsigned char **pp, long length)
 {
     return d2i_RSAPublicKey(a, (void *)pp, length);
