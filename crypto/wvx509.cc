@@ -13,6 +13,7 @@
 #include "wvstrutils.h"
 #include "wvautoconf.h"
 
+#include <openssl/asn1.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
@@ -781,7 +782,176 @@ WvString WvX509::get_ext_key_usage() const
 
 WvString WvX509::get_altsubject() const
 {
-    return get_extension(NID_subject_alt_name);
+    WvStringList sanlist;
+    
+    CHECK_CERT_EXISTS_GET("subject alt name", false);
+    
+    GENERAL_NAMES *altnames = NULL;
+    int i;
+
+    altnames = static_cast<GENERAL_NAMES *>
+                          (X509_get_ext_d2i(cert, 
+                                            NID_subject_alt_name, 
+                                            &i, NULL));
+                                            
+    if (altnames)
+    {
+        for(int j = 0; j < sk_GENERAL_NAME_num(altnames); j++)
+        {
+            GENERAL_NAME *n = sk_GENERAL_NAME_value(altnames, j);
+            WvString s;
+            char oneline[256];
+            WvDynBuf buf;
+            unsigned char *p;
+            int len;
+            
+            switch (n->type)
+            {
+                case GEN_EMAIL:
+                    s = WvString("email:%s",
+                                 reinterpret_cast<const char *>(n->d.ia5->data));
+                    break;
+                case GEN_DNS:
+                    s = WvString("DNS:%s",
+                                 reinterpret_cast<const char *>(n->d.ia5->data));
+                    break;
+                case GEN_URI:
+                    s = WvString("URI:%s",
+                                 reinterpret_cast<const char *>(n->d.ia5->data));
+                    break;
+                case GEN_DIRNAME:
+                    X509_NAME_oneline(n->d.dirn, oneline, sizeof(oneline));
+                    s = WvString("DirName:%s", oneline);
+                    break;
+                case GEN_IPADD:
+                    p = n->d.ip->data;
+                    len = n->d.ip->length;        
+                    if (len == 4)
+                        s = WvString("IP Address: %d.%d.%d.%d", 
+                                     p[0], p[1], p[2], p[3]);
+                    else if (len == 16)
+                        s = WvString("IP Address: IPv6 - not currently supported");
+                    else
+                        s = WvString("IP Address: INVALID");
+                    break;
+                case GEN_OTHERNAME:
+                    // We will convert this here to the OID, since it's easiest to parse
+                    
+                    OBJ_obj2txt(oneline, sizeof(oneline), n->d.otherName->type_id, 1);
+                    if (WvString(oneline) == "1.3.6.1.4.1.311.20.2.3")
+                    {  
+                         ASN1_UTF8STRING *utf8 = n->d.otherName->value->value.utf8string;
+                        // Until WvStrings gets UTF8 friendly, and since 99% of the time
+                        // this will be an ASCII user@kerberose-domain.internal type value
+                        // Be careful here and dump this into a WvDynBuf, and then output the
+                        // string.
+                        buf.put(ASN1_STRING_data(utf8), ASN1_STRING_length(utf8));
+                        s = WvString("Othername: Microsoft UPN: %s ", buf.getstr());
+                    } 
+                    else if (WvString(oneline) == "1.3.6.1.5.5.7.8.1")
+                    {
+                    /*
+                    PersonalData ::= SEQUENCE {
+                    
+                           nameOrPseudonym       NameOrPseudonym
+                           dateOfBirth           [0] GeneralizedTime OPTIONAL -- no data below day
+                           placeOfBirth          [1] DirectoryString OPTIONAL -- used as generally
+                                                                              -- used in the
+                                                                              -- country of birth,
+                                                                              -- usually the city. 
+                           gender                [2] PrintableString OPTIONAL -- assigned M or F
+                           postalAddress         [3] DirectoryString OPTIONAL
+                           civicRegistrationCode [4] DirectoryString OPTIONAL
+                           countryOfCitizenship  [5] PrintableString OPTIONAL -- similar to
+                                                                              -- countryName
+                           countryOfResidence    [6] PrintableString OPTIONAL -- similar to 
+                                                                              -- countryName
+                    }
+                                                                                                                                                                                                                                                                                                                             
+                    NameOrPseudonym ::= CHOICE {
+                              surAndGivenName SEQUENCE {
+                                        surName DirectoryString,
+                                        givenName SEQUENCE OF DirectoryString
+                              },
+                              pseudoNym       DirectoryString
+                       }
+                    */
+                        s = WvString("Othername: Personal Data: <unsupported> ");
+                    }
+                    else if (WvString(oneline) == "1.3.6.1.5.5.7.8.2")
+                    {
+                    /*
+                    
+                    UserGroupName ::=     SEQUENCE {
+                                  domain            UTF8String,
+                                  user              UTF8String,
+                                  groups            SEQUENCE OF UTF8String OPTIONAL
+                    }
+                    */
+                        s = WvString("Othername: User Group: <unsupported> ");
+                    }
+                    else if (WvString(oneline) == "1.3.6.1.5.5.7.8.3")
+                    {
+                    /*
+                    PermanentIdentifier ::=     SEQUENCE {
+                               assignerAuthority        GeneralName OPTIONAL,
+                               identifier               Name
+                    }
+                    */
+                        s = WvString("Othername: Permanent Identifier: <unsupported> ");
+                    }
+                    else if (WvString(oneline) == "1.3.6.1.5.5.7.8.4")
+                    {
+                    /*
+                    HardwareModuleName ::= SEQUENCE {
+                            hwType OBJECT IDENTIFIER,
+                            hwSerialNum OCTET STRING 
+                    }
+                    */
+                        s = WvString("Othername: Hardware Module Name: <unsupported> ");
+                    }
+                    else if (WvString(oneline) == "1.3.6.1.5.5.7.8.5")
+                    {
+                        ASN1_UTF8STRING *utf8 = n->d.otherName->value->value.utf8string;
+                        buf.put(ASN1_STRING_data(utf8), ASN1_STRING_length(utf8));
+                        s = WvString("Othername: XMPP Address: %s ", buf.getstr());
+                    }
+                    else if (WvString(oneline) == "1.3.6.1.5.5.7.8.6")
+                    {
+                    /*
+                    SIM ::= SEQUENCE {
+                                hashAlg          AlgorithmIdentifier,
+                                authorityRandom  OCTET STRING,   -- RA chosen random number
+                                                                 -- used in computation of
+                                                                 -- pEPSI
+                                pEPSI            OCTET STRING    -- hash of HashContent
+                                                                 -- with algorithm hashAlg
+                    }
+                    
+                    HashContent ::= SEQUENCE {
+                               userPassword     UTF8String,         -- user supplied password
+                               authorityRandom  OCTET STRING,       -- RA chosen random number
+                               identifierType   OBJECT IDENTIFIER,  -- SIItype
+                               identifier       UTF8String          -- SII
+                    }
+                    */                                                                                                                                                                                   
+                        s = WvString("Othername: SIM: <unsupported> ");
+                    }
+                    else if (WvString(oneline) == "1.3.6.1.5.5.7.8.7") 
+                    {
+                        ASN1_IA5STRING *ia5 = n->d.otherName->value->value.ia5string;
+                        buf.put(ASN1_STRING_data(ia5), ASN1_STRING_length(ia5));
+                        s = WvString("Othername: DNS SRV: %s", buf.getstr());
+                    }
+                    else
+                    {
+                        s = WvString("Othername: Unknown (%s): <unsupported>", oneline);
+                    }
+            }
+            sanlist.append(s);
+        }     
+    }
+    return sanlist.join("\n");
 }
 
 

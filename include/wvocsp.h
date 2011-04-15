@@ -17,8 +17,17 @@
 #define __WVOCSP_H
 #include "wvx509.h"
 
-#include <openssl/ocsp.h>
+struct ocsp_request_st;
+typedef ocsp_request_st OCSP_REQUEST;
 
+struct ocsp_cert_id_st;
+typedef ocsp_cert_id_st OCSP_CERTID;
+
+struct ocsp_response_st;
+typedef ocsp_response_st OCSP_RESPONSE;
+
+struct ocsp_basic_response_st;
+typedef ocsp_basic_response_st OCSP_BASICRESP;
 
 class WvOCSPReq
 {
