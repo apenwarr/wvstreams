@@ -14,7 +14,7 @@ ifdef _SOLARIS
 else 
     ifdef _MACOS
     	CFLAGS+= -DMACOS
-    	CXXFLAGS+= -DMACOS
+    	CXXFLAGS+= -DMACOS -D_XOPEN_SOURCE
     	WV_EXCLUDES+= linuxstreams/tests/aliastest linuxstreams/tests/ifctest linuxstreams/tests/routetest qt/tests/qtstringtest
     	TEST_SKIP_OBJS+= linuxstreams/t/%
     else
