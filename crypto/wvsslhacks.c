@@ -8,7 +8,11 @@
  * 
  * See wvsslhacks.h.
  */
-#include "wvsslhacks.h"
+
+// work around compile error on solaris.  there's probably a better way.
+#ifndef SOLARIS
+    #include "wvsslhacks.h"
+#endif
 
 #include "openssl/ocsp.h"
 

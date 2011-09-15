@@ -95,6 +95,11 @@ if test x$GCC = xyes ; then
  -Wpointer-arith -Wbad-function-cast -Wnested-externs"
 fi
 
+# Seems to be necessary for libwvutils.so to link on solaris
+if test "x$(uname)" = "xSunOS" ; then
+  CFLAGS="$CFLAGS -fPIC"
+fi
+
 CPPFLAGS="$CPPFLAGS -I$srcdir"
 
 AC_OUTPUT(Makefile testsuite/Makefile)
