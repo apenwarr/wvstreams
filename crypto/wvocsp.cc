@@ -69,7 +69,8 @@ WvOCSPResp::~WvOCSPResp()
 void WvOCSPResp::decode(WvBuf &encoded)
 {
     BIO *membuf = BIO_new(BIO_s_mem());
-    BIO_write(membuf, encoded.get(encoded.used()), encoded.used());
+    size_t len = encoded.used();
+    BIO_write(membuf, encoded.get(len), len);
 
     resp = d2i_OCSP_RESPONSE_bio(membuf, NULL);
     
