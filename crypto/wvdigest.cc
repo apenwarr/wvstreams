@@ -13,10 +13,10 @@
 
 /***** WvEVPMDDigest *****/
 
-WvEVPMDDigest::WvEVPMDDigest(const env_md_st *_evpmd) :
+WvEVPMDDigest::WvEVPMDDigest(const EVP_MD*_evpmd) :
     evpmd(_evpmd), active(false)
 {
-    evpctx = new EVP_MD_CTX;
+    evpctx = EVP_MD_CTX_new();
     _reset();
 }
 
@@ -24,7 +24,7 @@ WvEVPMDDigest::WvEVPMDDigest(const env_md_st *_evpmd) :
 WvEVPMDDigest::~WvEVPMDDigest()
 {
     cleanup();
-    delete evpctx;
+    EVP_MD_CTX_free(evpctx);
 }
 
 
@@ -60,7 +60,7 @@ bool WvEVPMDDigest::_reset()
     // the typecast is necessary for API compatibility with different
     // versions of openssl.  None of them *actually* change the contents of
     // the pointer.
-    EVP_DigestInit(evpctx, (env_md_st *)evpmd);
+    EVP_DigestInit(evpctx, evpmd);
     active = true;
     return true;
 }
@@ -79,7 +79,7 @@ void WvEVPMDDigest::cleanup()
 
 size_t WvEVPMDDigest::digestsize() const
 {
-    return EVP_MD_size((env_md_st *)evpmd);
+    return EVP_MD_size(evpmd);
 }
 
 
@@ -104,14 +104,14 @@ WvHMACDigest::WvHMACDigest(WvEVPMDDigest *_digest,
 {
     key = new unsigned char[keysize];
     memcpy(key, _key, keysize);
-    hmacctx = new HMAC_CTX;
+    hmacctx = HMAC_CTX_new();
     _reset();
 }
 
 WvHMACDigest::~WvHMACDigest()
 {
     cleanup();
-    delete hmacctx;
+    HMAC_CTX_free(hmacctx);
     deletev key;
     delete digest;
 }
@@ -145,7 +145,7 @@ bool WvHMACDigest::_finish(WvBuf &outbuf)
 bool WvHMACDigest::_reset()
 {
     cleanup();
-    HMAC_Init(hmacctx, key, keysize, (env_md_st *)digest->getevpmd());
+    HMAC_Init(hmacctx, key, keysize, digest->getevpmd());
     active = true;
     return true;
 }

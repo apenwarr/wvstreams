@@ -350,6 +350,8 @@ bool WvX509Mgr::signcert(WvX509 &unsignedcert) const
         return false;
     }
 
+    uint32_t ex_flags = X509_get_extension_flags(cert);
+    uint32_t ex_kusage = X509_get_key_usage(cert);
     if (cert == unsignedcert.cert)
     {
 	debug("Self Signing!\n");
@@ -362,8 +364,8 @@ bool WvX509Mgr::signcert(WvX509 &unsignedcert) const
         return false;
     }
 #endif
-    else if (!((cert->ex_flags & EXFLAG_KUSAGE) && 
-               (cert->ex_kusage & KU_KEY_CERT_SIGN)))
+    else if (!((ex_flags & EXFLAG_KUSAGE) && 
+               (ex_kusage & KU_KEY_CERT_SIGN)))
     {
 	debug("This Certificate is not allowed to sign certificates!\n");
 	return false;
@@ -390,6 +392,8 @@ bool WvX509Mgr::signcert(WvX509 &unsignedcert) const
 
 bool WvX509Mgr::signcrl(WvCRL &crl) const
 {
+    uint32_t ex_flags = X509_get_extension_flags(cert);
+    uint32_t ex_kusage = X509_get_key_usage(cert);
     if (!isok() || !crl.isok())
     {
         debug(WvLog::Warning, "Asked to sign CRL, but certificate or CRL (or "
@@ -403,12 +407,12 @@ bool WvX509Mgr::signcrl(WvCRL &crl) const
               "CRLs!\n");
         return false;
     }
-    else if (!((cert->ex_flags & EXFLAG_KUSAGE) && 
-	  (cert->ex_kusage & KU_CRL_SIGN)))
+    else if (!((ex_flags & EXFLAG_KUSAGE) && 
+	  (ex_kusage & KU_CRL_SIGN)))
     {
 	debug("Certificate not allowed to sign CRLs! (%s %s)\n", 
-              (cert->ex_flags & EXFLAG_KUSAGE),
-	      (cert->ex_kusage & KU_CRL_SIGN));
+              (ex_flags & EXFLAG_KUSAGE),
+	      (ex_kusage & KU_CRL_SIGN));
 	return false;
     }
 #endif
@@ -454,7 +458,6 @@ WvString WvX509Mgr::sign(WvBuf &data) const
 {
     assert(rsa);
 
-    EVP_MD_CTX sig_ctx;
     unsigned char sig_buf[4096];
     
     EVP_PKEY *pk = EVP_PKEY_new();
@@ -467,20 +470,22 @@ WvString WvX509Mgr::sign(WvBuf &data) const
 	return WvString::null;
     }
     
-    EVP_SignInit(&sig_ctx, EVP_sha1());
-    EVP_SignUpdate(&sig_ctx, data.peek(0, data.used()), data.used());
+    EVP_MD_CTX *sig_ctx = EVP_MD_CTX_new();
+    EVP_SignInit(sig_ctx, EVP_sha1());
+    EVP_SignUpdate(sig_ctx, data.peek(0, data.used()), data.used());
     unsigned int sig_len = sizeof(sig_buf);
-    int sig_err = EVP_SignFinal(&sig_ctx, sig_buf, 
+    int sig_err = EVP_SignFinal(sig_ctx, sig_buf, 
 				&sig_len, pk);
     if (sig_err != 1)
     {
 	debug("Error while signing.\n");
 	EVP_PKEY_free(pk);
+	EVP_MD_CTX_free(sig_ctx);
 	return WvString::null;
     }
 
     EVP_PKEY_free(pk);
-    EVP_MD_CTX_cleanup(&sig_ctx); // this isn't my fault ://
+    EVP_MD_CTX_free(sig_ctx); // this isn't my fault ://
     WvDynBuf buf;
     buf.put(sig_buf, sig_len);
     debug("Signature size: %s\n", buf.used());
