@@ -15,7 +15,7 @@ public:
     virtual size_t uwrite(const void *buf, size_t size)
     {
 	++count;
-	fprintf(stderr, "uwrite #%d (%d bytes)\n", count, size);
+	fprintf(stderr, "uwrite #%d (%d bytes)\n", count, (int)size);
 	if (count == 2)
 	    close(); // pretend we had a socket error
 	return 0;

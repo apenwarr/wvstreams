@@ -16,5 +16,6 @@ int main()
 
     UniConfKey k;
 
-    printf("root: %d uu: %d k: %d\n", sizeof(r), sizeof(uu), sizeof(k));
+    printf("root: %d uu: %d k: %d\n",
+        (int)sizeof(r), (int)sizeof(uu), (int)sizeof(k));
 }

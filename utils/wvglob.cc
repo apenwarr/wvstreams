@@ -132,37 +132,54 @@ WvString WvGlob::glob_to_regex(const char *src, size_t &src_used,
                         {
                             // Get rid of degenerate case:
                             src_used += 2;
-                            if (dst) dst[dst_used] = '\\'; ++dst_used;
-                            if (dst) dst[dst_used] = '^'; ++dst_used;
+                            if (dst) dst[dst_used] = '\\';
+                            ++dst_used;
+                            if (dst) dst[dst_used] = '^';
+                            ++dst_used;
                         }
                         else
                         {
-                            if (dst) dst[dst_used] = '('; ++dst_used;
+                            if (dst) dst[dst_used] = '(';
+                            ++dst_used;
                             state = BRACKET_FIRST;
                         }
                         break;
 
                     case '*':
-                        if (dst) dst[dst_used] = '('; ++dst_used;
-                        if (dst) dst[dst_used] = '['; ++dst_used;
-                        if (dst) dst[dst_used] = '^'; ++dst_used;
-                        if (dst) dst[dst_used] = '/'; ++dst_used;
-                        if (dst) dst[dst_used] = ']'; ++dst_used;
-                        if (dst) dst[dst_used] = '*'; ++dst_used;
-                        if (dst) dst[dst_used] = ')'; ++dst_used;
+                        if (dst) dst[dst_used] = '(';
+                        ++dst_used;
+                        if (dst) dst[dst_used] = '[';
+                        ++dst_used;
+                        if (dst) dst[dst_used] = '^';
+                        ++dst_used;
+                        if (dst) dst[dst_used] = '/';
+                        ++dst_used;
+                        if (dst) dst[dst_used] = ']';
+                        ++dst_used;
+                        if (dst) dst[dst_used] = '*';
+                        ++dst_used;
+                        if (dst) dst[dst_used] = ')';
+                        ++dst_used;
                         break;
 
                     case '?':
-                        if (dst) dst[dst_used] = '('; ++dst_used;
-                        if (dst) dst[dst_used] = '['; ++dst_used;
-                        if (dst) dst[dst_used] = '^'; ++dst_used;
-                        if (dst) dst[dst_used] = '/'; ++dst_used;
-                        if (dst) dst[dst_used] = ']'; ++dst_used;
-                        if (dst) dst[dst_used] = ')'; ++dst_used;
+                        if (dst) dst[dst_used] = '(';
+                        ++dst_used;
+                        if (dst) dst[dst_used] = '[';
+                        ++dst_used;
+                        if (dst) dst[dst_used] = '^';
+                        ++dst_used;
+                        if (dst) dst[dst_used] = '/';
+                        ++dst_used;
+                        if (dst) dst[dst_used] = ']';
+                        ++dst_used;
+                        if (dst) dst[dst_used] = ')';
+                        ++dst_used;
                         break;
 
                     case '{':
-                        if (dst) dst[dst_used] = '('; ++dst_used;
+                        if (dst) dst[dst_used] = '(';
+                        ++dst_used;
                         ++src_used;
                         while (true)
                         {
@@ -181,10 +198,12 @@ WvString WvGlob::glob_to_regex(const char *src, size_t &src_used,
                                 break;
                             else if (src[src_used] != ',')
                                 return WvString("Unfinished brace expression (index %s)", src_used);
-                            if (dst) dst[dst_used] = '|'; ++dst_used;
+                            if (dst) dst[dst_used] = '|';
+                            ++dst_used;
                             ++src_used;
                         }
-                        if (dst) dst[dst_used] = ')'; ++dst_used;
+                        if (dst) dst[dst_used] = ')';
+                        ++dst_used;
                         break;
 
                     case '^':
@@ -194,12 +213,15 @@ WvString WvGlob::glob_to_regex(const char *src, size_t &src_used,
                     case ')':
                     case '|':
                     case '+':
-                        if (dst) dst[dst_used] = '\\'; ++dst_used;
-                        if (dst) dst[dst_used] = src[src_used]; ++dst_used;
+                        if (dst) dst[dst_used] = '\\';
+                        ++dst_used;
+                        if (dst) dst[dst_used] = src[src_used];
+                        ++dst_used;
                         break;
 
                     default:
-                        if (dst) dst[dst_used] = src[src_used]; ++dst_used;
+                        if (dst) dst[dst_used] = src[src_used];
+                        ++dst_used;
                         break;
                 }
                 break;
@@ -219,10 +241,12 @@ WvString WvGlob::glob_to_regex(const char *src, size_t &src_used,
                     case '*':
                     case '?':
                     case '\\':
-                        if (dst) dst[dst_used] = '\\'; ++dst_used;
+                        if (dst) dst[dst_used] = '\\';
+                        ++dst_used;
                         // fall through..
                     default:
-                        if (dst) dst[dst_used] = src[src_used]; ++dst_used;
+                        if (dst) dst[dst_used] = src[src_used];
+                        ++dst_used;
                         break;
 
                 }
@@ -233,23 +257,31 @@ WvString WvGlob::glob_to_regex(const char *src, size_t &src_used,
                 switch (src[src_used])
                 {
                     case '!':
-                        if (dst) dst[dst_used] = '['; ++dst_used;
-                        if (dst) dst[dst_used] = '^'; ++dst_used;
+                        if (dst) dst[dst_used] = '[';
+                        ++dst_used;
+                        if (dst) dst[dst_used] = '^';
+                        ++dst_used;
                         break;
 
                     case '^':
-                        if (dst) dst[dst_used] = '\\'; ++dst_used;
-                        if (dst) dst[dst_used] = '^'; ++dst_used;
-                        if (dst) dst[dst_used] = '|'; ++dst_used;
-                        if (dst) dst[dst_used] = '['; ++dst_used;
+                        if (dst) dst[dst_used] = '\\';
+                        ++dst_used;
+                        if (dst) dst[dst_used] = '^';
+                        ++dst_used;
+                        if (dst) dst[dst_used] = '|';
+                        ++dst_used;
+                        if (dst) dst[dst_used] = '[';
+                        ++dst_used;
                         break;
 
                     case '/':
                         return WvString("Slash not allowed in bracket expression (index %s)", src_used);
 
                     default:
-                        if (dst) dst[dst_used] = '['; ++dst_used;
-                        if (dst) dst[dst_used] = src[src_used]; ++dst_used;
+                        if (dst) dst[dst_used] = '[';
+                        ++dst_used;
+                        if (dst) dst[dst_used] = src[src_used];
+                        ++dst_used;
                         break;
                 }
                 state = BRACKET;
@@ -259,8 +291,10 @@ WvString WvGlob::glob_to_regex(const char *src, size_t &src_used,
                 switch (src[src_used])
                 {
                     case ']':
-                        if (dst) dst[dst_used] = ']'; ++dst_used;
-                        if (dst) dst[dst_used] = ')'; ++dst_used;
+                        if (dst) dst[dst_used] = ']';
+                        ++dst_used;
+                        if (dst) dst[dst_used] = ')';
+                        ++dst_used;
                         state = NORMAL;
                         break;
 
@@ -268,7 +302,8 @@ WvString WvGlob::glob_to_regex(const char *src, size_t &src_used,
                         return WvString("Slash not allowed in bracket expression (index %s)", src_used);
 
                     default:
-                        if (dst) dst[dst_used] = src[src_used]; ++dst_used;
+                        if (dst) dst[dst_used] = src[src_used];
+                        ++dst_used;
                         break;
                 }
                 break;

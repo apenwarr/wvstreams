@@ -66,7 +66,7 @@ WVTEST_MAIN("stresshash")
 	   
     size_t avglength = elems / (d.numslots - total);
     size_t ideal = elems / d.numslots;
-    printf("Avg chain length: %d (ideally %d)\n", avglength, ideal);
+    printf("Avg chain length: %d (ideally %d)\n", (int)avglength, (int)ideal);
 
     printf("Removing...\n");
     fflush(stdout);
@@ -146,7 +146,7 @@ WVTEST_MAIN("hashtest.cc")
     WVPASS(!t[xx]);
     
     if (!WVPASS(t.count() == 3))
-        printf("   because [%d] != [3]\n", t.count());
+        printf("   because [%d] != [3]\n", (int)t.count());
     
     t.remove(&x);
     t.remove(&y2);
@@ -154,7 +154,7 @@ WVTEST_MAIN("hashtest.cc")
     WVPASS(!t[y2]);
     WVPASS(!t[xx]);
     if (!WVPASS(t.count() == 1))
-        printf("   because [%d] != [1]\n", t.count());
+        printf("   because [%d] != [1]\n", (int)t.count());
     
     WvStringTable::Iter i(t);
     for (i.rewind(); i.next(); )

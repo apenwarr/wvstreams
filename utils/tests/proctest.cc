@@ -73,20 +73,20 @@ int main()
     fprintf(stderr, "started (%d/%d)...\n", proc.running, proc.pid);
     proc.wait(4000);
     fprintf(stderr, "wait done (%d/%d/%d)...\n",
-	    proc.running, proc.estatus, proc.old_pids.count());
+	    proc.running, proc.estatus, (int)proc.old_pids.count());
     fprintf(stderr, "stopping process...\n");
     proc.stop(2000, false);
     fprintf(stderr, "stop done (%d/%d/%d)...\n",
-	    proc.running, proc.estatus, proc.old_pids.count());
+	    proc.running, proc.estatus, (int)proc.old_pids.count());
     fprintf(stderr, "start again...\n");
     proc.start_again();
     proc.wait(4000);
     fprintf(stderr, "wait done (%d/%d/%d)...\n",
-	    proc.running, proc.estatus, proc.old_pids.count());
+	    proc.running, proc.estatus, (int)proc.old_pids.count());
     fprintf(stderr, "stopping process...\n");
     proc.stop(1000, true);
     fprintf(stderr, "stop done (%d/%d/%d)...\n",
-	    proc.running, proc.estatus, proc.old_pids.count());
+	    proc.running, proc.estatus, (int)proc.old_pids.count());
     fprintf(stderr, "\n\n");
     
     fprintf(stderr, "Checking for leftover subprocesses...\n");

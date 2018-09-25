@@ -12,7 +12,6 @@
 #include "wvx509mgr.h"
 #include "wvbase64.h"
 
-
 static const char * warning_str_get = "Tried to determine %s, but CRL is blank!\n";
 #define CHECK_CRL_EXISTS_GET(x, y)                                      \
     if (!crl) {                                                         \

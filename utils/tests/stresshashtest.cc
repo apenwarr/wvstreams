@@ -48,7 +48,7 @@ int main()
 	d.add(new Intstr(count, count), true);
     }
     
-    printf("\rAdded: total %d (should be %d)\n", d.count(), elems);
+    printf("\rAdded: total %d (should be %d)\n", (int)d.count(), elems);
     
     total = 0;
     for (count = 0; count < d.numslots; count++)
@@ -72,7 +72,7 @@ int main()
     }
     
     printf("\rRemoved.  New count: %d (should be %d)\n",
-	   d.count(), elems - elems/5);
+	   (int)d.count(), elems - elems/5);
     
     IntstrDict::Iter i(d);
     total = d.count();

@@ -62,7 +62,6 @@ void WvIPRouteList::get_kernel()
     char *line;
     WvString ifc, table, gate, addr, mask, src;
     int metric, flags;
-    bool invalid;
     WvIPRoute *r;
     WvStringList words;
     WvStringList::Iter word(words);
@@ -116,7 +115,6 @@ void WvIPRouteList::get_kernel()
     {
 	//log(WvLog::Debug2, "get_kern2: line: %s\n", line);
 	
-	invalid = false;
 	ifc = gate = table = "";
 	metric = 0;
 	
@@ -143,7 +141,7 @@ void WvIPRouteList::get_kernel()
 	    {
 		if (word2 == "local")
 		{
-		    invalid = true; // ignore 'local' table - too complex
+		    // ignore 'local' table - too complex
 		    break;
 		}
 		else

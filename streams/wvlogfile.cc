@@ -26,7 +26,6 @@ static time_t gmtoffset()
 {
     time_t nowgmt = time(NULL);
     struct tm gmt = *gmtime(&nowgmt);
-    struct tm local = *localtime(&nowgmt);
     time_t nowantilocal = mktime(&gmt); // mktime assumes gmt
     return nowgmt - nowantilocal;
 }

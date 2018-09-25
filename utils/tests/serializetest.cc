@@ -65,10 +65,10 @@ int main()
     wv_serialize(buf, true);
     wv_serialize(buf, bb);
     wv_serialize(buf, 'x');
-    printf("buf used: %d\n", buf.used());
+    printf("buf used: %d\n", (int)buf.used());
     
     printf("got: '%s'\n", wv_deserialize<WvString>(buf).cstr());
-    printf("buf used: %d\n", buf.used());
+    printf("buf used: %d\n", (int)buf.used());
     printf("got: %d\n", wv_deserialize<int>(buf));
     printf("got: %d\n", wv_deserialize<short>(buf));
     printf("got: %d\n", wv_deserialize<int>(buf));
@@ -81,13 +81,13 @@ int main()
     s.print();
     wv_serialize(buf, s);
     s.print();
-    printf("buf used: %d\n", buf.used());
+    printf("buf used: %d\n", (int)buf.used());
 
-    WvBufCursor buf2(buf, 0, buf.used());
+    WvBufCursor buf2(buf, 0, (int)buf.used());
     Silly *s2 = wv_deserialize<Silly *>(buf2);
     s2->print();
     delete s2;
-    printf("buf used: %d/%d\n", buf2.used(), buf.used());
+    printf("buf used: %d/%d\n", (int)buf2.used(), (int)buf.used());
     
     Silly s3 = wv_deserialize<Silly>(buf);
     s3.print();
@@ -100,7 +100,7 @@ int main()
     list.append(new int(1231), true);
     list.append(new int(973), true);
     wv_serialize(buf, list);
-    printf("buf used: %d\n", buf.used());
+    printf("buf used: %d\n", (int)buf.used());
     
     WvDynBuf xbuf;
     wv_serialize(xbuf, buf);
@@ -109,7 +109,7 @@ int main()
     intList *list2 = wv_deserialize<intList *>(*xbuf2);
     delete xbuf2;
     
-    printf("%d list elements after deserialize.\n", list.count());
+    printf("%d list elements after deserialize.\n", (int)list.count());
     intList::Iter i(*list2);
     for (i.rewind(); i.next(); )
 	printf(" ... %d\n", *i);

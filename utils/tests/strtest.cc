@@ -53,7 +53,7 @@ void fptestfunc(WvStringParm fp1, WvStringParm fpf1,
 
 int main()
 {
-    printf("A WvString is %d bytes long.\n", sizeof(WvString));
+    printf("A WvString is %d bytes long.\n", (int)sizeof(WvString));
 
     WvString a, b("Foo"), c("Foo"), d("Blue"), e;
     const char *ca = "Fork", *cb = "Foo", *cc = "Foo", *cd = NULL;
@@ -118,7 +118,7 @@ int main()
     n1 = n4;
     n5 = n1;
     printf("null: ok1\n");
-    printf("null: %d %d %d %d %d\n", !n1, !n2, n1.len(), n1==n2, n3.num());
+    printf("null: %d %d %d %d %d\n", !n1, !n2, (int)n1.len(), n1==n2, n3.num());
     n3.append("junk");
     printf("null: %d %d %d %d %d\n", n1==n6, !n1, !n6, n1==NULL, n6==NULL);
     WvString ns("%s %s %s %s %s %s\n", n1, n2, n3, n4, n5, n6);

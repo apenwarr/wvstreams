@@ -34,7 +34,7 @@ WVTEST_MAIN("encodertest.cc")
 	WvDynBuf outbuf;
 	WVPASS(heapPass->encode(inbuf, outbuf));
 	WVPASS(outbuf.getstr() == "Luke is really cool");
-	printf("%d\n", heapPass->bytes_processed());
+	printf("%d\n", (int)heapPass->bytes_processed());
 	WVPASS(heapPass->bytes_processed() == 19);
 	WVFAIL(heapPass->isfinished());
 	inbuf.putstr("Buffers work kinda weird");

@@ -15,7 +15,7 @@ WVTEST_MAIN("wvgzip trivial encode + decode x1")
     inbuf.putstr(str);
     WvDynBuf zippedbuf;
     WvDynBuf unzippedbuf;
-    printf("inbuf: %i zippedbuf: %i\n", inbuf.used(), zippedbuf.used());
+    printf("inbuf: %i zippedbuf: %i\n", (int)inbuf.used(), (int)zippedbuf.used());
 
     WvGzipEncoder zipper(WvGzipEncoder::Deflate);
     zipper.encode(inbuf, zippedbuf, true, true);
@@ -24,7 +24,7 @@ WVTEST_MAIN("wvgzip trivial encode + decode x1")
 
     WvGzipEncoder unzipper(WvGzipEncoder::Inflate);
     unzipper.encode(zippedbuf, unzippedbuf, true, true);
-    printf("inbuf: %i unzippedbuf: %i\n", inbuf.used(), unzippedbuf.used());
+    printf("inbuf: %i unzippedbuf: %i\n", (int)inbuf.used(), (int)unzippedbuf.used());
     WVPASS(unzippedbuf.used() == STRING_LENGTH);
     WvString unzippedstr = unzippedbuf.getstr(); 
     WVPASS(unzippedstr == str);

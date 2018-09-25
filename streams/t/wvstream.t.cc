@@ -59,7 +59,7 @@ public:
     
     virtual size_t uwrite(const void *buf, size_t count)
     {
-	fprintf(stderr, "I'm uwrite! (%d)\n", count);
+	fprintf(stderr, "I'm uwrite! (%d)\n", (int)count);
 	if (block_writes)
 	    return 0;
 	size_t ret = WvStream::uwrite(buf, count);

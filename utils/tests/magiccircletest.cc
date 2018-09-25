@@ -10,7 +10,6 @@ int main()
 {
     WvMagicCircle q(999);
     char buf[1024], buf2[1024];
-    size_t len;
     size_t i;
     
     srandom(0);
@@ -34,7 +33,6 @@ int main()
 	    }
 	    
 	    q.skip(1);
-	    len = q.get(buf, i-1);
 	    
 	    memset(buf2, i % 256, i);
 	    
@@ -47,7 +45,7 @@ int main()
 	    
 	    assert(!memcmp(buf, buf2, i-1));
 	    
-	    printf("         << %d\n", i);
+	    printf("         << %d\n", (int)i);
 	}
 	
 	assert(!q.used());
@@ -57,7 +55,7 @@ int main()
 	// child
 	for (i = 1; i <= 999; i++)
 	{
-	    printf(">> %d\n", i);
+	    printf(">> %d\n", (int)i);
 	    
 	    memset(buf, i % 256, i);
 	    

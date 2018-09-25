@@ -281,7 +281,7 @@ public:
     WvIPAddr operator- (int n) const;
 
     uint32_t addr() const
-        { return *(uint32_t *)binaddr; }
+        { uint32_t x; memcpy(&x, binaddr, 4); return x; }
 
     bool is_zero() const
         { return addr() == 0; }

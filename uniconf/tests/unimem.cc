@@ -28,8 +28,8 @@ public:
 
 int main()
 {
-    printf("uniconfvaluetree: %d bytes\n", sizeof(UniConfValueTree));
-    printf("wvstring: %d bytes\n", sizeof(WvString));
+    printf("uniconfvaluetree: %d bytes\n", (int)sizeof(UniConfValueTree));
+    printf("wvstring: %d bytes\n", (int)sizeof(WvString));
     Report r;
 
     int mode = 2;

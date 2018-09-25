@@ -134,6 +134,7 @@ static void wvcrash_real(int sig, int fd, pid_t pid)
     wr(fd, "\n");
 
 #if WVCRASH_USE_SIGALTSTACK
+#pragma GCC diagnostic ignored "-Wframe-address"
     // Determine if this has likely been a stack overflow
     const void *last_real_stack_frame;
     for (;;)

@@ -79,10 +79,9 @@ private:
     WvLink link;
     WvConfigEntryEmu* entry;
 public:
-    Iter(WvConfigSectionEmu& _sect):
+    Iter(WvConfigSectionEmu &_sect):
 	sect(_sect), iter(_sect.uniconf), link(NULL, false), entry(NULL)
     { 
-        assert(&_sect);
     }
     ~Iter();
     void rewind();

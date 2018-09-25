@@ -270,7 +270,7 @@ bool UniIniGen::commit_atomic(WvStringParm real_filename)
 	return false;
     }
 
-    save(file, *root); // write the changes out to our temp file
+    save(file, root); // write the changes out to our temp file
 
     mode_t theumask = umask(0);
     umask(theumask);
@@ -331,7 +331,7 @@ void UniIniGen::commit()
 
         fchmod(file.getwfd(), (statbuf.st_mode & 07777) | S_ISVTX);
 
-        save(file, *root);
+        save(file, root);
     
         if (!file.geterr())
         {
@@ -482,26 +482,26 @@ static void save_sect(WvStream &file, UniConfValueTree &toplevel,
 }
 
 
-void UniIniGen::save(WvStream &file, UniConfValueTree &parent)
+void UniIniGen::save(WvStream &file, UniConfValueTree *parent)
 {
     // parent might be NULL, so it really should be a pointer, not
     // a reference.  Oh well...
-    if (!&parent) return;
+    if (!parent) return;
     
-    if (parent.fullkey() == root->fullkey())
+    if (parent->fullkey() == root->fullkey())
     {
 	// the root itself is a special case, since it's not in a section,
 	// and it's never NULL (so we don't need to write it if it's just
 	// blank)
-	if (!!parent.value())
-	    printkey(file, parent.key(), parent.value(), save_cb);
+	if (!!parent->value())
+	    printkey(file, parent->key(), parent->value(), save_cb);
     }
 
     bool printedsection = false;
     
-    save_sect(file, parent, parent, printedsection, false, save_cb);
+    save_sect(file, *parent, *parent, printedsection, false, save_cb);
     
-    UniConfValueTree::Iter it(parent);
+    UniConfValueTree::Iter it(*parent);
     for (it.rewind(); it.next(); )
     {
         UniConfValueTree &node = *it;

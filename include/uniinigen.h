@@ -56,7 +56,7 @@ private:
     bool commit_atomic(WvStringParm real_filename);
 #endif
     
-    void save(WvStream &file, UniConfValueTree &parent);
+    void save(WvStream &file, UniConfValueTree *parent);
     bool refreshcomparator(const UniConfValueTree *a,
 			   const UniConfValueTree *b);
 };
