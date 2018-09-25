@@ -1157,7 +1157,11 @@ WvString WvX509::get_extension(int nid) const
         
         if (ext)
         {
+#if (OPENSSL_VERSION_NUMBER >= 0x10000000L)
+            const X509V3_EXT_METHOD *method = X509V3_EXT_get(ext);
+#else
             X509V3_EXT_METHOD *method = X509V3_EXT_get(ext);
+#endif
             if (!method)
             {
                 WvDynBuf buf;

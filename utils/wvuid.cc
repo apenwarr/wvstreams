@@ -6,6 +6,7 @@
  */ 
 #include "wvautoconf.h"
 #include "wvuid.h"
+#include <unistd.h>
 
 #if WIN32
 
