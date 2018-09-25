@@ -101,8 +101,9 @@ WVTEST_MAIN("dynbuf contiguous getting")
     {
         outlines.append("Version: 4");
         outlines.append("Authenticate: foo");
-        char zeros[NUM_ZEROS];
+        char zeros[NUM_ZEROS + 1];
         memset(zeros, (int)'0', NUM_ZEROS);
+        zeros[NUM_ZEROS] = 0;
         outlines.append(zeros);
     }
 
