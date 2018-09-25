@@ -296,6 +296,7 @@ WVTEST_MAIN("ssl establish connection")
 
     // check for BUGZID:10781
     char data[20000];
+    memset(data, 'A', sizeof(data));
     size_t wlen = ssl->write(data, sizeof(data));
 
     printf("Wrote %zd bytes\n", wlen);
