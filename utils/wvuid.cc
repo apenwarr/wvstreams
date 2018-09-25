@@ -34,6 +34,7 @@ wvuid_t wvgetuid()
 
 #else // not WIN32
 
+#include <unistd.h>
 
 WvString wv_username_from_uid(wvuid_t uid)
 {
