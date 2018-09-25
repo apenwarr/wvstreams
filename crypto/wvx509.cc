@@ -975,7 +975,7 @@ static void add_aia(WvStringParm type, WvString identifier,
     sk_ACCESS_DESCRIPTION_push(ainfo, acc);
     acc->method = OBJ_txt2obj(type.cstr(), 0);
     acc->location->type = GEN_URI;
-    acc->location->d.ia5 = ASN1_IA5STRING_new();
+    acc->location->d.ia5 = M_ASN1_IA5STRING_new();
     unsigned char *cident 
 	= reinterpret_cast<unsigned char *>(identifier.edit());
     ASN1_STRING_set(acc->location->d.ia5, cident, identifier.len());
@@ -1060,7 +1060,7 @@ void WvX509::set_crl_urls(WvStringList &urls)
         GENERAL_NAMES *uris = GENERAL_NAMES_new();
         GENERAL_NAME *uri = GENERAL_NAME_new();
         uri->type = GEN_URI;
-        uri->d.ia5 = ASN1_IA5STRING_new();
+        uri->d.ia5 = M_ASN1_IA5STRING_new();
         unsigned char *cident
 	    = reinterpret_cast<unsigned char *>(i().edit());    
         ASN1_STRING_set(uri->d.ia5, cident, i().len());
@@ -1163,11 +1163,10 @@ WvString WvX509::get_extension(int nid) const
 #else
             X509V3_EXT_METHOD *method = X509V3_EXT_get(ext);
 #endif
-            ASN1_OCTET_STRING *ext_data_str = X509_EXTENSION_get_data(ext);
             if (!method)
             {
                 WvDynBuf buf;
-                buf.put(ext_data_str->data, ext_data_str->length);
+                buf.put(ext->value->data, ext->value->length);
                 retval = buf.getstr();
             }
             else
@@ -1178,21 +1177,21 @@ WvString WvX509::get_extension(int nid) const
                 // even though it's const (at least as of version 0.9.8e). 
                 // gah.
 #if OPENSSL_VERSION_NUMBER >= 0x0090800fL
-                const unsigned char * ext_value_data = ext_data_str->data;
+                const unsigned char * ext_value_data = ext->value->data;
 #else
                 unsigned char *ext_value_data = ext->value->data;
 #endif
                 if (method->it)
                 {
                     ext_data = ASN1_item_d2i(NULL, &ext_value_data,
-                                             ext_data_str->length, 
+                                             ext->value->length, 
                                              ASN1_ITEM_ptr(method->it));
                     TRACE("Applied generic conversion!\n");
                 }
                 else
                 {
                     ext_data = method->d2i(NULL, &ext_value_data,
-                                           ext_data_str->length);
+                                           ext->value->length);
                     TRACE("Applied method specific conversion!\n");
                 }
                 
@@ -1327,13 +1326,13 @@ bool WvX509::verify(WvBuf &original, WvStringParm signature) const
         return false;
     
     /* Verify the signature */
-    EVP_MD_CTX *sig_ctx = EVP_MD_CTX_new();
-    EVP_VerifyInit(sig_ctx, EVP_sha1());
-    EVP_VerifyUpdate(sig_ctx, original.peek(0, original.used()),
+    EVP_MD_CTX sig_ctx;
+    EVP_VerifyInit(&sig_ctx, EVP_sha1());
+    EVP_VerifyUpdate(&sig_ctx, original.peek(0, original.used()),
 		     original.used());
-    int sig_err = EVP_VerifyFinal(sig_ctx, sig_buf, sig_size, pk);
+    int sig_err = EVP_VerifyFinal(&sig_ctx, sig_buf, sig_size, pk);
     EVP_PKEY_free(pk);
-    EVP_MD_CTX_free(sig_ctx); // Again, not my fault... 
+    EVP_MD_CTX_cleanup(&sig_ctx); // Again, not my fault... 
     if (sig_err != 1) 
     {
         debug("Verify failed!\n");
@@ -1452,19 +1451,19 @@ void WvX509::set_ski()
 {
     CHECK_CERT_EXISTS_SET("ski");
 
-    ASN1_OCTET_STRING *oct = ASN1_OCTET_STRING_new();
-    ASN1_BIT_STRING *pk = X509_get0_pubkey_bitstr(cert);
+    ASN1_OCTET_STRING *oct = M_ASN1_OCTET_STRING_new();
+    ASN1_BIT_STRING *pk = cert->cert_info->key->public_key;
     unsigned char pkey_dig[EVP_MAX_MD_SIZE];
     unsigned int diglen;
 
     EVP_Digest(pk->data, pk->length, pkey_dig, &diglen, EVP_sha1(), NULL);
 
-    ASN1_OCTET_STRING_set(oct, pkey_dig, diglen);
+    M_ASN1_OCTET_STRING_set(oct, pkey_dig, diglen);
     X509_EXTENSION *ext = X509V3_EXT_i2d(NID_subject_key_identifier, 0, 
 					oct);
     X509_add_ext(cert, ext, -1);
     X509_EXTENSION_free(ext);
-    ASN1_OCTET_STRING_free(oct);
+    M_ASN1_OCTET_STRING_free(oct);
 }
 
 

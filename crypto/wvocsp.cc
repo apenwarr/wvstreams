@@ -121,10 +121,9 @@ bool WvOCSPResp::check_nonce(const WvOCSPReq &req) const
 
 bool WvOCSPResp::signedbycert(const WvX509 &cert) const
 {
-    STACK_OF(X509) *sk = sk_X509_new_null();
-    sk_X509_push(sk, cert.cert);
-    int i = OCSP_basic_verify(bs, sk, NULL, OCSP_NOVERIFY);
-    sk_X509_free(sk);
+    EVP_PKEY *skey = X509_get_pubkey(cert.cert);
+    int i = OCSP_BASICRESP_verify(bs, skey, 0);
+    EVP_PKEY_free(skey);
 
     if(i > 0)
         return true;
@@ -135,15 +134,33 @@ bool WvOCSPResp::signedbycert(const WvX509 &cert) const
 
 WvX509 WvOCSPResp::get_signing_cert() const
 {
-    const STACK_OF(X509) *certs = OCSP_resp_get0_certs(bs);
-    if (!bs || !sk_X509_num(certs))
+    if (!bs || !sk_X509_num(bs->certs))
         return WvX509();
 
-    X509 *signer = NULL;
-    if (OCSP_resp_get0_signer(bs, &signer, NULL) == 1) {
-        return WvX509(X509_dup(signer));
+    // note: the following bit of code is taken almost verbatim from
+    // ocsp_vfy.c in OpenSSL 0.9.8. Copyright and attribution should 
+    // properly belong to them
+
+    OCSP_RESPID *id = bs->tbsResponseData->responderId;
+
+    if (id->type == V_OCSP_RESPID_NAME)
+    {
+        X509 *x = X509_find_by_subject(bs->certs, id->value.byName);
+        if (x)
+            return WvX509(X509_dup(x));
     }
 
+    if (id->value.byKey->length != SHA_DIGEST_LENGTH) return NULL;
+    unsigned char tmphash[SHA_DIGEST_LENGTH];
+    unsigned char *keyhash = id->value.byKey->data;
+    for (int i = 0; i < sk_X509_num(bs->certs); i++)
+    {
+        X509 *x = sk_X509_value(bs->certs, i);
+        X509_pubkey_digest(x, EVP_sha1(), tmphash, NULL);
+        if(!memcmp(keyhash, tmphash, SHA_DIGEST_LENGTH))
+            return WvX509(X509_dup(x));
+    }
+    
     return WvX509();
 }
 
