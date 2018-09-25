@@ -241,14 +241,17 @@ tests: $(REAL_TESTS)
 
 test: all autodep-test tests qtest
 
+BIN_P := $(shell pwd):$(shell pwd)/uniconf/daemon:$(shell pwd)/uniconf/tests:$(PATH)
+LD_LP := $(BIN_P):$(LD_LIBRARY_PATH)
+
 qtest: all wvtestmain
-	LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(shell pwd)" $(WVTESTRUN) $(MAKE) runtests
+	$(WVTESTRUN) $(MAKE) runtests
 
 runtests:
-	$(VALGRIND) ./wvtestmain '$(TESTNAME)'
+	LD_LIBRARY_PATH="$(LD_LP)" PATH="$(BIN_P)" $(VALGRIND) ./wvtestmain '$(TESTNAME)'
 ifeq ("$(TESTNAME)", "")
-	cd uniconf/tests && DAEMON=0 ./unitest.sh
-	cd uniconf/tests && DAEMON=1 ./unitest.sh
+	cd $(WVSTREAMS)/uniconf/tests && DAEMON=0 LD_LIBRARY_PATH="$(LD_LP)" PATH="$(BIN_P)" ./unitest.sh
+	cd $(WVSTREAMS)/uniconf/tests && DAEMON=1 LD_LIBRARY_PATH="$(LD_LP)" PATH="$(BIN_P)" ./unitest.sh
 endif
 
 
