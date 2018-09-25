@@ -25,9 +25,10 @@ WVTEST_MAIN("WvHttpPool GET")
 	l.append(&pool, false, "WvHttpPool");
 
 	WvStream *buf;
+	WvLog dlog("httpdata", WvLog::Debug1);
 	WVPASS(buf = pool.addurl("http://www.google.com"));
 	WVPASS(buf->isok());
-	buf->autoforward(*wvcon);
+	buf->autoforward(dlog);
 	buf->setclosecallback(wv::bind(close_callback, wv::ref(*buf)));
 	l.append(buf, false, "buf stream");
 	while (buf->isok() && (wvcon->isok() || !pool.idle()))
