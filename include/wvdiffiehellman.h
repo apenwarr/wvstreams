@@ -27,7 +27,7 @@ public:
     bool create_secret(WvBuf &inbuf, size_t in_len, WvBuf& outbuf);
 
 protected:
-    struct dh_st *info;
+    DH *info;
     BN_ULONG generator;
 
 private:

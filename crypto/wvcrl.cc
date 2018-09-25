@@ -357,31 +357,19 @@ bool WvCRL::isrevoked(WvStringParm serial_number) const
 	ASN1_INTEGER *serial = serial_to_int(serial_number);
 	if (serial)
 	{
-	    X509_REVOKED mayberevoked;
-	    mayberevoked.serialNumber = serial;
-	    if (crl->crl->revoked)
-	    {
-		int idx = sk_X509_REVOKED_find(crl->crl->revoked, 
-					       &mayberevoked);
-		ASN1_INTEGER_free(serial);
-		if (idx >= 0)
-                {
-                    debug("Certificate is revoked.\n");
-		    return true;
-                }
-                else
-                {
-                    debug("Certificate is not revoked.\n");
-		    return false;
-                }
-	    }
-	    else
-	    {
-		ASN1_INTEGER_free(serial);
-		debug("CRL does not have revoked list.\n");
-                return false;
-	    }
-	    
+	    X509_REVOKED *revoked_entry = NULL;
+	    int idx = X509_CRL_get0_by_serial(crl, &revoked_entry, serial);
+	    ASN1_INTEGER_free(serial);
+	    if (idx >= 1 || revoked_entry)
+            {
+                debug("Certificate is revoked.\n");
+	        return true;
+            }
+            else
+            {
+                debug("Certificate is not revoked.\n");
+	        return false;
+            }
 	}
 	else
 	    debug(WvLog::Warning, "Can't convert serial number to ASN1 format. "

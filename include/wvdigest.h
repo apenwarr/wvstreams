@@ -9,10 +9,8 @@
 
 #include "wvencoder.h"
 #include <stdint.h>
+#include <openssl/evp.h>
 
-struct env_md_st;
-struct env_md_ctx_st;
-struct hmac_ctx_st;
 
 /**
  * Superclass for all message digests.
@@ -45,8 +43,8 @@ public:
 class WvEVPMDDigest : public WvDigest
 {
     friend class WvHMACDigest;
-    const env_md_st *evpmd;
-    env_md_ctx_st *evpctx;
+    const EVP_MD *evpmd;
+    EVP_MD_CTX *evpctx;
     bool active;
 
 public:
@@ -54,13 +52,13 @@ public:
     virtual size_t digestsize() const;
 
 protected:
-    WvEVPMDDigest(const env_md_st *_evpmd);
+    WvEVPMDDigest(const EVP_MD *_evpmd);
     virtual bool _encode(WvBuf &inbuf, WvBuf &outbuf,
         bool flush); // consumes input
     virtual bool _finish(WvBuf &outbuf); // outputs digest
     virtual bool _reset(); // supported: resets digest value
     
-    const env_md_st *getevpmd()
+    const EVP_MD *getevpmd()
         { return evpmd; }
 
 private:
@@ -104,7 +102,7 @@ class WvHMACDigest : public WvDigest
     WvEVPMDDigest *digest;
     unsigned char *key;
     size_t keysize;
-    hmac_ctx_st *hmacctx;
+    HMAC_CTX *hmacctx;
     bool active;
 
 public:
