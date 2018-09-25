@@ -1019,9 +1019,10 @@ static void parse_stack(WvStringParm ext, WvStringList &list,
     for (i.rewind();i.next();)
     {
         WvString stack_entry(*i);
-        if (strstr(stack_entry, prefix))
+        const char *p = strstr(stack_entry.edit(), prefix);
+        if (p)
         {
-            WvString uri(stack_entry.edit() + prefix.len());
+            WvString uri(p + prefix.len());
             list.append(uri);  
         }
     }
