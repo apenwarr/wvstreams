@@ -308,7 +308,8 @@ void WvCRL::decode(const DumpMode mode, WvBuf &buf)
     }
 
     BIO *bufbio = BIO_new(BIO_s_mem());
-    BIO_write(bufbio, buf.get(buf.used()), buf.used());
+    size_t len = buf.used();
+    BIO_write(bufbio, buf.get(len), len);
 
     if (mode == CRLPEM)
     {

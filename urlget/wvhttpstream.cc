@@ -386,7 +386,16 @@ void WvHttpStream::execute()
                 while (len && url->putstream->isok())
                     len = url->putstream->read(url->putstream_data, 102400);
 
-                if (!url->putstream->isok())
+                // FIXME: If our stream is too fast to connect, we won't
+                // get another execute to finish reading the putstream, and
+                // we'll never send the request.  Let's at least reduce the
+                // chances of this causing a problem... although I'd prefer
+                // to eliminate it completely, I'm not quite sure how.
+                // -dcoombs (20120106)
+                if (len < 1024)
+                    len = url->putstream->read(url->putstream_data, 1024);
+
+                if (!url->putstream->isok() || len == 0)
                 {
                     url->putstream = NULL;
                     send_request(url);

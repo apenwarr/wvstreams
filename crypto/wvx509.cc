@@ -576,7 +576,8 @@ void WvX509::decode(const DumpMode mode, WvBuf &encoded)
     else
     {        
         BIO *membuf = BIO_new(BIO_s_mem());
-        BIO_write(membuf, encoded.get(encoded.used()), encoded.used());
+        size_t len = encoded.used();
+        BIO_write(membuf, encoded.get(len), len);
 
         if (mode == CertPEM)
             cert = PEM_read_bio_X509(membuf, NULL, NULL, NULL);
