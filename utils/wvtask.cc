@@ -55,8 +55,6 @@ char *alloca ();
 # define Dprintf(fmt, args...)
 #endif
 
-#define BARRIER() //asm volatile("": : :"memory")
-
 volatile int WvTask::taskcount, WvTask::numtasks, WvTask::numrunning;
 
 WvTaskMan *WvTaskMan::singleton;
@@ -201,7 +199,6 @@ WvTaskMan::WvTaskMan()
     stacktop = (char *)alloca(0);
     
     context_return = 0;
-    BARRIER();
     assert(getcontext(&get_stack_return) == 0);
     if (context_return == 0)
     {
@@ -270,7 +267,6 @@ int WvTaskMan::run(WvTask &task, int val)
 	state = &old_task->mystate;
     
     context_return = 0;
-    BARRIER();
     assert(getcontext(state) == 0);
     volatile int newval = context_return;
     if (newval == 0)
@@ -325,7 +321,6 @@ int WvTaskMan::yield(int val)
 #endif
 		
     context_return = 0;
-    BARRIER();
     assert(getcontext(&current_task->mystate) == 0);
     volatile int newval = context_return;
     if (newval == 0)
@@ -350,7 +345,6 @@ void WvTaskMan::get_stack(WvTask &task, size_t size)
     WvTask *volatile t = &task;
     volatile size_t s = size;
     context_return = 0;
-    BARRIER();
     assert(getcontext(&get_stack_return) == 0);
     if (context_return == 0)
     {
@@ -423,7 +417,6 @@ void WvTaskMan::_stackmaster()
 	assert(magic_number == -WVTASK_MAGIC);
 	
         context_return = 0;
-        BARRIER();
         assert(getcontext(&stackmaster_task) == 0);
         val = context_return;
 	if (val == 0)
@@ -489,7 +482,6 @@ void WvTaskMan::do_task()
 	
     // back here from longjmp; someone wants stack space.    
     context_return = 0;
-    BARRIER();
     assert(getcontext(&task->mystate) == 0);
     if (context_return == 0)
     {
@@ -526,7 +518,6 @@ void WvTaskMan::do_task()
                 }
                 else
                 {
-                    BARRIER();
                     assert(getcontext(&task->func_call) == 0);
                     task->func_call.uc_stack.ss_size = task->stacksize;
                     task->func_call.uc_stack.ss_sp = task->stack;
@@ -538,7 +529,6 @@ void WvTaskMan::do_task()
                             (void (*)(void))call_func, 1, task);
 
                     context_return = 0;
-                    BARRIER();
                     assert(getcontext(&task->func_return) == 0);
                     if (context_return == 0)
                         setcontext(&task->func_call);
