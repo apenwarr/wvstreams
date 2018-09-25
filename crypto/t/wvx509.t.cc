@@ -359,6 +359,7 @@ WVTEST_MAIN("certreq / signreq / signcert")
 	= WvX509Mgr::certreq("cn=test.signed.com,dc=signed,dc=com", rsakey);
 
     WvX509Mgr cacert("CN=test.foo.com,DC=foo,DC=com", DEFAULT_KEYLEN, true);
+    WvX509Mgr cacert2("CN=test.foo.com,DC=foo,DC=com", DEFAULT_KEYLEN, true);
     WVPASS(cacert.isok());
     WVPASS(cacert.validate());
     
@@ -378,8 +379,19 @@ WVTEST_MAIN("certreq / signreq / signcert")
     ca_in.append("http://localhost/~wlach/testca.pem");
     ca_in.append("http://localhost/~wlach/testca-alt.pem");
     cert.set_aia(ca_in, ocsp_in);
+    // NOTE(apenwarr): This used to recheck cert.signedbyca(cacert)
+    // *without* re-signing, with the expectation that it would fail (since
+    // we changed stuff and now the signature is invalid).  At some point
+    // openssl (at least in v1.0.0l) broke this by caching the signed
+    // portion of a cert until you re-sign it, which sounds kind of
+    // dangerous to me, but I guess it doesn't come up very often (as long
+    // as you don't forget to re-sign!).  I changed the test to sign using a
+    // separate cert instead, to show that signedbyca() at least can tell
+    // the difference between two signing certs.
+    cacert2.signcert(cert);
     WVPASS(cert.issuedbyca(cacert));
     WVFAIL(cert.signedbyca(cacert));
+    WVPASS(cert.signedbyca(cacert2));
 
     // should pass again after re-signing
     cacert.signcert(cert);    
