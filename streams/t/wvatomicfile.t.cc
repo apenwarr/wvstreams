@@ -1,10 +1,7 @@
 /* FIXME: horribly incomplete */
 #include "wvtest.h"
 #include "wvatomicfile.h"
-
-#ifdef MACOS
-  #include <sys/stat.h>
-#endif
+#include <sys/stat.h>
 
 WVTEST_MAIN("atomic file test")
 {

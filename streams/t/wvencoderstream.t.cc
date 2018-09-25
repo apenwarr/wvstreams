@@ -12,7 +12,7 @@ WVTEST_MAIN("gzip")
     static const char in_data[] = "a line of text\n";
     
     /* deflated "a compressed line" */
-    static const char zin_data[] = {
+    static const unsigned char zin_data[] = {
 	0x78, 0x9c, 0x4b, 0x54,
 	0x48, 0xce, 0xcf, 0x2d,
 	0x28, 0x4a, 0x2d, 0x2e,
@@ -34,7 +34,7 @@ WVTEST_MAIN("gzip")
     WvGzipEncoder *inflater = new WvGzipEncoder(WvGzipEncoder::Inflate);
     gzip.readchain.append(inflater, true);
     WVFAIL(gzip.isreadable());
-    gzip.write(zin_data);
+    gzip.write(zin_data, sizeof(zin_data));
     line = gzip.blocking_getline(1000);
     WVFAIL(gzip.isreadable());
     WVPASSEQ(line, "a compressed line");
@@ -43,7 +43,7 @@ WVTEST_MAIN("gzip")
     WvEncoderStream gzip2((loopy.addRef(), &loopy));
     
     gzip2.write(in_data);
-    gzip2.write(zin_data);
+    gzip2.write(zin_data, sizeof(zin_data));
     line = gzip2.blocking_getline(1000, '\n', 1);
     WVPASSEQ(line, "a line of text");
     WvGzipEncoder *inflater2 = new WvGzipEncoder(WvGzipEncoder::Inflate);
