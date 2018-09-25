@@ -14,7 +14,7 @@
 #include "wvrsa.h"
 #include "wvstringlist.h"
 
-// Structures to make the compiler happy so we don't have to include x509v3.h ;)
+// Structures to make the compiler happy so we don't have to include x509v3.h
 struct x509_st;
 typedef struct x509_st X509;
 struct ssl_ctx_st;
