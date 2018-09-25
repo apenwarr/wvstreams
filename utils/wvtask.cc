@@ -55,17 +55,19 @@ char *alloca ();
 # define Dprintf(fmt, args...)
 #endif
 
-int WvTask::taskcount, WvTask::numtasks, WvTask::numrunning;
+#define BARRIER() //asm volatile("": : :"memory")
+
+volatile int WvTask::taskcount, WvTask::numtasks, WvTask::numrunning;
 
 WvTaskMan *WvTaskMan::singleton;
-int WvTaskMan::links, WvTaskMan::magic_number;
+volatile int WvTaskMan::links, WvTaskMan::magic_number;
 WvTaskList WvTaskMan::all_tasks, WvTaskMan::free_tasks;
 ucontext_t WvTaskMan::stackmaster_task, WvTaskMan::get_stack_return,
     WvTaskMan::toplevel;
-WvTask *WvTaskMan::current_task, *WvTaskMan::stack_target;
-char *WvTaskMan::stacktop;
+WvTask *volatile WvTaskMan::current_task, *volatile WvTaskMan::stack_target;
+char *volatile WvTaskMan::stacktop;
 
-static int context_return;
+static volatile int context_return;
 
 
 static bool use_shared_stack()
@@ -199,6 +201,7 @@ WvTaskMan::WvTaskMan()
     stacktop = (char *)alloca(0);
     
     context_return = 0;
+    BARRIER();
     assert(getcontext(&get_stack_return) == 0);
     if (context_return == 0)
     {
@@ -245,6 +248,8 @@ WvTask *WvTaskMan::start(WvStringParm name,
 
 int WvTaskMan::run(WvTask &task, int val)
 {
+    WvTask *volatile t = &task;
+    volatile int v = val;
     assert(magic_number == -WVTASK_MAGIC);
     assert(task.magic_number == WVTASK_MAGIC);
     assert(!task.recycled);
@@ -255,9 +260,9 @@ int WvTaskMan::run(WvTask &task, int val)
     if (&task == current_task)
 	return val; // that's easy!
         
-    WvTask *old_task = current_task;
+    WvTask *volatile old_task = current_task;
     current_task = &task;
-    ucontext_t *state;
+    ucontext_t *volatile state;
     
     if (!old_task)
 	state = &toplevel; // top-level call (not in an actual task yet)
@@ -265,13 +270,14 @@ int WvTaskMan::run(WvTask &task, int val)
 	state = &old_task->mystate;
     
     context_return = 0;
+    BARRIER();
     assert(getcontext(state) == 0);
-    int newval = context_return;
+    volatile int newval = context_return;
     if (newval == 0)
     {
 	// saved the state, now run the task.
-        context_return = val;
-        setcontext(&task.mystate);
+        context_return = v;
+        setcontext(&t->mystate);
         return -1;
     }
     else
@@ -319,8 +325,9 @@ int WvTaskMan::yield(int val)
 #endif
 		
     context_return = 0;
+    BARRIER();
     assert(getcontext(&current_task->mystate) == 0);
-    int newval = context_return;
+    volatile int newval = context_return;
     if (newval == 0)
     {
 	// saved the task state; now yield to the toplevel.
@@ -340,25 +347,28 @@ int WvTaskMan::yield(int val)
 
 void WvTaskMan::get_stack(WvTask &task, size_t size)
 {
+    WvTask *volatile t = &task;
+    volatile size_t s = size;
     context_return = 0;
+    BARRIER();
     assert(getcontext(&get_stack_return) == 0);
     if (context_return == 0)
     {
 	assert(magic_number == -WVTASK_MAGIC);
-	assert(task.magic_number == WVTASK_MAGIC);
+	assert(t->magic_number == WVTASK_MAGIC);
 
         if (!use_shared_stack())
         {
 #if defined(__linux__) && (defined(__386__) || defined(__i386) || defined(__i386__))
-            static char *next_stack_addr = (char *)0xB0000000;
-            static const size_t stack_shift = 0x00100000;
+            static volatile char *next_stack_addr = (char *)0xB0000000;
+            static volatile const size_t stack_shift = 0x00100000;
 
             next_stack_addr -= stack_shift;
 #else
-            static char *next_stack_addr = NULL;
+            static volatile char *next_stack_addr = NULL;
 #endif
         
-            task.stack = mmap(next_stack_addr, task.stacksize,
+            t->stack = mmap((void *)next_stack_addr, t->stacksize,
                 PROT_READ | PROT_WRITE,
 #ifndef MACOS 
                 MAP_PRIVATE | MAP_ANONYMOUS,
@@ -369,8 +379,8 @@ void WvTaskMan::get_stack(WvTask &task, size_t size)
         }
 	
 	// initial setup
-	stack_target = &task;
-	context_return = size/1024 + (size%1024 > 0);
+	stack_target = t;
+	context_return = s/1024 + (s%1024 > 0);
 	setcontext(&stackmaster_task);
     }
     else
@@ -378,7 +388,7 @@ void WvTaskMan::get_stack(WvTask &task, size_t size)
 	if (current_task)
 	    valgrind_fix(stacktop);
 	assert(magic_number == -WVTASK_MAGIC);
-	assert(task.magic_number == WVTASK_MAGIC);
+	assert(t->magic_number == WVTASK_MAGIC);
 	
 	// back from stackmaster - the task is now set up.
 	return;
@@ -388,8 +398,12 @@ void WvTaskMan::get_stack(WvTask &task, size_t size)
 
 void WvTaskMan::stackmaster()
 {
-    // leave lots of room on the "main" stack before doing our magic
-    alloca(1024*1024);
+    // leave lots of room on the "main" stack before doing our magic.
+    // We have to use the return value of alloca() because fancy gcc
+    // optimization levels might completely eliminate it otherwise, causing
+    // nasty unwanted stack overlaps.
+    char *volatile x = (char *)alloca(1024*1024);
+    *x = 0;
     
     _stackmaster();
 }
@@ -397,8 +411,8 @@ void WvTaskMan::stackmaster()
 
 void WvTaskMan::_stackmaster()
 {
-    int val;
-    size_t total;
+    volatile int val;
+    volatile size_t total;
     
     Dprintf("stackmaster 1\n");
     
@@ -409,6 +423,7 @@ void WvTaskMan::_stackmaster()
 	assert(magic_number == -WVTASK_MAGIC);
 	
         context_return = 0;
+        BARRIER();
         assert(getcontext(&stackmaster_task) == 0);
         val = context_return;
 	if (val == 0)
@@ -429,7 +444,7 @@ void WvTaskMan::_stackmaster()
 	    total = (val+1) * (size_t)1024;
 	    
             if (!use_shared_stack())
-                total = 1024; // enough to save the do_task stack frame
+                total = 2048; // enough to save the do_task stack frame
 
 	    // set up a stack frame for the new task.  This runs once
 	    // per get_stack.
@@ -469,11 +484,12 @@ void WvTaskMan::call_func(WvTask *task)
 void WvTaskMan::do_task()
 {
     assert(magic_number == -WVTASK_MAGIC);
-    WvTask *task = stack_target;
+    WvTask *volatile task = stack_target;
     assert(task->magic_number == WVTASK_MAGIC);
 	
     // back here from longjmp; someone wants stack space.    
     context_return = 0;
+    BARRIER();
     assert(getcontext(&task->mystate) == 0);
     if (context_return == 0)
     {
@@ -510,6 +526,7 @@ void WvTaskMan::do_task()
                 }
                 else
                 {
+                    BARRIER();
                     assert(getcontext(&task->func_call) == 0);
                     task->func_call.uc_stack.ss_size = task->stacksize;
                     task->func_call.uc_stack.ss_sp = task->stack;
@@ -521,6 +538,7 @@ void WvTaskMan::do_task()
                             (void (*)(void))call_func, 1, task);
 
                     context_return = 0;
+                    BARRIER();
                     assert(getcontext(&task->func_return) == 0);
                     if (context_return == 0)
                         setcontext(&task->func_call);

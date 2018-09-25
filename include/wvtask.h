@@ -44,7 +44,7 @@ class WvTask
     // them as return values.
     typedef void TaskFunc(void *userdata);
     
-    static int taskcount, numtasks, numrunning;
+    static volatile int taskcount, numtasks, numrunning;
     int magic_number, *stack_magic;
     WvString name;
     int tid;
@@ -82,9 +82,9 @@ class WvTaskMan
     friend class WvTask;
     
     static WvTaskMan *singleton;
-    static int links;
+    static volatile int links;
     
-    static int magic_number;
+    static volatile int magic_number;
     static WvTaskList all_tasks, free_tasks;
     
     static void get_stack(WvTask &task, size_t size);
@@ -93,13 +93,13 @@ class WvTaskMan
     static void do_task();
     static void call_func(WvTask *task);
 
-    static char *stacktop;
+    static char *volatile stacktop;
     static ucontext_t stackmaster_task;
     
-    static WvTask *stack_target;
+    static WvTask *volatile stack_target;
     static ucontext_t get_stack_return;
     
-    static WvTask *current_task;
+    static WvTask *volatile current_task;
     static ucontext_t toplevel;
     
     WvTaskMan();
@@ -136,4 +136,5 @@ private:
 
 
 #endif // ifdef _WIN32
+
 #endif // __WVTASK_H
