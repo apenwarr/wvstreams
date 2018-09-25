@@ -136,7 +136,7 @@ AC_C_BIGENDIAN
 CPPFLAGS_save="$CPPFLAGS"
 WV_APPEND(CPPFLAGS, -Werror)
 AC_MSG_CHECKING(for __attribute__ ((deprecated)))
-AC_COMPILE_IFELSE(
+AC_COMPILE_IFELSE([AC_LANG_SOURCE(
 [#include "confdefs.h"
 void f() __attribute__ ((deprecated));
 void f()
@@ -147,7 +147,7 @@ int main()
 {
     return 0;
 }
-],
+])],
 		  [AC_MSG_RESULT([yes])
 		   AC_DEFINE([ATTR_DEPRECATED],
 			     [__attribute__ ((deprecated))],
@@ -459,7 +459,7 @@ if test "$with_pam" != "no"; then
     LIBS_save="$LIBS"
     AC_CHECK_LIB(pam, pam_start,, [with_pam=no])
     AC_MSG_CHECKING(for sane PAM implementation)
-    AC_COMPILE_IFELSE(
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE(
 [#include "confdefs.h"
 #if HAVE_SECURITY_PAM_APPL_H
 # include <security/pam_appl.h>
@@ -479,7 +479,7 @@ int main()
     c.conv = noconv;
     return 0;
 }
-],
+])],
 		      [AC_MSG_RESULT([yes])
 		       AC_DEFINE([HAVE_BROKEN_PAM], [0])],
 		      [AC_MSG_RESULT([no])
