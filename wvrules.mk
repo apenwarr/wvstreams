@@ -59,7 +59,7 @@ endif
 
 ifdef _WIN32
   XPATH += $(WVSTREAMS)/win32 $(WVSTREAMS)/win32/cominclude
-  AR=i586-mingw32msvc-ar
+  AR=i686-w64-mingw32-ar
   LIBS += -lssl -lcrypto -lz -lole32 -lrpcrt4 -lwsock32 -lgdi32 -limagehlp \
   	  -lstdc++
 else

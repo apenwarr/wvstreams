@@ -3,9 +3,9 @@ MYDIR=$(cd `dirname -- $0` && pwd)
 PORTS=$MYDIR/../wvports
 $MYDIR/configure \
 	--build=$($MYDIR/config.guess) \
-	--host=i586-mingw32msvc \
+	--host=i686-w64-mingw32 \
 	--enable-exceptions \
-	CPPFLAGS="-mno-cygwin \
+	CPPFLAGS="\
 		-I$PORTS/zlib/build/zlib \
 		-I$PORTS/openssl/build/openssl/include $XCPPFLAGS \
 		-I$PORTS/win32api/build/w32api/include" \

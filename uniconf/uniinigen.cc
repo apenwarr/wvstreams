@@ -302,7 +302,7 @@ void UniIniGen::commit()
     // Windows doesn't support all that fancy stuff, just open the
     // file and be done with it
     WvFile file(filename, O_WRONLY|O_TRUNC|O_CREAT, create_mode);
-    save(file, *root); // write the changes out to our file
+    save(file, root); // write the changes out to our file
     file.close();
     if (file.geterr())
     {

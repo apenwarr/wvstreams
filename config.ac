@@ -164,15 +164,15 @@ AC_CHECK_FUNC(argp_parse)
 if test "$ac_cv_func_argp_parse" != yes \
     -o "$ac_cv_header_argp_h" != yes ; then
     (
-    	echo
-    	echo 'configuring argp...'
-	mkdir -p argp
-    	cd argp
-	MYARGPDIR="../wvsrcdir/argp"
-	rm -f $MYARGPDIR/config.status
-    	$MYARGPDIR/configure --host=$host_cpu-$host_os --srcdir=$MYARGPDIR || exit $?
-    	echo 'argp configured.'
-    	echo
+        echo
+        echo 'configuring argp...'
+        mkdir -p argp
+        cd argp
+        MYARGPDIR="../wvsrcdir/argp"
+        rm -f $MYARGPDIR/config.status
+        $MYARGPDIR/configure --host=$host --srcdir=$MYARGPDIR || exit $?
+        echo 'argp configured.'
+        echo
     ) || exit $?
     USE_WVSTREAMS_ARGP=1
 fi

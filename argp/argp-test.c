@@ -33,14 +33,13 @@
 
 #include "argp.h"
 
-#if !HAVE_ASPRINTF
-#include <stdarg.h>
-
 #ifdef _WIN32
 /* We all know rand sucks, but it's not like we're going to be running tests */
 #define random rand
 #endif
 
+#if !HAVE_ASPRINTF
+#include <stdarg.h>
 
 static int
 asprintf (char **result, const char *format, ...)

@@ -200,7 +200,7 @@ extern void __argp_fmtstream_update (argp_fmtstream_t __fs);
 extern int _argp_fmtstream_ensure (argp_fmtstream_t __fs, size_t __amount);
 extern int __argp_fmtstream_ensure (argp_fmtstream_t __fs, size_t __amount);
 
-#ifdef __OPTIMIZE__
+#ifdef ignore__OPTIMIZE__
 /* Inline versions of above routines.  */
 
 #if !_LIBC

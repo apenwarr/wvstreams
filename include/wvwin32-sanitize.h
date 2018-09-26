@@ -40,6 +40,8 @@ extern "C" {
 #endif
 
 unsigned int sleep(unsigned int secs);
+
+typedef int pid_t;
 extern pid_t getpid();
 
 unsigned int alarm(unsigned int t);
