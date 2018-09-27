@@ -24,6 +24,7 @@
 #include "wvstreamsdebugger.h"
 #include "wvstringlist.h"
 #include "setjmp.h"
+#define _XOPEN_SOURCE
 #include <ucontext.h>
 
 #define WVTASK_MAGIC 0x123678

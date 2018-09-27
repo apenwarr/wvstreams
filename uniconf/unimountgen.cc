@@ -305,7 +305,7 @@ static int wvstrcmp(const WvString *l, const WvString *r)
     return strcmp(*l, *r);
 }
 
-UniMountGen::Iter *UniMountGen::iterator(const UniConfKey &key)
+IUniConfGen::Iter *UniMountGen::iterator(const UniConfKey &key)
 {
     UniGenMount *found = findmount(key);
     if (found)
@@ -345,7 +345,7 @@ UniMountGen::Iter *UniMountGen::iterator(const UniConfKey &key)
 // FIXME: this function will be rather slow if you try to iterate over multiple
 // generators and the latency level is high (as is the case with e.g.: the tcp generator). 
 // the fast path will only kick in if you iterate over a single generator.
-UniMountGen::Iter *UniMountGen::recursiveiterator(const UniConfKey &key)
+IUniConfGen::Iter *UniMountGen::recursiveiterator(const UniConfKey &key)
 {
     UniGenMount *found = findmountunder(key);
     if (found)

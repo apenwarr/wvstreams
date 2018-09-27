@@ -62,9 +62,10 @@ protected:
     UniHashTreeBase *xparent; /*!< the parent of this subtree */
     Container *xchildren; /*!< the hash table of children */
 
-private:
     void _setparent(UniHashTreeBase *parent);
     UniHashTreeBase *_root() const;
+
+private:
 
     /** Called by a child to link itself to this node. */
     void link(UniHashTreeBase *node);

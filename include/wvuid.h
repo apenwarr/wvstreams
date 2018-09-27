@@ -13,10 +13,11 @@
   typedef WvString wvuid_t;
   #define WVUID_INVALID (WvString::null)
 #else // not WIN32
-  #include <pwd.h>
+  #include <unistd.h>
   typedef uid_t wvuid_t;
   #define WVUID_INVALID ((wvuid_t)(-1))
 #endif
+
 
 /**
  * Convert a uid object into a human-readable username.

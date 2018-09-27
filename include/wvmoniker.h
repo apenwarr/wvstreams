@@ -72,7 +72,7 @@ public:
 	// from IObject, which is very important. The 'for' avoids a
 	// warning.
 	for(IObject *silly = (T *)NULL; silly; )
-            ;
+            silly = (T *)NULL;
     };
 };
 

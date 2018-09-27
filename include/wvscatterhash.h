@@ -183,7 +183,7 @@ public:
         Iter(WvScatterHash &_table) : IterBase(_table) { }
         Iter(const Iter &other) : IterBase(other) { }
 
-        unsigned char *getstatus() { return &xstatus[index-1]; }
+        unsigned char *getstatus() { return &this->xstatus[index-1]; }
 
         T *ptr() const
             { return (T *)(get()); }

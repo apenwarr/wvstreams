@@ -69,7 +69,7 @@ void UniCacheGen::commit()
 
 void UniCacheGen::loadtree(const UniConfKey &key)
 {
-    UniConfGen::Iter *i = inner->recursiveiterator(key);
+    IUniConfGen::Iter *i = inner->recursiveiterator(key);
     if (!i) return;
 
     //assert(false);
