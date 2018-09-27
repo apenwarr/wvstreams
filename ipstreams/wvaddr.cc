@@ -833,7 +833,7 @@ size_t WvUnixAddr::sockaddr_len() const
     size_t val = strlen(sockname);
     if (val > max)
 	val = max;
-    return sizeof(fake->sun_family) + val;
+    return sizeof(*fake) - sizeof(fake->sun_path) + val;
 }
 
 
