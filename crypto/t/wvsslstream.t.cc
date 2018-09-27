@@ -260,7 +260,6 @@ WVTEST_MAIN("ssl establish connection")
     printf("Starting listener on %s\n", laddrstr.cstr());
 
     WVPASS(l.isok());
-
     if (!l.isok())
 	wvcon->print("Error was: %s\n", l.errstr());
 
@@ -291,15 +290,19 @@ WVTEST_MAIN("ssl establish connection")
 
     // send a message and ensure it's received
     ssl->print(MSG "\n");
-    WvIStreamList::globallist.runonce();
-    WVPASS(gotmessage);
+    for (int i=0; i<10; i++)
+    {
+	WvIStreamList::globallist.runonce();
+	if (gotmessage) break;
+    }
+    if (!WVPASS(gotmessage)) return;
 
     // check for BUGZID:10781
     char data[20000];
     memset(data, 'A', sizeof(data));
     size_t wlen = ssl->write(data, sizeof(data));
 
-    printf("Wrote %zd bytes\n", wlen);
+    fprintf(stderr, "Wrote %zd bytes\n", wlen);
 
     // setup for next test
     singleconn->setcallback(wv::bind(do_transfer, singleconn));
