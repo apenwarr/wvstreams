@@ -10,6 +10,10 @@ WVTEST_MAIN("WvMagicLoopback Sanity")
     signal(SIGPIPE, SIG_IGN);
 
     WvMagicLoopback ml(1024);
+    if (!WVPASS(ml.isok())) {
+        wverr->print("loop error: %s\n", ml.errstr());
+        return;
+    }
     
     pid_t pid = fork();
     WVFAIL(pid < 0 && "fork() failed");
@@ -57,8 +61,10 @@ WVTEST_MAIN("WvMagicLoopback Sanity")
 WVTEST_MAIN("WvMagicLoopback Non-Blocking Writes") 
 {
     WvMagicLoopback ml(1024);
-
-    WVPASS(ml.isok());
+    if (!WVPASS(ml.isok())) {
+        wverr->print("loop error: %s\n", ml.errstr());
+        return;
+    }
 
     for (int i=0; i<(1<<10); ++i)
     {
