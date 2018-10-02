@@ -6,12 +6,22 @@
 #   If not given, we run all tests from all sections.
 #
 export UNICONF
-PATH=".:$PATH"
-
 RUNWHICH="$1"
 
 # do you want to test the uniconfd, or just straight ini files?
 [ -z "$DAEMON" ] && DAEMON=0
+
+export LD_LIBRARY_PATH=.
+[ -z "$WVSTREAMS" ] && WVSTREAMS=..
+D=$WVSTREAMS/uniconf/tests
+
+uniconfd() {
+    ./uniconf/daemon/uniconfd "$@"
+}
+
+uni() {
+    ./uniconf/tests/uni "$@"
+}
 
 # don't play with these
 TESTNUM=1
@@ -22,8 +32,8 @@ IFS="
 
 RECONFIG()
 {
-    killall -q uniconfd
-    killall -q -9 uniconfd
+    pkill -x uniconfd
+    pkill -KILL -x uniconfd
     rm -f $PWD/unisocket
     
     XDAEMON="$DAEMON"
@@ -152,7 +162,7 @@ xx uni set /a/b foo
 xx uni get /a/b
 
 SECTION ini "ini file tests"
-RECONFIG ini:simple.ini
+RECONFIG "ini:$D/simple.ini"
  x uni get /section1/a
 ss 1
  x uni get /section1/a/b
@@ -168,18 +178,18 @@ ss "a2 = 11" "b2 = 22" "c2 = 33" "d2 = 44" "e2 = 55"
 # FIXME: this test fails with the daemon, passes without!
 # It's related to the trailing slash.
 #
-#RECONFIG ini:simple2.ini
+#RECONFIG "ini:$D/simple2.ini"
 # x uni hdump /section3/
 #ss "a3 = {}" "* = default star" "a3/bog = alternative bog"
 
 
 SECTION list "list (try-alternatives) generator tests"
-RECONFIG "list: ini:simple.ini"
+RECONFIG "list: ini:$D/simple.ini"
  s 1
 xx uni get /section1/a
  s section0 section1 section2 section3 \*
 xx uni keys /
-RECONFIG "list: ini:simple2.ini ini:simple.ini"
+RECONFIG "list: ini:$D/simple2.ini ini:$D/simple.ini"
  s 1
 xx uni get /section1/a
 xx uni get /section1/xa
@@ -203,7 +213,7 @@ SECTION default "Default (*/*) generator tests"
 RECONFIG "default: null:"
  s
 xx uni get /anything
-RECONFIG default:ini:simple.ini
+RECONFIG default:ini:$D/simple.ini
  s 1
 xx uni get /section1/a
  s "the standard bog"
@@ -218,7 +228,7 @@ xx uni hkeys '/*'     # FIXME: stars should be hidden by the default: filter
 
 # the list: directive here should make no difference at all.
 SECTION deflist "Default/list combination tests"
-base="ini:simple.ini"
+base="ini:$D/simple.ini"
 for uri in "default:$base" "list:default:$base" "default:list:$base"; do
     RECONFIG "$uri"
      s 111
@@ -228,7 +238,7 @@ for uri in "default:$base" "list:default:$base" "default:list:$base"; do
      s a a/bog b b/bog c c/bog d d/bog e e/bog
     xx uni keys section1 # FIXME: this one fails because plain default: fails
 done
-RECONFIG "default:list: ini:simple2.ini ini:simple.ini"
+RECONFIG "default:list: ini:$D/simple2.ini ini:$D/simple.ini"
  s 1x
 xx uni get /section2/a2
  s 1
@@ -240,7 +250,7 @@ xx uni get /section2/anything
 
 
 SECTION wvconf "WvConf wrapper tests"
-RECONFIG wvconf:simple.ini
+RECONFIG wvconf:$D/simple.ini
  s 5
 xx uni get /section1/e
  s section0 section1 section2 section3 \*
@@ -270,7 +280,7 @@ fi  # disable failing tests
 #   the daemon you're using.
 SECTION cache "Caching tests"
    # FIXME: all of these fail, implying that the cache massively sucks.
-RECONFIG "cache:ini:simple2.ini"
+RECONFIG "cache:ini:$D/simple2.ini"
  s "alternative bog"
 xx uni get /section3/a3/bog
 xx uni get /section3/a3/bog
@@ -278,7 +288,7 @@ xx uni get /section3/a3/bog
 xx uni keys /
  s \* a3 a3/bog
 xx uni hkeys /section3
-RECONFIG "cache:list: ini:simple2.ini ini:simple.ini"
+RECONFIG "cache:list: ini:$D/simple2.ini ini:$D/simple.ini"
  s 1
 xx uni get /section1/a
 xx uni get /section1/xa
@@ -290,7 +300,7 @@ xx uni keys /section1
 xx uni keys /section2
  s "a2 = 1x" "b2 = 2x" "c2 = 3x" "d2 = 44" "e2 = 55"
 xx uni dump /section2
-RECONFIG --daemon "ini:simple2.ini"  # daemon itself is non-cached
+RECONFIG --daemon "ini:$D/simple2.ini"  # daemon itself is non-cached
 UNICONF="cache:$UNICONF"  # but cache the connection to the daemon
  s "alternative bog"
 xx uni get /section3/a3/bog
