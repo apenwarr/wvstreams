@@ -45,7 +45,7 @@ public:
     { 
         chdir(old_dir); 
         closedir(dir_handle);
-        free(old_dir);
+        delete[] old_dir;
     }
 };
 
