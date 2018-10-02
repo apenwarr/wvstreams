@@ -1,8 +1,27 @@
-#include <wvtest.h>
-#include <wvprociter.h>
-#include <wvfile.h>
+#include "wvtest.h"
+#include "wvprociter.h"
+#include "wvfile.h"
+#include "wvstrutils.h"
+#include "wvlog.h"
 #include <signal.h>
 #include <sys/wait.h>
+
+WVTEST_MAIN("wvprociter")
+{
+    WvLog log("prociter");
+    bool ok = false;
+    WvProcIter i;
+    for (i.rewind(); i.next();)
+    {
+        if (i->pid > 0) ok = true;  // at least one valid proc
+        WVPASS(i->pid > 0);
+        WVPASS(!!i->exe);
+        WVPASS(!i->cmdline.isempty());
+        log("pid %s cmd [%s] line [%s]\n", i->pid, i->exe, i->cmdline.join("!"));
+    }
+    WVPASS(ok);
+}
+
 
 WVTEST_MAIN("wvkillall")
 {

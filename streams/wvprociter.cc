@@ -7,60 +7,66 @@
  */
 
 #include "wvprociter.h"
-#include "wvfile.h"
-#include "wvfileutils.h"
+#include "wvpipe.h"
+#include "wvstrutils.h"
 #include <sys/types.h>
 #include <signal.h>
+#include <stdlib.h>
 
-WvProcIter::WvProcIter() :
-    dir_iter("/proc", false, true)
+
+WvProcIter::WvProcIter()
 {
-    if (!dir_iter.isok())
-	fprintf(stderr, "WARNING: Can't open /proc: is it mounted?\n");
-    if (access("/proc/1/.", F_OK) != 0)
-	fprintf(stderr, "WARNING: Can't find /proc/1: is /proc mounted?\n");
+    p = NULL;
 }
 
 WvProcIter::~WvProcIter()
 {
+    delete p;
 }
 
 bool WvProcIter::isok() const
 {
-    return dir_iter.isok();
+    return !p || p->isok();
 }
 
 void WvProcIter::rewind()
 {
-    dir_iter.rewind();
+    if (p) delete p;
+    p = NULL;
+
+    const char *argv[] = {"ps", "ax", "-o", "pid,command", NULL};
+    p = new WvPipe(argv[0], argv, false, true, false);
+    p->blocking_getline(-1);
+    if (!p->isok())
+    {
+        int rc = p->finish();
+	fprintf(stderr, "WARNING: empty results from ps: exit code %d\n", rc);
+    }
 }
 
 bool WvProcIter::next()
 {
-    for (;;)
-    {
-        if (!dir_iter.next())
-            return false;
-        if (!wvstring_to_num(dir_iter->name, proc_ent.pid))
-            continue;
+    assert(p);
+    if (!p || !p->isok()) return false;
 
-        proc_ent.exe = wvreadlink(WvString("%s/exe", dir_iter->fullname));
+    // Okay to use blocking_getline here because we don't expect ps to
+    // take long to start returning data.
+    char *line = p->blocking_getline(-1);
+    if (!line) return false;
 
-        proc_ent.cmdline.zap();
-        WvFile cmdline_file(WvString("%s/cmdline", dir_iter->fullname), O_RDONLY);
-        while (cmdline_file.isok())
-        {
-            const char *line = cmdline_file.getline(0, '\0');
-            if (line == NULL)
-                break;
-            WvString line_str(line);
-            line_str.unique();
-            proc_ent.cmdline.append(line_str);
-        }
-        cmdline_file.close();
+    WvString s(trim_string(line));
+    WvStringList l;
+    l.split(s, " ", 2);
+    assert(l.count() == 2);
 
-        break;
-    }
+    WvStringList::Iter i(l);
+    i.rewind(); i.next();
+    proc_ent.pid = atol(*i);
+    assert(proc_ent.pid > 0);
+    i.next();
+    proc_ent.cmdline.zap();
+    proc_ent.cmdline.split(*i);
+    proc_ent.exe = *proc_ent.cmdline.first();
     return true;
 }
 
