@@ -434,6 +434,7 @@ if test "$with_openssl" != "no"; then
     fi
     AC_CHECK_HEADERS(openssl/ssl.h,, [with_openssl=no],
                      [#define OPENSSL_NO_KRB5])
+    AC_CHECK_LIB(dl, dlopen)
     LIBS_save="$LIBS"
     AC_CHECK_LIB(crypto, X509_free)
     AC_CHECK_LIB(ssl, SSL_has_matching_session_id,, [with_openssl=no])
