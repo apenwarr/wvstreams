@@ -27,9 +27,16 @@ WvShmZone::WvShmZone(size_t _size)
 	return;
     }
     
-    buf = mmap(0, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);              
+    buf = mmap(0, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+#ifdef MAP_ANON
+    // MacOS doesn't support mapping over /dev/zero, but it works with
+    // an alternative set of arguments.
+    if (buf == MAP_FAILED && errno == ENODEV) {
+        buf = mmap(0, size, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANON, -1, 0);
+    }
+#endif
     
-    if (!buf)
+    if (!buf || buf == MAP_FAILED)
     {
 	seterr(errno);
 	return;

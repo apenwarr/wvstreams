@@ -27,7 +27,6 @@ WVTEST_MAIN("embarrassingly simple unixdgsockets test")
 
 WVTEST_MAIN("fire random binary data through unixdgsocket")
 {
-
     // autofoward works in 1024 byte long chunks so use a stupidly long string
     // of sample data to be extra sure.
     WvString tstdata =
@@ -202,7 +201,6 @@ WVTEST_MAIN("fire random binary data through unixdgsocket")
         "f1c69295f3ef3cf918339d976a30631d3f46382455fc1be936bc8cfd4298"
         "f9ae5ebd052a6fd8e02c497fcf7bd106a45f63b23c20a3ed1eb4fb9bba18"
         "907a84d1ffbe64a93b4c09841e5cecafe7027c20";
-
     int tstlen = tstdata.len() / 2;
     unsigned char outbuf[tstlen];
     
@@ -218,10 +216,16 @@ WVTEST_MAIN("fire random binary data through unixdgsocket")
     WvUnixDGConn out(testfile);
 
     WVPASS(out.iswritable());
+
+    // MacOS can't handle unix domain socket datagrams > 2048 bytes.
+    if (tstlen > 2048) tstlen = 2048;
+
     out.write(outbuf, tstlen);
 
     // Is there something to read now?
     WVPASS(in.isreadable());
+    if (!WVPASS(in.isok())) WVPASSEQ(in.errstr(), "");
+    if (!WVPASS(out.isok())) WVPASSEQ(out.errstr(), "");
 
     WvDynBuf b;
     int len = in.read(b, tstlen);
@@ -229,6 +233,7 @@ WVTEST_MAIN("fire random binary data through unixdgsocket")
    
     // walk through the buffers to make sure input matches output.
     const unsigned char* inbuf = b.get(tstlen);
+    if (!WVPASS(inbuf)) return;
     bool success = true;
     for (int i = 0; i < tstlen; i++) 
     {

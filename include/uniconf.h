@@ -434,7 +434,7 @@ public:
  */
 class UniConf::Iter : public UniConf::IterBase
 {
-    UniConfGen::Iter *it;
+    IUniConfGen::Iter *it;
     
 public:
     /** Creates an iterator over the direct children of a branch. */
@@ -465,7 +465,7 @@ public:
  */
 class UniConf::RecursiveIter : public UniConf::IterBase
 {
-    UniConfGen::Iter *it;
+    IUniConfGen::Iter *it;
 
 public:
     /** Creates a recursive iterator over a branch. */

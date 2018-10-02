@@ -5,7 +5,7 @@
 
 
 
-WVTEST_MAIN("passwd_crypttest.cc")
+WVTEST_MAIN("passwd crypt")
 {
 #ifdef WIN32
     srand(time(0));
@@ -31,7 +31,8 @@ WVTEST_MAIN("passwd_crypttest.cc")
     
 }
 
-WVTEST_MAIN("passwd_md5test.cc")
+#ifndef MACOS  // MacOS only supports old-style DES crypt
+WVTEST_MAIN("passwd md5")
 {
     srandom(time(0));
 
@@ -47,7 +48,8 @@ WVTEST_MAIN("passwd_md5test.cc")
  
     WVPASS(!!blank_result1 && blank_result1 != "*");
     WVPASS(!!blank_result2 && blank_result2 != "*");
-    WVFAIL(blank_result1 == blank_result2);
+    WVFAILEQ(blank_result1, blank_result2);
     WVPASS(!!word_result && word_result != "*");
     WVPASS(!!longword_result && longword_result != "*");
 }
+#endif

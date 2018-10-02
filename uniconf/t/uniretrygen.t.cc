@@ -26,7 +26,7 @@ struct UniRetryGenTester
 
 void wait_for_daemon(UniRetryGenTester t)
 {
-    UniConfRoot another_cfg(WvString("retry:unix:%s", t.socket));
+    UniConfRoot another_cfg(WvString("retry:unix:%s 100", t.socket));
     
     for (;;)
     {
@@ -43,7 +43,7 @@ void wait_for_daemon(UniRetryGenTester t)
 WVTEST_MAIN("UniRetryGen Sanity Test")
 {
     UniRetryGen *gen = new UniRetryGen("temp:");
-    UniConfGenSanityTester::sanity_test(gen, "retry:temp:");
+    UniConfGenSanityTester::sanity_test(gen, "retry:temp: 100");
     WVRELEASE(gen);
 }
 
@@ -151,7 +151,7 @@ WVTEST_MAIN("UniRetryGen: mount point exists")
     // bug 9769
     UniConfRoot uniconf("temp:");
     
-    WVPASS(uniconf["foo"].mount("retry:unix:/tmp/foobar"));
+    WVPASS(uniconf["foo"].mount("retry:unix:/tmp/foobar 100"));
 
     WVPASS(uniconf["foo"].exists());
     WVPASSEQ(uniconf["foo"].xget("", WvString::null), "");

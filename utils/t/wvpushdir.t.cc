@@ -5,24 +5,24 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <sys/param.h>
+#include <stdlib.h>
 
 WVTEST_MAIN("pushdir exists")
 {
     WvString dir("/tmp/wvpushdir-%s", getpid());
     mkdir(dir, 0775);
+    char realdir[PATH_MAX + 1] = "";
+    realpath(dir, realdir);
+    WVPASS(realdir[0]);
 
     WvPushDir newpushdir(dir);
 
     WVPASS(newpushdir.isok());
 
-#ifdef MACOS
-    char *pwd = static_cast<char *>(calloc(PATH_MAX,sizeof(char *)));
-    getcwd(pwd,PATH_MAX);
-#else
-    char *pwd =  get_current_dir_name();
-#endif
-    WVPASSEQ(pwd, dir);
-    free(pwd);
+    char pwd[1024] = "";
+    getcwd(pwd, sizeof(pwd));
+    WVPASSEQ(pwd, realdir);
 
     unlink(dir);
 }

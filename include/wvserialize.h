@@ -60,6 +60,7 @@ inline int16_t _wv_htons(int16_t i)
     return htons(i);
 }
 
+#ifndef ntohll
 /**
  * Helper functions to convert 64 bit ints to and from host byteorder
  */
@@ -80,6 +81,7 @@ inline uint64_t htonll(uint64_t n)
     return (((uint64_t)htonl(n)) << 32) | htonl(n >> 32);
 #endif
 }
+#endif
 
 /**
  * A helper function that serializes different types of integers.  Since

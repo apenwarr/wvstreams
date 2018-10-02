@@ -13,7 +13,7 @@
 
 WVTEST_MAIN("non-blocking connect BUGZID:10714")
 {
-    WvString uds("/tmp/wvtest.wvunixsocket.%s", getpid());
+    WvString uds("/tmp/wvtest.unix.%s", getpid());
 
     pid_t pid = fork();
     if (pid == 0)
@@ -22,8 +22,14 @@ WVTEST_MAIN("non-blocking connect BUGZID:10714")
         //
         // Create listening socket but do not accept connections
         WvUnixListener l(uds, 0600);
-        wverr->print("Server: intentially hanging\n");
-        pause();
+        if (l.isok())
+        {
+            wverr->print("Server: intentionally hanging\n");
+            pause();
+        }
+        else
+            wverr->print("Server: failed to listen: %s\n", l.errstr());
+        _exit(99);
     }
     else if (pid > 0)
     {
@@ -41,9 +47,7 @@ WVTEST_MAIN("non-blocking connect BUGZID:10714")
             WvUnixConn s(uds);
 
         wverr->print("WvUnixConn::WvUnixConn doesn't hang when executing many "
-                     "times");
-
-        wvdelay(100);
+                     "times\n");
 
         kill(pid, SIGTERM);
         // In case a signal is in the process of being delivered...

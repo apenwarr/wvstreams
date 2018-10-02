@@ -113,11 +113,12 @@ WVTEST_MAIN("retry:uniconfd")
     WvString uniconfd_sock("/tmp/unireplicategen-uniconfd-%s", getpid());
     WvString uniconfd_ini("/tmp/unireplicategen-uniconfd-%s.ini", getpid());
     WvString ini_moniker("ini:%s", uniconfd_ini);
-    char * uniconfd_argv[] =
+    WvString l_moniker("unix:%s", uniconfd_sock);
+    const char *uniconfd_argv[] =
         {
-            (char*)"uniconfd",
-            (char*)"-l", WvString("unix:%s", uniconfd_sock).edit(),
-            ini_moniker.edit(),
+            "uniconfd",
+            "-l", l_moniker,
+            ini_moniker,
             NULL
         };
     pid_t uniconfd_pid;
@@ -142,7 +143,7 @@ WVTEST_MAIN("retry:uniconfd")
     // Use the UniConfTestDaemon!
     if ((uniconfd_pid = fork()) == 0)
     {
-    	execv("uniconf/daemon/uniconfd", uniconfd_argv);
+    	execv("uniconf/daemon/uniconfd", (char *const *)uniconfd_argv);
     	_exit(1);
     }
     wvdelay(100);
@@ -185,7 +186,7 @@ WVTEST_MAIN("retry:uniconfd")
     
     if ((uniconfd_pid = fork()) == 0)
     {
-    	execv("uniconf/daemon/uniconfd", uniconfd_argv);
+    	execv("uniconf/daemon/uniconfd", (char *const *)uniconfd_argv);
     	_exit(1);
     }
     wvdelay(100);

@@ -96,8 +96,17 @@ WVTEST_MAIN("basic")
 #ifndef _WIN32
 WVTEST_MAIN("regex split")
 {
-    WvRegex re1("/"), re2("/+"), re3("/*"), re4("");
+    WVPASS(1);
+    WvRegex re1("/");
+    WVPASS(11);
+    WvRegex re2("/+");
+    WVPASS(12);
+    WvRegex re3("/*");
+    WVPASS(13);
+    WvRegex re4("");
+    WVPASS(2);
     WvStringList l;
+    WVPASS(3);
 
 #define TEST_SPLIT(str, re, expected) \
     do { \
@@ -110,6 +119,7 @@ WVTEST_MAIN("regex split")
     	WVPASS(result == expected); \
     } while (false)
     
+    WVPASS(4);
     TEST_SPLIT("tmp//file", re1, "tmp++file");   
     TEST_SPLIT("/tmp//file", re1, "+tmp++file");   
     TEST_SPLIT("/tmp/file", re1, "+tmp+file");

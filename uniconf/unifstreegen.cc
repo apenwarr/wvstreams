@@ -62,7 +62,7 @@ public:
 	log("Key '%s' not found.\n", key);
     }
     
-    virtual Iter *recursiveiterator(const UniConfKey &key)
+    virtual IUniConfGen::Iter *recursiveiterator(const UniConfKey &key)
     {
 	// don't try to optimize this like UniMountGen does, because we're
 	// going to mount things *as* we iterate through them, not sooner.

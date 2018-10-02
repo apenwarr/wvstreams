@@ -103,8 +103,8 @@ public:
     virtual void commit();
     virtual bool refresh();
     virtual void flush_buffers() { }
-    virtual Iter *iterator(const UniConfKey &key);
-    virtual Iter *recursiveiterator(const UniConfKey &key);
+    virtual IUniConfGen::Iter *iterator(const UniConfKey &key);
+    virtual IUniConfGen::Iter *recursiveiterator(const UniConfKey &key);
 
 private:
     /** Find the active generator for a given key. */

@@ -134,7 +134,7 @@ bool UniFilterGen::isok()
 }
 
 
-UniConfGen::Iter *UniFilterGen::iterator(const UniConfKey &key)
+IUniConfGen::Iter *UniFilterGen::iterator(const UniConfKey &key)
 {
     UniConfKey mapped_key;
     if (xinner && keymap(key, mapped_key))
@@ -144,7 +144,7 @@ UniConfGen::Iter *UniFilterGen::iterator(const UniConfKey &key)
 }
 
 
-UniConfGen::Iter *UniFilterGen::recursiveiterator(const UniConfKey &key)
+IUniConfGen::Iter *UniFilterGen::recursiveiterator(const UniConfKey &key)
 {
     UniConfKey mapped_key;
     if (xinner && keymap(key, mapped_key))

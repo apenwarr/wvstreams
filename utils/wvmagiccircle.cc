@@ -13,13 +13,17 @@ WvMagicCircle::WvMagicCircle(size_t _size)
        head(((int*)shm.buf)[0]), tail(((int*)shm.buf)[1])
 {
     assert((int)_size > 0);
-    
-    head = tail = 0;
     size = _size + 1; // a circular queue uses one extra byte
-    circle = shm.cbuf + 2*sizeof(int);
-    
     if (shm.geterr())
+    {
 	seterr(shm);
+	circle = NULL;
+    }
+    else
+    {
+        circle = shm.cbuf + 2*sizeof(int);
+        head = tail = 0;
+    }
 }
 
 
@@ -31,6 +35,7 @@ WvMagicCircle::~WvMagicCircle()
 
 size_t WvMagicCircle::used()
 {
+    if (!isok()) return 0;
     int x = tail - head;
     if (x < 0)
 	x += size;

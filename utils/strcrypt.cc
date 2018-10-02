@@ -35,6 +35,7 @@ WvString passwd_crypt(const char *str)
  * encryption. Also, str does not need to be less than 8 chars as we're
  * using the glibc md5 algorithm.
  */
+#ifndef MACOS  // MacOS only supports old-style DES crypt
 WvString passwd_md5(const char *str)
 {
     static char saltchars[] =
@@ -57,3 +58,4 @@ WvString passwd_md5(const char *str)
     WvString s(result);
     return s;
 }
+#endif

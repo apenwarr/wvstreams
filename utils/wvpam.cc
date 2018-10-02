@@ -5,6 +5,10 @@
  * A WvStream that authenticates with PAM before allowing any reading or
  * writing.  See wvpam.h.
  */
+#ifdef MACOS
+// Need to include pwd.h early on MacOS to avoid uuid_t typedef conflicts.
+#include <pwd.h>
+#endif
 #include "wvlog.h"
 #include "wvpam.h"
 #include "wvautoconf.h"

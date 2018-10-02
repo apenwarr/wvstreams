@@ -104,7 +104,7 @@ bool UniConfGen::haschildren(const UniConfKey &key)
     
     hold_delta();
     
-    Iter *it = iterator(key);
+    IUniConfGen::Iter *it = iterator(key);
     if (it)
     {
 	it->rewind();
@@ -257,7 +257,7 @@ public:
 };
 
 
-UniConfGen::Iter *UniConfGen::recursiveiterator(const UniConfKey &key)
+IUniConfGen::Iter *UniConfGen::recursiveiterator(const UniConfKey &key)
 {
     return new _UniConfGenRecursiveIter(this, key);
 }

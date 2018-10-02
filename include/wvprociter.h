@@ -9,8 +9,10 @@
 #ifndef __WVPROCITER_H
 #define __WVPROCITER_H
 
-#include "wvdiriter.h"
 #include "wvstringlist.h"
+
+class WvPipe;
+
 
 struct WvProcEnt
 {
@@ -22,7 +24,7 @@ struct WvProcEnt
 class WvProcIter
 {
 private:
-    WvDirIter dir_iter;
+    WvPipe *p;
     WvProcEnt proc_ent;
 
 public:

@@ -13,7 +13,7 @@ const int WvRegex::default_eflags = 0;
     
 void WvRegex::seterr(int errcode)
 {
-    int error_desc_len = ::regerror(errcode, &preg, NULL, 0);
+    int error_desc_len = have_preg ? ::regerror(errcode, &preg, NULL, 0) : 0;
     if (error_desc_len > 0)
     {
         WvString error_desc;
@@ -27,7 +27,6 @@ void WvRegex::seterr(int errcode)
 bool WvRegex::set(WvStringParm regex, int cflags)
 {
     if (have_preg) ::regfree(&preg);
-
     int errcode = ::regcomp(&preg, regex, cflags);
     if (errcode)
     {
@@ -35,7 +34,6 @@ bool WvRegex::set(WvStringParm regex, int cflags)
         have_preg = false;
     }
     else have_preg = true;
-    
     return have_preg;
 }
 

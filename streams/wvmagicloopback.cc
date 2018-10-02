@@ -8,6 +8,7 @@
 WvMagicLoopback::WvMagicLoopback(size_t size)
     : circle(size), loop()
 {
+    if (!circle.isok()) seterr_both(circle.geterr(), circle.errstr());
 }
 
 

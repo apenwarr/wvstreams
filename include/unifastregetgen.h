@@ -42,7 +42,6 @@ public:
     virtual bool haschildren(const UniConfKey &key);
 
 private:
-    IUniConfGen *inner;
     UniConfValueTree *tree;
     
 protected:

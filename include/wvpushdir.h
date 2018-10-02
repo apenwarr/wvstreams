@@ -22,17 +22,20 @@ class WvPushDir : public WvError
     char *old_dir;
 
 public:
+    // Prevent dynamic allocation: arbitrary sequence of creation/deletion
+    // would just result in random directories getting popped in the wrong
+    // sequence.  If you want to switch directories in a random order,
+    // do it yourself with chdir().
     void* operator new(size_t) 
         { abort(); }
 
     WvPushDir(WvStringParm new_dir)
     {
-#ifdef MACOS
-       old_dir = static_cast<char *>(calloc(PATH_MAX, sizeof(char *)));
-       getcwd(old_dir, PATH_MAX);;
-#else
-       old_dir = get_current_dir_name();
-#endif
+        old_dir = new char[2048];
+        if (!getcwd(old_dir, 2048)) {
+            errnum = errno;
+            return;
+        }
        dir_handle = opendir(old_dir);
        if (chdir(new_dir) == -1)
           errnum = errno;
@@ -42,7 +45,7 @@ public:
     { 
         chdir(old_dir); 
         closedir(dir_handle);
-        free(old_dir);
+        delete[] old_dir;
     }
 };
 

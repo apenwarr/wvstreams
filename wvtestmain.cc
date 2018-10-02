@@ -27,9 +27,19 @@ static bool fd_is_valid(int fd)
 }
 
 
+#ifdef MACOS
+#include <netdb.h>
+#endif
+
 static int fd_count(const char *when)
 {
     int count = 0;
+
+#ifdef MACOS
+    // MacOS leaks a fd as soon as it activates the resolver.  So let's
+    // make sure the resolver has been activated before we first count fds.
+    gethostbyname("localhost");
+#endif
     
     printf("fds open at %s:", when);
     
