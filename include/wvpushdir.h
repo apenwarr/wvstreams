@@ -22,6 +22,10 @@ class WvPushDir : public WvError
     char *old_dir;
 
 public:
+    // Prevent dynamic allocation: arbitrary sequence of creation/deletion
+    // would just result in random directories getting popped in the wrong
+    // sequence.  If you want to switch directories in a random order,
+    // do it yourself with chdir().
     void* operator new(size_t) 
         { abort(); }
 
