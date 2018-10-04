@@ -5,10 +5,10 @@
 
 extern "C" {
     int close(int fd);
-    int read(int fd, void *buf, size_t count);
-    int write(int fd, const void *buf, size_t count);
+    int read(int fd, void *buf, unsigned count);
+    int write(int fd, const void *buf, unsigned count);
 
-    unsigned int sleep(unsigned int seconds); // does this belong here?
+    unsigned int sleep(unsigned seconds); // does this belong here?
 }
 
 #ifndef __GNUC__

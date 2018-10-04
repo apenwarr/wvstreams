@@ -10,7 +10,7 @@ long glob;
 
 static void gentask(void *userdata)
 {
-    long startval = (long)userdata, val = startval;
+    long startval = (long)(long long)userdata, val = startval;
     
     while (val - startval < 3)
     {

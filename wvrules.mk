@@ -46,7 +46,6 @@ include $(WVSTREAMS_SRC)/config.defaults.mk
 
 ifeq (${OS},SOLARIS)
   _SOLARIS= _SOLARIS
-  AR=gar
 endif
 
 ifeq (${OS},MACOS)
@@ -59,7 +58,6 @@ endif
 
 ifdef _WIN32
   XPATH += $(WVSTREAMS)/win32 $(WVSTREAMS)/win32/cominclude
-  AR=i686-w64-mingw32-ar
   LIBS += -lssl -lcrypto -lz -lole32 -lrpcrt4 -lwsock32 -lgdi32 -limagehlp \
   	  -lstdc++
 else

@@ -424,7 +424,7 @@ void wvcrash_setup(const char *_argv0, const char *_desc)
     wvcrash_add_signal(SIGILL);
 }
 
-#elif defined(_WIN32)
+#elif defined(_WIN32) && !defined(_WIN64)
 
 #include <windows.h>
 #include <stdio.h>
@@ -614,5 +614,6 @@ void wvcrash_setup(const char *_argv0, const char *_desc) {}
 void wvcrash(int sig) {}
 void wvcrash_add_signal(int sig) {}
 void wvcrash_setup(const char *_argv0, const char *_desc) {}
+void setup_console_crash() {}
 
 #endif // Not Linux

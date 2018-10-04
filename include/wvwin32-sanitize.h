@@ -11,6 +11,7 @@
 #include <winsock.h>
 #include <malloc.h>
 #include <io.h>
+#include <sys/types.h>
 
 #ifndef _SYS_GUID_OPERATOR_EQ_
 #define _SYS_GUID_OPERATOR_EQ_ 1
@@ -41,8 +42,11 @@ extern "C" {
 
 unsigned int sleep(unsigned int secs);
 
-typedef int pid_t;
-extern pid_t getpid();
+#ifdef _WIN32
+extern int getpid(void);
+#else
+extern pid_t getpid(void);
+#endif
 
 unsigned int alarm(unsigned int t);
 int fsync(int fd);
