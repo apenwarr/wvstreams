@@ -554,13 +554,11 @@ if test "$with_zlib" != "no"; then
     AC_CHECK_LIB(z, compress,, [with_zlib=no])
 fi
 
-# Find out whether TR1 or Boost are available.
+# Find out whether TR1 is available.
+CPPFLAGS_save=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS -stdlib=libstdc++"
+AC_CHECK_HEADERS([tr1/functional], [], [CPPFLAGS="$CPPFLAGS_save"])
 AC_CHECK_HEADERS(tr1/functional)
-AC_CHECK_HEADERS(boost/function.hpp)
-
-# When compiling with exceptions disabled and Boost, applications need
-# to provide an "exception handler", declared here.
-AC_CHECK_HEADERS(boost/throw_exception.hpp)
 
 # check for missing packages
 missing_required=
@@ -591,10 +589,9 @@ if test "$with_zlib" = "no"; then
     AC_MSG_WARN([zlib is missing.])
     missing_required="$missing_required zlib"
 fi
-if test "$ac_cv_header_tr1_functional" != "yes" \
-     -a "$ac_cv_header_boost_function_hpp" != "yes"; then
-    AC_MSG_WARN([both tr1/functional and boost/function.hpp are missing.])
-    missing_required="$missing_required boost/function.hpp"
+if test "$ac_cv_header_tr1_functional" != "yes"; then
+    AC_MSG_WARN([tr1/functional is missing.])
+    missing_required="$missing_required tr1/functional"
 fi
 
 if test -n "$missing_required"; then
