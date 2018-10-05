@@ -1,0 +1,25 @@
+
+if [ -z "$dirs" ]; then
+    echo "usage: set dirs=<source dirs...>" >&2
+    exit 99
+fi
+
+for dir in $dirs; do
+    for d in $dir/*.cc; do
+        [ -e "$d" ] || continue
+        echo "${d%.cc}.o"
+    done &&
+    for d in $dir/*.c; do
+        [ -e "$d" ] || continue
+        echo "${d%.c}.o"
+    done || break
+done |
+sort |
+{
+    if [ -n "$_WIN32" ]; then
+    	redo-ifchange not-win32.list
+        comm -2 -3 - not-win32.list
+    else
+        cat
+    fi
+}

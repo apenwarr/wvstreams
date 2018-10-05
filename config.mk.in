@@ -33,7 +33,7 @@ LIBS=@LIBS@
 LIBS_DBUS=@LIBS_DBUS@
 LIBS_QT=@LIBS_QT@
 LIBS_PAM=@LIBS_PAM@
-LIBS_TCL=@LIBS_TCL@
+LIBS_SSL=@LIBS_SSL@
 
 prefix=@prefix@
 datarootdir=@datarootdir@
@@ -55,12 +55,10 @@ enable_debug=@enable_debug@
 enable_optimization=@enable_optimization@
 enable_resolver_fork=@enable_resolver_fork@
 enable_warnings=@enable_warnings@
-enable_testgui=@enable_testgui@
 
 with_dbus=@with_dbus@
 with_openssl=@with_openssl@
 with_pam=@with_pam@
-with_tcl=@with_tcl@
 with_readline=@with_readline@
 with_qt=@with_qt@
 with_zlib=@with_zlib@

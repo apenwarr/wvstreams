@@ -25,6 +25,7 @@
 #include "wvstrutils.h"
 #include "wvfileutils.h"
 #include "wvstreamsdaemon.h"
+#include "wvlinkerhack.h"
 
 #ifdef WITH_SLP
 #include "slp.h"
@@ -35,12 +36,7 @@
 using std::map;
 using wv::shared_ptr;
 
-
-#ifdef _WIN32
-#pragma comment(linker, "/include:?UniRegistryGenMoniker@@3V?$WvMoniker@VIUniConfGen@@@@A")
-#pragma comment(linker, "/include:?UniPStoreGenMoniker@@3V?$WvMoniker@VIUniConfGen@@@@A")
-#pragma comment(linker, "/include:?UniIniGenMoniker@@3V?$WvMoniker@VIUniConfGen@@@@A")
-#endif
+WV_LINK_TO(UniGenHack);
 
 #define DEFAULT_CONFIG_FILE "ini:uniconf.ini"
 

@@ -1,0 +1,55 @@
+exec >&2
+if [ -z "$OUT" ]; then
+    echo "Error: run redo from your output dir (obj/), not source dir." >&2
+    exit 99
+fi
+
+redo-ifchange "$OUT/_config.od"
+. "$OUT/_config.od"
+
+if [ "$enable_optimization" = "yes" ]; then
+    CXXFLAGS="$CXXFLAGS -O2"
+    CFLAGS="$CFLAGS -O2"
+fi
+if [ "$enable_warnings" != "no" ]; then
+    CXXFLAGS="$CXXFLAGS -Wall -Woverloaded-virtual"
+    CFLAGS="$CFLAGS -Wall"
+fi
+if [ "$enable_debug" = "yes" ]; then
+    CPPFLAGS="$CPPFLAGS -ggdb -DDEBUG=1"
+    LDFLAGS="$LDFLAGS -ggdb"
+fi
+if [ -n "$USE_WVSTREAMS_ARGP" ]; then
+    CPPFLAGS="$CPPFLAGS -Iargp"
+fi
+
+CPPFLAGS="$CPPFLAGS
+    -D_DEFAULT_SOURCE -D_GNU_SOURCE
+    -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -DUNSTABLE
+"
+
+# FIXME: os-specific defines aren't great. Convert to autoconf-detected
+# per-feature flags instead.
+case $OS in
+  LINUX)
+    _LINUX=1
+    ;;
+  SOLARIS)
+    _SOLARIS=1
+    CPPFLAGS="$CPPFLAGS -D_SOLARIS -DSOLARIS"
+    ;;
+  MACOS)
+    _MACOS=1
+    CPPFLAGS="$CPPFLAGS -D_MACOS -DMACOS"
+    ;;
+  WIN32)
+    _WIN32=1
+    CPPFLAGS="$CPPFLAGS -Iwin32 -D_WIN32"
+    LIBS="$LIBS -lole32 -lrpcrt4 -lwsock32 -lgdi32 -limagehlp -lstdc++"
+    ;;
+  *) echo "Error: $OS: unrecognized operating system for compilation." >&2 ;;
+esac
+if [ -z "$WIN32" ]; then
+  CFLAGS="$CFLAGS -fPIC"
+  CXXFLAGS="$CXXFLAGS -fPIC"
+fi

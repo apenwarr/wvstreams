@@ -4,12 +4,9 @@
 #include "strutils.h"
 #include "wvstringmask.h"
 #include "wvtclstring.h"
+#include "wvlinkerhack.h"
 
-#ifdef _WIN32
-#pragma comment(linker, "/include:?UniRegistryGenMoniker@@3V?$WvMoniker@VIUniConfGen@@@@A")
-#pragma comment(linker, "/include:?UniPStoreGenMoniker@@3V?$WvMoniker@VIUniConfGen@@@@A")
-#pragma comment(linker, "/include:?UniIniGenMoniker@@3V?$WvMoniker@VIUniConfGen@@@@A")
-#endif
+WV_LINK_TO(UniGenHack);
 
 void usage()
 {

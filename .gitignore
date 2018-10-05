@@ -1,14 +1,13 @@
 *.cache
-include/wvautoconf.h.in
+/_wvautoconf.h.in
 *.[oa]
 *.so
-*.libs
 *~
 .*.d
 /config.log
 /config.mk
 /config.status
-*.so.*
+lib*.so.*
 /reconfigure
 /configure.real
 /lib
@@ -18,5 +17,5 @@ include/wvautoconf.h.in
 /wvfdstream.t.tmp
 /CC
 /CXX
--MP
-lib*.list
+/lib*.list
+/sources.list

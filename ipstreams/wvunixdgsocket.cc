@@ -1,6 +1,8 @@
 #include "wvunixdgsocket.h"
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <fcntl.h>
+
 
 WvUnixDGSocket::WvUnixDGSocket(WvStringParm filename, bool _server, int perms)
     : socketfile(filename)

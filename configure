@@ -1,20 +1,16 @@
 #!/bin/sh
-
-set -e
-OUTDIR=$(cd -- ${OUTDIR:-$(pwd)} && pwd)
-INDIR=`dirname -- "$0"`
-FULLINDIR=$(cd -- "$INDIR" && pwd)
-cd -- $INDIR
-if [ ! -f include/wvautoconf.h.in ] || [ ! -f configure.real ]; then
-    ./autogen.sh
+if ! redo-ifchange 2>/dev/null; then
+    echo "Fatal: this package requires the redo build system." >&2
+    echo "For example: https://github.com/apenwarr/redo" >&2
+    exit 99
 fi
 
-if [ $OUTDIR = $FULLINDIR ]; then
-    mkdir -p obj;
-    cd obj;
-    OUTDIR=$OUTDIR/obj
-    INDIR=..
+SRCDIR=$(dirname "$0")
+redo-ifchange "$SRCDIR/configure.real" || exit
+
+if [ -e configure.real ]; then
+    echo "Fatal: create an output dir first, and configure from there." >&2
+    exit 99
 fi
 
-cd -- $OUTDIR
-exec $INDIR/configure.real "$@"
+exec "$SRCDIR/configure.real" "$@"

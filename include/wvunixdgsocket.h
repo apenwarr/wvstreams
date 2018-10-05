@@ -1,11 +1,6 @@
 #ifndef __WVUNIXDGSOCKET_H
 #define __WVUNIXDGSOCKET_H
 
-#include <sys/types.h>
-#include <sys/syslog.h>
-#include <sys/socket.h>
-#include <fcntl.h>
-
 #include "wvlog.h"
 #include "wvstring.h"
 #include "wvlinklist.h"

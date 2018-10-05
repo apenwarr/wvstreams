@@ -143,7 +143,7 @@ WVTEST_MAIN("retry:uniconfd")
     // Use the UniConfTestDaemon!
     if ((uniconfd_pid = fork()) == 0)
     {
-    	execv("uniconf/daemon/uniconfd", (char *const *)uniconfd_argv);
+    	execv("./uniconfd", (char *const *)uniconfd_argv);
     	_exit(1);
     }
     wvdelay(100);
@@ -186,7 +186,7 @@ WVTEST_MAIN("retry:uniconfd")
     
     if ((uniconfd_pid = fork()) == 0)
     {
-    	execv("uniconf/daemon/uniconfd", (char *const *)uniconfd_argv);
+    	execv("./uniconfd", (char *const *)uniconfd_argv);
     	_exit(1);
     }
     wvdelay(100);

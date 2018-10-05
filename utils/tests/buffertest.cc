@@ -94,7 +94,7 @@ int main()
     in = max = total = 0;
     while (1)
     {
-	i = random() % sizeof(xx);
+	i = rand() % sizeof(xx);
 	s = (char *)bb.alloc(i);
 	memcpy(s, xx, i);
 #ifdef DEBUG_STRESS
@@ -104,7 +104,7 @@ int main()
 	total += i;
         size_t lastalloc = i;
         
-	i = random() % sizeof(xx);
+	i = rand() % sizeof(xx);
 	if (i > lastalloc)
 	    i = lastalloc;
 #ifdef DEBUG_STRESS
@@ -113,7 +113,7 @@ int main()
 	bb.unalloc(i);
 	in -= i;
 	
-	i = random() % sizeof(xx);
+	i = rand() % sizeof(xx);
 	if (i > in)
 	    i = in;
 #ifdef DEBUG_STRESS
@@ -122,7 +122,7 @@ int main()
 	bb.get(i);
 	in -= i;
 	
-	i = random() % sizeof(xx);
+	i = rand() % sizeof(xx);
 #ifdef DEBUG_STRESS
         fprintf(stderr, "put(%d)\n", (int)i);
 #endif
@@ -130,7 +130,7 @@ int main()
 	in += i;
 	total += i;
 
-	i = random() % sizeof(xx);
+	i = rand() % sizeof(xx);
 	if (i > in)
 	    i = in;
 #ifdef DEBUG_STRESS
@@ -140,7 +140,7 @@ int main()
 	in -= i;
         size_t lastput = i;
         
-	i = random() % sizeof(xx);
+	i = rand() % sizeof(xx);
 	if (i > lastput)
 	    i = lastput;
 #ifdef DEBUG_STRESS
