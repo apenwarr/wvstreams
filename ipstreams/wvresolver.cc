@@ -14,7 +14,6 @@
 
 #ifdef _WIN32
 #define WVRESOLVER_SKIP_FORK
-typedef int pid_t;
 #define kill(a,b)
 #define waitpid(a,b,c) (0)
 #define alarm(a)

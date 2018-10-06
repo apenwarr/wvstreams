@@ -285,7 +285,7 @@ WVTEST_MAIN("daemon quit")
 // test that proxying between two uniconf daemons works
 // e.g.: client -> uniconfd -> uniconfd
 
-static WvPipe * setup_master_daemon(bool implicit_root, 
+static WvPipe *setup_master_daemon(bool implicit_root, 
         WvString &masterpipename, WvString &ininame)
 {
     ininame = wvtmpfilename("uniconfd.t-ini");
@@ -310,15 +310,17 @@ static WvPipe * setup_master_daemon(bool implicit_root,
 
     WvString lmoniker("unix:%s", masterpipename);
     const char * const uniconfd_args[] = {
-        "uniconf/daemon/uniconfd",
-        "-d", "--pid-file", pidfile.cstr(),
+        "./uniconfd",
+        "--pid-file", pidfile.cstr(),
         "-l", lmoniker.cstr(),
         mount1.cstr(),
         mount2.cstr(),
         NULL
     };
 
-    return new WvPipe(uniconfd_args[0], uniconfd_args, false, true, false);
+    WvPipe *p = new WvPipe(uniconfd_args[0], uniconfd_args, false, true, false);
+    WVPASS(p->isok());
+    return p;
 }
 
 
@@ -335,8 +337,8 @@ static WvPipe * setup_slave_daemon(bool implicit_root, WvStringParm masterpipena
         rootmount.append("/=retry:cache:unix:%s", masterpipename);
 
     WvString lmoniker("unix:%s", slavepipename);
-    const char * const uniconfd_args[] = {
-        "uniconf/daemon/uniconfd",
+    const char *const uniconfd_args[] = {
+        "./uniconfd",
         "--pid-file", pidfile.cstr(),
         "-l", lmoniker,
         rootmount.cstr(),
@@ -347,7 +349,7 @@ static WvPipe * setup_slave_daemon(bool implicit_root, WvStringParm masterpipena
 }
 
 
-static void wait_for_pipe_ready(WvStringParm pipename)
+static void wait_for_pipe_ready(WvPipe *p, WvStringParm pipename)
 {
     // If we can't get a connection in 100ms, something is seriously wrong..
 
@@ -356,14 +358,19 @@ static void wait_for_pipe_ready(WvStringParm pipename)
 
     WvString line;
     line = sock->getline(100);
-    while (!line)
+    for (int i = 0; i < 100 && !line && !p->child_exited(); i++)
     {
+        wverr->print(".");
+        wvdelay(100);
         WVRELEASE(sock);
         sock = new WvUnixConn(addr);
         line = sock->getline(100);
     }
     WVRELEASE(sock);
-    wvcon->print("Pipe ready! (%s)\n", line);
+    wverr->print("\n");
+    WVPASS(line);
+    WVFAIL(p->child_exited());
+    wvcon->print("Pipe ready! (%s) (%s)\n", p->exit_status(), line);
 }
 
 
@@ -374,14 +381,14 @@ static void daemon_proxy_test(bool implicit_root)
     WvPipe *master = setup_master_daemon(implicit_root, masterpipename, ininame);
     master->setcallback(wv::bind(WvPipe::ignore_read, wv::ref(*master)));
     master->nowrite();
-    wait_for_pipe_ready(masterpipename);
+    wait_for_pipe_ready(master, masterpipename);
     
     wvcon->print("Setting up slave daemon.\n");
     WvString slavepipename;
     WvPipe *slave = setup_slave_daemon(implicit_root, masterpipename, slavepipename);
     slave->setcallback(wv::bind(WvPipe::ignore_read, wv::ref(*slave)));
     slave->nowrite();
-    wait_for_pipe_ready(slavepipename);
+    wait_for_pipe_ready(slave, slavepipename);
 
     WvStringList commands;
     commands.append("get /cfg/pickles/apples/foo");

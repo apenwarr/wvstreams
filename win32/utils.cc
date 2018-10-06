@@ -40,7 +40,11 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
 }
 
 
+#ifdef _WIN32
+int getpid()
+#else
 pid_t getpid()
+#endif
 {
     return GetCurrentThreadId();
 }

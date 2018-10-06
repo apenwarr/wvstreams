@@ -13,6 +13,7 @@
 
 #ifdef _WIN32
 #include <time.h>
+#define NOCRYPT
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include "wvwin32-sanitize.h"

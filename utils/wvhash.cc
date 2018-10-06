@@ -30,6 +30,6 @@ unsigned WvHash(const int &i)
 
 unsigned WvHash(const void *p)
 {
-    return reinterpret_cast<unsigned long>(p);
+    return (unsigned)(unsigned long long)p;
 }
 

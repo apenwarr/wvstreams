@@ -1,5 +1,0 @@
-#!/bin/sh
-xjed $(find -type f \( -name '*.src' -o -name '*.pl' -o -name '*.pm' \
-	-o -name '*.aml' \
-	-o -name '*.cc' -o -name '*.c' -o -name '*.h' \) | fgrep -v .tmp.) \
-	include/wvstream.h &

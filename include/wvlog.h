@@ -18,9 +18,7 @@
 
 #include "wvstream.h"
 #include <errno.h>
-#ifdef _WIN32
-typedef int pid_t;
-#endif
+#include <sys/types.h>
 
 class WvLog;
 

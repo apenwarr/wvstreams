@@ -2,22 +2,22 @@
 #include "wvcont.h"
 #include <stdio.h>
 
+static char v1, v2;
+
 // START conttest.cc definitions
 static void *nonfunc(void *_x)
 {
-    long x = (long)_x;
-    
-    return (void *)(1234560000 + x);
+    return (char *)_x + 1234560000;
 }
 
 
 static void *func(void *_x)
 {
-    long x = (long)_x;
+    char *x = (char *)_x;
     
     for (int count = 0; count < 4 && WvCont::isok(); count++)
-	WvCont::yield((void *)++x);
-    return (void *) -(++x);
+	WvCont::yield(++x);
+    return 0;
 }
 
 
@@ -39,7 +39,7 @@ public:
 private:
     void *honker(Honk &h, void *_x)
     {
-	long x = (long)_x;
+	char *x = (char *)_x;
 //	printf("%s: STARTING (%d)\n", id, x);
 	
 	for (x--; WvCont::isok() && x > 0; x--)
@@ -69,21 +69,21 @@ WVTEST_MAIN("basics")
 	// 'func' actually gets called; there are no parallel running 'func's.
 	// cb2's task calls into cb1's task, however.
     
-	WVPASS((long)cb1((void *)100) == 101);
-	WVPASS((long)cb2((void *)200) == 102);
-	WVPASS((long)cb3((void *)300) == 103);
+	WVPASS(cb1(&v1) == &v1 + 1);
+	WVPASS(cb2(&v2) == &v1 + 2);
+	WVPASS(cb3(&v2) == &v1 + 3);
 	cb1 = WvCont(nonfunc);
-	WVPASS((long)cb1((void *)400) == 1234560400);
-	WVPASS((long)cb2((void *)500) == 104);
-	WVPASS((long)cb3((void *)600) == -105);
+	WVPASS(cb1(&v1) == &v1 + 1234560000);
+	WVPASS(cb2(&v2) == &v1 + 4);
+	WVPASS(cb3(&v2) == 0);
 	cb2 = nonfunc;
-        WVPASS((long)cb1((void *)700) == 1234560700);
-	WVPASS((long)cb2((void *)800) == 1234560800);
-	WVPASS((long)cb3((void *)900) == 901);
+        WVPASS(cb1(&v1) == &v1 + 1234560000);
+	WVPASS(cb2(&v2) == &v2 + 1234560000);
+	WVPASS(cb3(&v2) == &v2 + 1);
 	cb3 = nonfunc;
-	WVPASS((long)cb1((void *)1000) == 1234561000);
-	WVPASS((long)cb2((void *)1100) == 1234561100);
-	WVPASS((long)cb3((void *)1200) == 1234561200);
+	WVPASS(cb1(&v1) == &v1 + 1234560000);
+	WVPASS(cb2(&v2) == &v2 + 1234560000);
+	WVPASS(cb3(&v2) == &v2 + 1234560000);
     }
 
 #ifdef CAN_UNITTEST_ASSERTION_FAILURE 

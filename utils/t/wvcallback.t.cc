@@ -20,7 +20,7 @@ typedef wv::function<A(void*)> A3Callback;
 
 static A bunk(const A &a, void *userdata)
 {
-    long incr = (long)userdata;
+    long incr = (long)(long long)userdata;
     return A(a.x+incr, a.y+incr*2);
 }
 

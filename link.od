@@ -1,0 +1,21 @@
+exec >&2
+redo-ifchange config.od sources.list $OUT/libwvstatic.so
+. ./config.od
+
+if [ -z "$objs" ]; then
+    echo 'link.od: must set $objs first.'
+    exit 99
+fi
+
+libs="$LIBS_QT $LIBS_PAM $LIBS_DBUS $LIBS_SSL $LIBS"
+
+xobjs=
+for d in $objs; do
+    xobjs="$xobjs $OUT/$d"
+done
+
+redo-ifchange $xobjs &&
+$CXX -o $3 $LDFLAGS \
+    -Wl,-rpath,'$ORIGIN' \
+    $xobjs $OUT/libwvstatic.so \
+    $libs

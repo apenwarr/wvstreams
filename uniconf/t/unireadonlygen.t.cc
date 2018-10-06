@@ -3,6 +3,9 @@
 #include "uniconfroot.h"
 #include "wvfile.h"
 #include "wvtest.h"
+#include "wvlinkerhack.h"
+
+WV_LINK_TO(UniReadOnlyGen);
 
 // NOTE: UniReadOnlyGen violates the "sensible" UniConf semantics tested for
 // in uniconfgen-sanitytest.h, since setting a value doesn't work.

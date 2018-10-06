@@ -1,6 +1,9 @@
 #include "wvtest.h"
 #include "uniconfgen.h"
 #include "wvmoniker.h"
+#include "wvlinkerhack.h"
+
+WV_LINK_TO(UniNullGen);
 
 static void cb(const UniConfKey &, WvStringParm)
 {

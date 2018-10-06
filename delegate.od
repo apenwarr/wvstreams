@@ -1,0 +1,36 @@
+# redo requests in the output dir all fall back to $OUT/default.do, which
+# simply sets $SRCDIR and then runs this file.
+#
+# Our job is then to delegate the work the right .do file inside $SRCDIR,
+# if any.
+exec >&2
+OUT=$PWD
+x1= x2= dofile=
+redo-whichdo "$SRCDIR/$1" | {
+    ifcreate=
+    while read a b; do
+        case $a in
+          -)
+            ifcreate="$ifcreate $b"
+            ;;
+          +)
+            redo-ifcreate $ifcreate &&
+            redo-ifchange "$b" || exit
+            dopath="$b"
+            dodir=$(dirname "$dopath")
+            dofile=$(basename "$dopath")
+            ;;
+          1)
+            x1="$b"
+            ;;
+          2)
+            x2="$b"
+            out="$PWD/$3"
+            #echo "delegate: ./$dofile $x1" >&2
+            (cd "$dodir" && . "./$dofile" "$x1" "$x2" "$out")
+            exit
+            ;;
+        esac
+    done
+    exit 3
+}
