@@ -1,6 +1,7 @@
 redo-ifchange config.od $OUT/libs.list
 . ./config.od
 [ -n "$DESTDIR" ] || die "set DESTDIR before installing."
+
 $INSTALL -d \
     "$DESTDIR$libdir" \
     "$DESTDIR$includedir/wvstreams/xplc" \

@@ -1,4 +1,3 @@
-exec >&2
 redo-ifchange $OUT/wvtestmain config.od
 . ./config.od
 
@@ -9,4 +8,5 @@ else
     RUN=
 fi
 
-cd "$OUT" && $VALGRIND $RUN ./wvtestmain "$2"
+cd "$OUT"
+$VALGRIND $RUN ./wvtestmain "$2"

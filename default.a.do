@@ -1,4 +1,3 @@
-exec >&2
 redo-ifchange config.od $OUT/$2.list
 . ./config.od
 
@@ -7,6 +6,6 @@ obj=$(
     while read x; do
         echo "$OUT/$x"
     done
-) &&
-redo-ifchange $obj &&
+)
+redo-ifchange $obj
 $AR q $3 $obj

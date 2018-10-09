@@ -1,4 +1,3 @@
-exec >&2
 redo-ifchange config.od $OUT/$2.list
 . ./config.od
 
@@ -35,21 +34,22 @@ obj=$(
     while read x; do
         echo "$OUT/$x"
     done <$OUT/$2.list
-) &&
-redo-ifchange $obj $libdep && {
-    sofile="$OUT/$2.so.$SO_VERSION"
-    zdefs=
-    [ -z "$_LINUX" ] || zdefs="-Wl,-z,defs"
-    rm -f "$sofile" &&
-    if [ -n "$_WIN32" ]; then
-        echo "Skipping $1 on win32 (can't build shared libraries)" >&2
-        redo-ifchange "$OUT/$2.a" &&
-        ln -s $2.a "$sofile"
-    else
-        $CXX -o "$sofile" -shared \
-            $zdefs \
-            $LDFLAGS \
-            $obj $libdep $libs
-    fi &&
-    ln -s "$sofile" $3
-}
+)
+
+redo-ifchange $obj $libdep
+
+sofile="$OUT/$2.so.$SO_VERSION"
+zdefs=
+[ -z "$_LINUX" ] || zdefs="-Wl,-z,defs"
+rm -f "$sofile"
+if [ -n "$_WIN32" ]; then
+    echo "Skipping $1 on win32 (can't build shared libraries)" >&2
+    redo-ifchange "$OUT/$2.a"
+    ln -s $2.a "$sofile"
+else
+    $CXX -o "$sofile" -shared \
+        $zdefs \
+        $LDFLAGS \
+        $obj $libdep $libs
+fi
+ln -s "$sofile" $3

@@ -1,12 +1,10 @@
 redo-ifchange config.od
 . ./config.od
 
-if [ -z "$USE_WVSTREAMS_ARGP" ]; then
-    echo "Error: don't need argp; don't build libargp.list!" >&2
-    exit 99
-fi
+[ -n "$USE_WVSTREAMS_ARGP" ] || die "don't need argp; don't build libargp.list!"
 
-make -C "$OUT/argp" &&
+make -C "$OUT/argp"
+
 (
     cd "$OUT" &&
     for d in argp/*.o; do

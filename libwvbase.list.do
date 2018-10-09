@@ -1,4 +1,3 @@
-exec >&2
 redo-ifchange config.od
 . ./config.od
 
@@ -62,6 +61,7 @@ objs=$(cat <<-EOF
 	xplc/statichandler.o
 EOF
 )
+
 echo "$objs" |
 sort |
 {

@@ -1,5 +1,3 @@
-exec >&2
-
 case $2 in
   */tests/*|uniconf/daemon/uniconfd)
     [ -e "$2.cc" -o -e "$2.c" ] || exit 1

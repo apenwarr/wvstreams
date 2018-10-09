@@ -1,2 +1,4 @@
-redo-ifchange $OUT/uniconf/tests/uni
-ln -s uniconf/tests/uni $3
+redo-ifchange config.od $OUT/uniconf/tests/uni
+. ./config.od
+
+$LN_S uniconf/tests/uni $3

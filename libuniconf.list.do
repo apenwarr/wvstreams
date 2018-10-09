@@ -1,4 +1,3 @@
-exec >&2
 redo-ifchange sources.list config.od $OUT/libwvbase.list
 . ./config.od
 
