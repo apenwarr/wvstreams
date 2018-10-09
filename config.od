@@ -1,8 +1,9 @@
-exec >&2
-if [ -z "$OUT" ]; then
-    echo "Error: run redo from your output dir (obj/), not source dir." >&2
+die() {
+    echo Error: "$@" >&2
     exit 99
-fi
+}
+
+[ -n "$OUT" ] || die "run redo from your output dir (obj/), not source dir."
 
 redo-ifchange "$OUT/_config.od"
 . "$OUT/_config.od"
@@ -47,9 +48,9 @@ case $OS in
     CPPFLAGS="$CPPFLAGS -Iwin32 -D_WIN32"
     LIBS="$LIBS -lole32 -lrpcrt4 -lwsock32 -lgdi32 -limagehlp -lstdc++"
     ;;
-  *) echo "Error: $OS: unrecognized operating system for compilation." >&2 ;;
+  *) die "$OS: unrecognized operating system for compilation." ;;
 esac
 if [ -z "$WIN32" ]; then
-  CFLAGS="$CFLAGS -fPIC"
-  CXXFLAGS="$CXXFLAGS -fPIC"
+    CFLAGS="$CFLAGS -fPIC"
+    CXXFLAGS="$CXXFLAGS -fPIC"
 fi

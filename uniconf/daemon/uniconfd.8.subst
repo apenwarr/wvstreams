@@ -138,7 +138,7 @@ or even an empty string
 .I /var/lib/uniconf/uniconf.ini
 .SH AUTHORS
 This software was written by the hackers at Net Integration
-Technologies.  Contact us at <wvstreams\-dev@lists.nit.ca>
+Technologies.  Contact us at <wvstreams\-devel@googlegroups.com>
 .\" Local variables:
 .\" mode:nroff
 .\" End:

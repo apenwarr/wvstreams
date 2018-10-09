@@ -633,7 +633,7 @@ AC_SUBST(WVSRCDIR)
 
 AC_DEFINE_UNQUOTED([VERBOSE_PACKAGE_VERSION],["$PACKAGE_VERSION$WEAVER_BUILD_INFO"],[Verbose package version])
 
-AC_CONFIG_FILES(config.mk)
+AC_CONFIG_FILES(_config.od)
 AC_CONFIG_FILES([pkgconfig/libuniconf.pc
                  pkgconfig/libuniconf-uninstalled.pc
 		 pkgconfig/libwvbase.pc
