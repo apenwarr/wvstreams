@@ -33,7 +33,7 @@ public:
     /**
      * Get the first character set into the mask
      */
-    const char first() const;
+    char first() const;
 
     /**
      * Clear the WvStringMask, so that all lookups return false.

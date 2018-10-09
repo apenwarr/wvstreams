@@ -9,7 +9,7 @@
 #include <ctype.h>
 #include <assert.h>
 
-WvStringBuf WvFastString::nullbuf = { 0, 1 };
+WvStringBuf WvFastString::nullbuf = { 0, 1, {0} };
 const WvFastString WvFastString::null;
 
 const WvString WvString::empty("");

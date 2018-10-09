@@ -13,8 +13,8 @@ if [ "$enable_optimization" = "yes" ]; then
     CFLAGS="$CFLAGS -O2"
 fi
 if [ "$enable_warnings" != "no" ]; then
-    CXXFLAGS="$CXXFLAGS -Wall -Woverloaded-virtual"
-    CFLAGS="$CFLAGS -Wall"
+    CXXFLAGS="$CXXFLAGS -Wall -Wextra -Woverloaded-virtual -Wno-unused-parameter"
+    CFLAGS="$CFLAGS -Wall -Wextra -Wno-unused-parameter"
 fi
 if [ "$enable_debug" = "yes" ]; then
     CPPFLAGS="$CPPFLAGS -ggdb -DDEBUG=1"

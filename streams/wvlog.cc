@@ -50,7 +50,7 @@ WvLog::WvLog(WvStringParm _app, LogLevel _loglevel, WvLogFilter* _filter)
 
 
 WvLog::WvLog(const WvLog &l)
-    : app(l.app), loglevel(l.loglevel), filter(l.filter)
+    : WvStream(), app(l.app), loglevel(l.loglevel), filter(l.filter)
 {
 //    printf("log: %s create\n", app.cstr());
     num_logs++;

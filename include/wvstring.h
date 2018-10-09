@@ -355,7 +355,7 @@ public:
      * (equivalent to unique()) so the original char* can be safely changed
      * or destroyed.
      */
-    WvString(const WvString &s)
+    WvString(const WvString &s) : WvFastString()
     	{ copy_constructor(s); }
     WvString(const WvFastString &s)
         { copy_constructor(s); }

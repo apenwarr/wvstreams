@@ -824,8 +824,6 @@ const void *WvLinkedBufferStore::get(size_t count)
     assert(count > 0);
     
     totalused -= count;
-
-    assert(totalused >= 0);
     
     // search for first non-empty buffer
     WvBufStore *buf;

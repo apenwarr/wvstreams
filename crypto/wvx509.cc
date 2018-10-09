@@ -1258,8 +1258,9 @@ WvString WvX509::get_extension(int nid) const
         TRACE("Extension not present!\n");
     }
 
-    if (!!retval)
+    if (!!retval) {
         TRACE("Returning: %s\n", retval);
+    }
 
     return retval;
 }

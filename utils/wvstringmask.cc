@@ -27,7 +27,7 @@ bool WvStringMask::operator[](const char c) const
     return _set[uc];
 }
 
-const char WvStringMask::first() const
+char WvStringMask::first() const
 {
     return _first;
 }

@@ -30,7 +30,7 @@ static DefaultPort portmap[] = {
     { "ldaps", 636, false },
     { "ldap", 389, false },
     { "ftp", 21, true },
-    { NULL, 0 }
+    { NULL, 0, false }
 };
 
 // Look up the protocol and return the default port.

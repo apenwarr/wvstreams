@@ -330,6 +330,7 @@ bool WvDBusServer::do_server_msg(WvDBusConn &conn, WvDBusMsg &msg)
 	    assert(false); // should never happen
             
         assert(false);
+        return false;
     }
     else if (method == "GetConnectionCert" ||
 	    method == "GetConnectionCertFingerprint")

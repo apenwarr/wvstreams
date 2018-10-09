@@ -42,7 +42,7 @@ private:
 	char *x = (char *)_x;
 //	printf("%s: STARTING (%d)\n", id, x);
 	
-	for (x--; WvCont::isok() && x > 0; x--)
+	for (x--; WvCont::isok() && x != 0; x--)
 	{
 //	    printf("%s: --> Honking in (%d)\n", id, x);
 	    h.cb((void *)x);
