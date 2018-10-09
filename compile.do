@@ -17,12 +17,12 @@ else
 fi
 redo-ifchange "\$src" || exit
 
-depfile="\$3.d"
 \$cc -c "\$src" -o "\$3" \
     -Iinclude -I\$OUT/include \$cflags \
-    -MMD -MF "\$depfile"
-sed -e 1d -e 's/\\\\\$//' | xargs redo-ifchange
-rm -f "\$depfile"
+    -MMD -MF "\$3.d"
+read DEPS <\$3.d
+redo-ifchange \${DEPS#*:}
+rm -f "\$3.d"
 
 EOF
 redo-stamp <$3
