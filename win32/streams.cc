@@ -59,7 +59,7 @@ static bool is_socket(int fd)
 }
 
 
-int close(int fd)
+extern "C" int close(int fd)
 {
     int ret;
     if (is_socket(fd))
@@ -76,7 +76,7 @@ int close(int fd)
 }
 
 
-int read(int fd, void *buf, size_t count)
+extern "C" int read(int fd, void *buf, unsigned count)
 {
     int ret;
     if (is_socket(fd))
@@ -93,7 +93,7 @@ int read(int fd, void *buf, size_t count)
 }
 
 
-int write(int fd, const void *buf, size_t count)
+extern "C" int write(int fd, const void *buf, unsigned count)
 {
     int ret;
     if (is_socket(fd))
@@ -125,43 +125,63 @@ int socketpair(int family, int type, int protocol, int *sb)
     SOCKET insock, outsock, newsock;
     struct sockaddr_in sock_in;
 
-    if (type != SOCK_STREAM)
+    if (type != SOCK_STREAM) {
+        assert(0);
 	return -1;
+    }
 
     newsock = socket(AF_INET, type, 0);
-    if (newsock == INVALID_SOCKET)
+    if (newsock == INVALID_SOCKET) {
+        assert(0);
 	return -1;
+    }
 
     sock_in.sin_family = AF_INET;
     sock_in.sin_port = 0;
     sock_in.sin_addr.s_addr = INADDR_ANY;
-    if (bind(newsock, (struct sockaddr *) &sock_in, sizeof (sock_in)) < 0)
+    if (bind(newsock, (struct sockaddr *) &sock_in, sizeof (sock_in)) < 0) {
+        assert(0);
 	return -1;
+    }
 
-    int len = sizeof (sock_in);
-    if (getsockname(newsock, (struct sockaddr *)&sock_in, &len) < 0)
+    int len = sizeof(sock_in);
+    if (getsockname(newsock, (struct sockaddr *)&sock_in, &len) < 0) {
 	return -1;
+	assert(0);
+    }
 
-    if (listen(newsock, 2) < 0)
+    if (listen(newsock, 2) < 0) {
+        assert(0);
 	return -1;
+    }
 
     outsock = socket(AF_INET, type, 0);
-    if (outsock == INVALID_SOCKET)
+    if (outsock == INVALID_SOCKET) {
+        assert(0);
 	return -1;
+    }
 
     sock_in.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    if (connect(outsock, (struct sockaddr *)&sock_in, sizeof(sock_in)) < 0)
+    if (connect(outsock, (struct sockaddr *)&sock_in, sizeof(sock_in)) < 0) {
+        assert(0);
 	return -1;
+    }
 
     /* For stream sockets, accept the connection and close the listener */
     len = sizeof(sock_in);
     insock = accept(newsock, (struct sockaddr *)&sock_in, &len);
-    if (insock == INVALID_SOCKET)
+    if (insock == INVALID_SOCKET) {
+        assert(0);
 	return -1;
+    }
 
-    if (closesocket(newsock) < 0)
+    if (closesocket(newsock) < 0) {
+        assert(0);
 	return -1;
+    }
 
+    assert(insock <= INT_MAX);
+    assert(outsock <= INT_MAX);
     sb[0] = insock;
     sb[1] = outsock;
     return 0;
@@ -177,7 +197,7 @@ static size_t fake_read(int fd, void *buf, size_t len)
 {
     HANDLE h = (HANDLE)_get_osfhandle(fd);
     INPUT_RECORD p;
-    DPRINTF("fake_read(%d/%d,%p,%d) = ", fd, (int)h, buf, (int)len);
+    DPRINTF("fake_read(%d/%p,%p,%d) = ", fd, (void *)h, buf, (int)len);
     
     DWORD ret = 0;
     OVERLAPPED ov;
@@ -291,7 +311,7 @@ static size_t fake_read(int fd, void *buf, size_t len)
 	}
     }
     
-    DPRINTF("[%d]\n", ret);
+    DPRINTF("[%lld]\n", (long long)ret);
     return ret;
 }
 
@@ -409,8 +429,8 @@ SocketFromFDMaker::~SocketFromFDMaker()
 	    else
 	    {
 		fprintf(stderr,
-			"ERROR! Socket #%d was already shut down! (%d)\n",
-			m_socket, e);
+			"ERROR! Socket #%lld was already shut down! (%d)\n",
+			(long long)m_socket, e);
 		assert(result == 0);
 	    }
 	}

@@ -61,6 +61,9 @@ WVTEST_MAIN("loopback non-blocking")
 	}
 	printf("\n");
 	WVPASS(loop.isok());
+	if (!loop.isok()) {
+	    printf("Error was: %s\n", loop.errstr().cstr());
+	}
 	printf("Closing loop without draining first...\n");
     }
     WVPASS("loop closed okay");

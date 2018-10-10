@@ -25,14 +25,11 @@
 #define SIGPIPE 13
 #endif
 
-#ifndef ECONNREFUSED
+#undef ECONNREFUSED
 #define ECONNREFUSED WSAECONNREFUSED
-#endif
 
-#ifndef EWOULDBLOCK
+#undef EWOULDBLOCK
 #define EWOULDBLOCK WSAEWOULDBLOCK
-#endif
-
 
 typedef int socklen_t;
 

@@ -1,6 +1,11 @@
 #include "uniautogen.h"
 #include "uniconfroot.h"
+#include "wvlinkerhack.h"
 #include "wvtest.h"
+
+WV_LINK_TO(UniDefGen);
+WV_LINK_TO(UniIniGen);
+
 
 WVTEST_MAIN("basics")
 {

@@ -40,16 +40,18 @@ WvString uniautogen_moniker("default:ini:/etc/uniconf.conf");
  *       "org/gnome/Nautilus" from there, and return.
  *  - else, return a null: generator.
  */
+#include "wvlog.h"
 static IUniConfGen *creator(WvStringParm s, IObject *_obj)
 {
-    UniConfRoot cfg((UniConfGen *)
-		    wvcreate<IUniConfGen>(uniautogen_moniker, _obj), true);
+    UniConfGen *g = (UniConfGen *)wvcreate<IUniConfGen>(uniautogen_moniker, _obj);
+    UniConfRoot cfg(g, true);
+    fprintf(stderr, "autogen: rootmoniker: '%s' %p\n", uniautogen_moniker.cstr(), g);
     const UniConfKey appname(s);
     
     for (int i = appname.numsegments(); i >= 0; i--)
     {
 	UniConfKey prefix(appname.first(i)), suffix(appname.removefirst(i));
-
+	WvLog("autogen", WvLog::Info)("appname=%s prefix=%s suffix=%s result=%s\n", appname, prefix, suffix, cfg.xget("prefix"));
 	if (!!cfg.xget(prefix))
 	{
 	    return new UniSubtreeGen(wvcreate<IUniConfGen>(cfg.xget(prefix)),

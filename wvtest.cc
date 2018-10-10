@@ -264,17 +264,11 @@ int WvTest::run_all(const char * const *prefixes)
 }
 
 
-// If we aren't running in parallel, we want to output the name of the test
-// before we run it, so we know what happened if it crashes.  If we are
-// running in parallel, outputting this information in multiple printf()s
-// can confuse parsers, so we want to output everything in one printf().
+// We used to try to print the prefix first, then run the test, then print
+// the result on the same line.  Unfortunately that could cause formatting
+// problems when the test itself ends up writing to stdout/stderr.
 //
-// This function gets called by both start() and check().  If we're not
-// running in parallel, just print the data.  If we're running in parallel,
-// and we're starting a test, save a copy of the file/line/description until
-// the test is done and we can output it all at once.
-//
-// Yes, this is probably the worst API of all time.
+// So now we'll just always print the whole line at once.
 void WvTest::print_result(bool start, const char *_file, int _line, 
         const char *_condstr, bool result)
 {
@@ -298,20 +292,12 @@ void WvTest::print_result(bool start, const char *_file, int _line,
                 *cptr = '!';
         }
     }
-            
+    
+    fflush(stdout);
+    fflush(stderr);
     const char *result_str = result ? "ok\n" : "FAILED\n";
-    if (run_twice)
-    {
-        if (!start)
-            printf(TEST_START_FORMAT "%s", file, line, condstr, result_str);
-    }
-    else
-    {
-        if (start)
-            printf(TEST_START_FORMAT, file, line, condstr);
-        else
-            printf("%s", result_str);
-    }
+    if (!start)
+        printf(TEST_START_FORMAT "%s", file, line, condstr, result_str);
     fflush(stdout);
 
     if (!start)
@@ -341,6 +327,8 @@ void WvTest::check(bool cond)
     
     if (time(NULL) - start_time > MAX_TOTAL_TIME)
     {
+        fflush(stdout);
+        fflush(stderr);
 	printf("\n! WvTest   Total run time exceeded %d seconds!  FAILED\n",
 	       MAX_TOTAL_TIME);
 	fflush(stdout);

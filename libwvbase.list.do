@@ -62,7 +62,10 @@ objs=$(cat <<-EOF
 EOF
 )
 
-echo "$objs" |
+{
+    echo "$objs"
+    dirs=win32 . ./objlist.od
+} |
 sort |
 {
     if [ -n "$_WIN32" ]; then

@@ -179,6 +179,9 @@ IUniConfGen *UniMountGen::mount(const UniConfKey &key,
     IUniConfGen *gen = wvcreate<IUniConfGen>(moniker);
     if (gen)
         mountgen(key, gen, refresh); // assume always succeeds for now
+    else
+        fprintf(stderr, "uniconf: no generator for moniker: %s\n",
+                moniker.cstr());
 #if DEBUG
     assert(gen && "Moniker doesn't get us a generator!");
 #endif

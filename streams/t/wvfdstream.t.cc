@@ -16,6 +16,13 @@
 #include "wvtest.h"
 #include "wvfileutils.h"
 
+#if _WIN32
+#undef EBADF
+#define EBADF WSAEBADF
+#undef EACCES
+#define EACCES WSAEACCES
+#endif
+
 //FIXME: absolutely simple simple test right now, built from closeflushtest
 // BEGIN closeflushtest.cc definition
 class SillyStream : public WvFDStream
@@ -120,7 +127,8 @@ WVTEST_MAIN("stdout clone")
 	close(fd);
 	s.print("this will write to an invalid fd\n");
 	WVFAIL(s.isok());
-	WVPASSEQ(s.geterr(), EBADF);
+	s.print("s.geterr() is %s\n", s.geterr());
+	WVPASS(s.geterr() == EBADF || s.geterr() == EACCES);
     }
 }
 
@@ -242,7 +250,11 @@ WVTEST_MAIN("inbuf after read error")
     int socks[2];
     WVPASS(!wvsocketpair(SOCK_STREAM, socks));
     WvFdStream s1(socks[0]), s2(socks[1]);
+    WVPASS(s1.isok());
+    WVPASS(s2.isok());
     s1.print("1\n2\n3\n4\n");
+    WVPASS(s1.isok());
+    printf("s1 errstr: %s\n", s1.errstr().cstr());
     WVPASSEQ(s2.blocking_getline(1000, '\n', 1024), "1");
     s1.close();
     WVPASSEQ(s2.blocking_getline(1000, '\n', 1024), "2");

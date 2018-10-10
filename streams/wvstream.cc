@@ -23,6 +23,7 @@
 #include "wvneeds-sockets.h"
 
 #ifdef _WIN32
+#undef ENOBUFS
 #define ENOBUFS WSAENOBUFS
 #undef errno
 #define errno GetLastError()

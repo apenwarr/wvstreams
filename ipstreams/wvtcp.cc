@@ -16,9 +16,13 @@
 #define getsockopt(a,b,c,d,e) getsockopt(a,b,c,(char *)d, e) 
 #undef errno
 #define errno GetLastError()
+#undef EWOULDBLOCK
 #define EWOULDBLOCK WSAEWOULDBLOCK
+#undef EINPROGRESS
 #define EINPROGRESS WSAEINPROGRESS
+#undef EISCONN
 #define EISCONN WSAEISCONN
+#undef EALREADY
 #define EALREADY WSAEALREADY
 #undef EINVAL
 #define EINVAL WSAEINVAL
