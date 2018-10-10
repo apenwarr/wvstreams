@@ -11,16 +11,16 @@ RUNWHICH="$1"
 # do you want to test the uniconfd, or just straight ini files?
 [ -z "$DAEMON" ] && DAEMON=0
 
+echo "$0: pwd: $PWD" >&2
 export LD_LIBRARY_PATH=.
-[ -z "$WVSTREAMS" ] && WVSTREAMS=..
-D=$WVSTREAMS/uniconf/tests
+D=$SRCDIR/uniconf/tests
 
 uniconfd() {
-    ./uniconf/daemon/uniconfd "$@"
+    $WINE ./uniconf/daemon/uniconfd "$@"
 }
 
 uni() {
-    ./uniconf/tests/uni "$@"
+    $WINE ./uniconf/tests/uni "$@"
 }
 
 # don't play with these
@@ -99,10 +99,16 @@ _check()
 
 check()
 {
-    echo "ONE='$ONE'"
-    echo "TWO='$TWO'"
-    TESTMATCH && _check "$@"
+    hd <(echo "ONE='$1'")
+    hd <(echo "TWO='$2'")
+    TESTMATCH && _check "$1" = "$2"
     TESTNUM=$(($TESTNUM + 1))
+}
+
+CR=$(printf '\r')
+stripcr()
+{
+    perl -pe 's/\r//g;'
 }
 
 x()
@@ -115,7 +121,7 @@ xx()
 {
     echo "xx: '$*'"
     TESTMATCH && TWO=$("$@" || { [ $? -gt 127 ] && echo "UNI DIED!"; })
-    check "$(echo "$ONE" | sort)" = "$(echo "$TWO" | sort)"
+    check "$(echo "$ONE" | stripcr | sort)" "$(echo "$TWO" | stripcr | sort)"
 }
 
 s()
@@ -126,14 +132,14 @@ s()
 ss()
 {
     TESTMATCH && TWO="$*"
-    check "$(echo "$ONE" | sort)" = "$(echo "$TWO" | sort)"
+    check "$(echo "$ONE" | stripcr | sort)" "$(echo "$TWO" | stripcr | sort)"
 }
 
 
 
 SECTION tester "Testing the tester"
-check 1 = 1
-check "1  1" = $(echo "1  1")
+check 1 1
+check "1  1" $(echo "1  1")
  s "1  2"
 ss "1  2"
 xx echo "1  2"
@@ -147,19 +153,23 @@ RECONFIG null:
  s
 xx uni get /a
 xx uni get /a/b
-RECONFIG --daemon null:  # needs persistence
-xx uni set /a/b foo
-xx uni get /a/b
+if [ -z "$_WIN32" ]; then
+    RECONFIG --daemon null:  # needs persistence
+    xx uni set /a/b foo
+    xx uni get /a/b
+fi
 
 SECTION temp "temp generator tests"
 RECONFIG temp:
  s
 xx uni get /a
 xx uni get /a/b
-RECONFIG --daemon temp:   # needs persistence
-xx uni set /a/b foo
- s foo
-xx uni get /a/b
+if [ -z "$_WIN32" ]; then
+    RECONFIG --daemon temp:   # needs persistence
+    xx uni set /a/b foo
+     s foo
+    xx uni get /a/b
+fi
 
 SECTION ini "ini file tests"
 RECONFIG "ini:$D/simple.ini"
@@ -300,16 +310,17 @@ xx uni keys /section1
 xx uni keys /section2
  s "a2 = 1x" "b2 = 2x" "c2 = 3x" "d2 = 44" "e2 = 55"
 xx uni dump /section2
-RECONFIG --daemon "ini:$D/simple2.ini"  # daemon itself is non-cached
-UNICONF="cache:$UNICONF"  # but cache the connection to the daemon
- s "alternative bog"
-xx uni get /section3/a3/bog
-xx uni get /section3/a3/bog
- s section1 section2 section3 section4 \*
-xx uni keys /
- s \* a3 a3/bog
-xx uni hkeys /section3
-
+if [ -z "$_WIN32" ]; then
+    RECONFIG --daemon "ini:$D/simple2.ini"  # daemon itself is non-cached
+    UNICONF="cache:$UNICONF"  # but cache the connection to the daemon
+     s "alternative bog"
+    xx uni get /section3/a3/bog
+    xx uni get /section3/a3/bog
+     s section1 section2 section3 section4 \*
+    xx uni keys /
+     s \* a3 a3/bog
+    xx uni hkeys /section3
+fi
 
 
 
