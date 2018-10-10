@@ -1,5 +1,5 @@
 exec >&2
-redo-ifchange config.od sources.list $OUT/libwvstatic.so
+redo-ifchange config.od sources.list
 . ./config.od
 
 if [ -z "$objs" ]; then
@@ -16,6 +16,7 @@ done
 
 redo-ifchange $xobjs &&
 $CXX -o $3 $LDFLAGS \
-    -Wl,-rpath,'$ORIGIN' -Wl,-Map,$OUT/$2.map \
-    $xobjs $OUT/libwvstatic.so \
+    -Wl,-rpath,'$ORIGIN' \
+    -Wl,-Map,$OUT/$2.map \
+    $xobjs \
     $libs

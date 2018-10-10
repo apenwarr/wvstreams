@@ -13,7 +13,6 @@ objs=$(cat <<-EOF
 	uniconf/uniconfgen.o
 	uniconf/uniconfkey.o
 	uniconf/uniconfroot.o
-	uniconf/unigenhack.o
 	uniconf/unihashtree.o
 	uniconf/uniinigen.o
 	uniconf/unilistiter.o
@@ -64,7 +63,7 @@ EOF
 
 {
     echo "$objs"
-    dirs=win32 . ./objlist.od
+    [ -z "$_WIN32" ] || dirs=win32 . ./objlist.od
 } |
 sort |
 {

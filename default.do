@@ -1,7 +1,14 @@
 case $2 in
-  */tests/*|uniconf/daemon/uniconfd)
+  uniconf/tests/uni|uniconf/daemon/uniconfd)
     [ -e "$2.cc" -o -e "$2.c" ] || exit 1
-    objs=$2.o
+    objs="$2.o libuniconf.so libwvstreams.so libwvutils.so libwvbase.so"
+    libs="$LIBS_PAM $LIBS_SSL $LIBS"
+    . ./link.od
+    ;;
+  */tests/*)
+    [ -e "$2.cc" -o -e "$2.c" ] || exit 1
+    objs="$2.o libwvstatic.so"
+    libs="$LIBS_QT $LIBS_PAM $LIBS_DBUS $LIBS_SSL $LIBS"
     . ./link.od
     ;;
   *)
