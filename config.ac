@@ -386,6 +386,14 @@ if test "$enable_delete_detector" = "yes"; then
               [Define to enable the XPLC delete detector.])
 fi
 
+# zlib
+if test "$with_zlib" != "no"; then
+    if test "$with_zlib" != "" -a "$with_zlib" != "yes"; then
+        WV_APPEND(CPPFLAGS, -I$with_zlib)
+        WV_APPEND(LDFLAGS, -L$with_zlib)
+    fi
+fi
+
 # dbus
 if test "$with_dbus" != "no"; then        
     if test "$with_dbus" = "" -o "$with_dbus" = "yes"; then

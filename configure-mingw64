@@ -1,17 +1,8 @@
 #!/bin/bash
 MYDIR=$(cd `dirname -- $0` && pwd)
-PORTS=$MYDIR/../wvports
 $MYDIR/configure \
 	--build=$($MYDIR/config.guess) \
 	--host=x86_64-w64-mingw32 \
-	--enable-exceptions \
-	CPPFLAGS="\
-		-I$PORTS/zlib/build/zlib \
-		-I$PORTS/openssl/build/openssl/include $XCPPFLAGS \
-		-I$PORTS/win32api/build/w32api/include" \
-	LDFLAGS="\
-		-L$PORTS/zlib/build/zlib \
-		-L$PORTS/openssl/build/openssl \
-		-L$PORTS/win32api/build/w32api/lib -static" \
+	LDFLAGS="-static" \
 	LIBS="-lwsock32 -lgdi32" \
 	$@
