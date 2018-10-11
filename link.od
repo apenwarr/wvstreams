@@ -17,6 +17,5 @@ done
 redo-ifchange $xobjs &&
 $CXX -o $3 $LDFLAGS \
     -Wl,-rpath,'$ORIGIN' \
-    -Wl,-Map,$OUT/$2.map \
     $xobjs \
     $libs
