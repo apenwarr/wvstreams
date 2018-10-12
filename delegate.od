@@ -27,7 +27,7 @@ redo-whichdo "$SRCDIR/$1" | {
             x2="$b"
             out="$PWD/$3"
             #echo "delegate: ./$dofile $x1" >&2
-            (cd "$dodir" && . "./$dofile" "$x1" "$x2" "$out")
+            (cd "$dodir" && set -- "$x1" "$x2" "$out" && . "./$dofile")
             exit
             ;;
         esac
