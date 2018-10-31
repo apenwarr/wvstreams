@@ -1,36 +1,60 @@
+exec >&2
 # redo requests in the output dir all fall back to $OUT/default.do, which
 # simply sets $SRCDIR and then runs this file.
 #
 # Our job is then to delegate the work the right .do file inside $SRCDIR,
 # if any.
-exec >&2
 OUT=$PWD
-x1= x2= dofile=
-redo-whichdo "$SRCDIR/$1" | {
+ofile=$PWD/$3
+x1=$1
+cd "$SRCDIR"
+redo-whichdo "$x1" | {
     ifcreate=
-    while read a b; do
-        case $a in
-          -)
-            ifcreate="$ifcreate $b"
-            ;;
-          +)
-            redo-ifcreate $ifcreate &&
-            redo-ifchange "$b" || exit
-            dopath="$b"
-            dodir=$(dirname "$dopath")
-            dofile=$(basename "$dopath")
-            ;;
-          1)
-            x1="$b"
-            ;;
-          2)
-            x2="$b"
-            out="$PWD/$3"
-            #echo "delegate: ./$dofile $x1" >&2
-            (cd "$dodir" && set -- "$x1" "$x2" "$out" && . "./$dofile")
+    while read dopath; do
+        if [ ! -e "$dopath" ]; then
+            ifcreate="$ifcreate $dopath"
+        else
+            redo-ifcreate $ifcreate
+            redo-ifchange "$dopath"
+
+            # This is slightly faster than forking $(dirname) and $(basename),
+            # plus doesn't try to do any magic like using '.' for an empty
+            # dir field.
+            dofile=${dopath##*/}
+            dodir=${dopath%$dofile}
+
+            # Calculate the $1 path relative to the new $dodir.
+            # Note: if $dodir is nonempty, it will have a trailing slash,
+            # because of the way it's constructed.
+            #
+            # What we want is to run $dofile from $dodir in the *source*
+            # directory.  We then lie a bit in $1/$2: we provide a relative
+            # path to where we expect the *source* file to reside, even though
+            # $3 will actually end up putting the output at the same relative
+            # path inside $OUT.
+            x1_rel=${x1#$dodir}
+
+            # Calculate the $2 relative path.
+            # We can't start with $2 here, because we were called from
+            # default.do and redo-whichdo might have afound a default.o.do,
+            # for example.  We have to strip the extension from $1 ourselves.
+            ext=${dofile##*default}
+            if [ "$ext" != "$dofile" ]; then
+                ext=${ext%.do}
+            else
+                ext=''
+            fi
+            x2_rel=${x1#$dodir}
+            x2_rel=${x2_rel%$ext}
+
+            # .do files always expect to be run with $PWD set to their own
+            # directory.
+            cd "$dodir"
+
+            set -- "$x1_rel" "$x2_rel" "$ofile"
+            . "./$dofile"
             exit
-            ;;
-        esac
+        fi
     done
     exit 3
 }
