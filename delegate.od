@@ -1,4 +1,3 @@
-exec >&2
 # redo requests in the output dir all fall back to $OUT/default.do, which
 # simply sets $SRCDIR and then runs this file.
 #

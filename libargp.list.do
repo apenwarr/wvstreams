@@ -3,7 +3,7 @@ redo-ifchange config.od
 
 [ -n "$USE_WVSTREAMS_ARGP" ] || die "don't need argp; don't build libargp.list!"
 
-make -C "$OUT/argp"
+make -C "$OUT/argp" >&2
 
 (
     cd "$OUT" &&

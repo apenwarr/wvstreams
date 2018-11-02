@@ -1,3 +1,4 @@
+exec >&2
 redo-ifchange $OUT/wvtestmain config.od
 . ./config.od
 

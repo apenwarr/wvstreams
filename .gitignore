@@ -19,3 +19,4 @@ lib*.so.*
 /CXX
 /lib*.list
 /sources.list
+/.redo
