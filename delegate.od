@@ -3,57 +3,80 @@
 #
 # Our job is then to delegate the work the right .do file inside $SRCDIR,
 # if any.
-OUT=$PWD
-ofile=$PWD/$3
-x1=$1
-cd "$SRCDIR"
-redo-whichdo "$x1" | {
-    ifcreate=
-    while read dopath; do
-        if [ ! -e "$dopath" ]; then
-            ifcreate="$ifcreate $dopath"
-        else
-            redo-ifcreate $ifcreate
-            redo-ifchange "$dopath"
 
-            # This is slightly faster than forking $(dirname) and $(basename),
-            # plus doesn't try to do any magic like using '.' for an empty
-            # dir field.
-            dofile=${dopath##*/}
-            dodir=${dopath%$dofile}
 
-            # Calculate the $1 path relative to the new $dodir.
-            # Note: if $dodir is nonempty, it will have a trailing slash,
-            # because of the way it's constructed.
-            #
-            # What we want is to run $dofile from $dodir in the *source*
-            # directory.  We then lie a bit in $1/$2: we provide a relative
-            # path to where we expect the *source* file to reside, even though
-            # $3 will actually end up putting the output at the same relative
-            # path inside $OUT.
-            x1_rel=${x1#$dodir}
-
-            # Calculate the $2 relative path.
-            # We can't start with $2 here, because we were called from
-            # default.do and redo-whichdo might have afound a default.o.do,
-            # for example.  We have to strip the extension from $1 ourselves.
-            ext=${dofile##*default}
-            if [ "$ext" != "$dofile" ]; then
-                ext=${ext%.do}
+# redo_find_dofile src/path/outfile.x -> e.g. src/default.x.do
+# redo_find_dofile: wrapper for redo-whichdo that only prints which .do,
+#                   and establishes dependencies on the source path up to it
+redo_find_dofile() {
+    redo-whichdo "$1" | {
+        ifcreate=
+        while read -r dopath; do
+            if [ ! -e "$dopath" ]; then
+                ifcreate="$ifcreate $dopath"
             else
-                ext=''
+                redo-ifcreate $ifcreate
+                redo-ifchange "$dopath"
+                echo "$dopath"
             fi
-            x2_rel=${x1#$dodir}
-            x2_rel=${x2_rel%$ext}
-
-            # .do files always expect to be run with $PWD set to their own
-            # directory.
-            cd "$dodir"
-
-            set -- "$x1_rel" "$x2_rel" "$ofile"
-            . "./$dofile"
-            exit
-        fi
-    done
-    exit 3
+        done
+    }
 }
+
+# redo_basename src/path/outfile.x.y default.y.do -> src/path/outfile.x
+# redo_basename: synthesize $2 as would have been passed to dofile in
+#   redo src/path/outfile.x.y
+# by stripping the correct set of extensions
+redo_basename() {
+    local x1 dofile
+    x1=$1; dofile=$2
+    # Calculate the $2 relative path.
+    # We can't start with $2 here, because we were called from
+    # default.do and redo-whichdo might have afound a default.o.do,
+    # for example.  We have to strip the extension from $1 ourselves.
+    dofile=${dofile##*/}
+    ext=${dofile##default}
+    if [ "$ext" != "$dofile" ]; then
+      ext=${ext%.do}
+      echo "${x1%$ext}"
+    else
+      echo "$x1"
+    fi
+}
+
+# redo_run dofile.do src/path/srcname.x srcname output/file.y
+# redo_run: synthetically run a .do script, as if
+#   redo output/file.y
+# had invoked it to build output/file.y from src/path/srcname.x
+redo_run() {
+    local dopath x1 x2 x3
+    dopath=$1; shift
+    x1=$1; x2=$2; x3=$3
+    # This is slightly faster than forking $(dirname) and $(basename),
+    # plus doesn't try to do any magic like using '.' for an empty
+    # dir field.
+    dofile=${dopath##*/}
+    dodir=${dopath%"$dofile"}
+
+    # .do files always expect to be run with $PWD set to their own
+    # directory.
+    cd "$dodir" || exit 1
+
+    # Calculate the $1 path relative to the new $dodir.
+    # Note: if $dodir is nonempty, it will have a trailing slash,
+    # because of the way it's constructed.
+    #
+    # What we want is to run $dofile from $dodir in the *source*
+    # directory.  We then lie a bit in $1/$2: we provide a relative
+    # path to where we expect the *source* file to reside, even though
+    # $3 will actually end up putting the output at the same relative
+    # path inside $OUT.
+    set -- "${x1#$dodir}" "${x2#$dodir}" "$x3"
+    . "./$dofile"
+}
+
+OUT=$PWD
+cd "$SRCDIR" || exit 1
+dofile=$(redo_find_dofile "$1")
+basename=$(redo_basename "$1" "$dofile")
+redo_run "$dofile" "$1" "$basename" "$OUT/$3"
