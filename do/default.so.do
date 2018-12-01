@@ -1,5 +1,4 @@
-redo-ifchange config.od $OUT/$2.list
-. ./config.od
+redo-ifchange $OUT/$2.list
 
 libs="$LIBS_QT $LIBS_PAM $LIBS_DBUS $LIBS_SSL $LIBS"
 

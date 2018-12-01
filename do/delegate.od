@@ -1,0 +1,28 @@
+OUT=$PWD
+ofile=$PWD/$3
+cd "$SRCDIR"
+
+redo-ifchange do/config.od
+. do/config.od
+
+sub() {
+  local dofile="$1"
+  shift
+  redo-ifchange "$dofile"
+  . "$dofile"
+}
+
+if [ -e "do/$1.do" ]; then
+  sub "do/$1.do" "$1" "$2" "$ofile"
+  exit
+fi
+
+case $1 in
+  *.a) sub do/default.a.do "$1" "${1%.a}" "$ofile" ;;
+  *.so) sub do/default.so.do "$1" "${1%.so}" "$ofile" ;;
+  *.test) sub do/default.test.do "$1" "${1%.test}" "$ofile" ;;
+  *.runtest) sub do/default.runtest.do "$1" "${1%.runtest}" "$ofile" ;;
+  *.o) sub do/default.o.do "$1" "${1%.o}" "$ofile" ;;
+  *.8) sub do/default.8.do "$1" "${1%.8}" "$ofile" ;;
+  *) sub "do/default.do" "$1" "$2" "$ofile" ;;
+esac

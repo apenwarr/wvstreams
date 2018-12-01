@@ -1,5 +1,4 @@
-redo-ifchange $OUT/uni $OUT/uniconfd config.od
-. ./config.od
+redo-ifchange $OUT/uni $OUT/uniconfd
 
 cd $OUT
 export _WIN32 SRCDIR

@@ -1,6 +1,5 @@
 exec >&2
-redo-ifchange sources.list not-win32-tests.list config.od
-. ./config.od
+redo-ifchange $OUT/sources.list not-win32-tests.list
 
 dirs="
     utils/tests
@@ -14,7 +13,7 @@ dirs="
 [ "$with_dbus" = "no" ] || dirs="$dirs dbus/tests"
 [ "$with_qt" = "no" ] || dirs="$dirs qt/tests"
 
-. ./objlist.od |
+. do/objlist.od |
 while read d; do
     echo "${d%.o}"
 done | sort | {

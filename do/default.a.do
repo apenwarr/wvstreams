@@ -1,5 +1,4 @@
-redo-ifchange config.od $OUT/$2.list
-. ./config.od
+redo-ifchange $OUT/$2.list
 
 obj=$(
     sed -e 's/unigenhack\.o/unigenhack_s\.o/' "$OUT/$2.list" |

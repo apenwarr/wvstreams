@@ -1,5 +1,4 @@
-redo-ifchange sources.list config.od
-. ./config.od
+redo-ifchange $OUT/sources.list
 
 inp="
   $OUT/libwvbase.list

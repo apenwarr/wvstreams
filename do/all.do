@@ -1,6 +1,3 @@
-redo-ifchange config.od
-. ./config.od
-
 redo-ifchange $OUT/libs.list
 {
     while read lib; do

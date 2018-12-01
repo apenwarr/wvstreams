@@ -1,2 +1,2 @@
 SRCDIR=@SRCDIR@
-. "$SRCDIR/delegate.od"
+. "$SRCDIR/do/delegate.od"

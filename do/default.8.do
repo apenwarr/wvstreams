@@ -1,6 +1,3 @@
-redo-ifchange config.od
-. ./config.od
-
 redo-ifchange $1.subst
 dir=$(dirname "$1")
 mkdir -p "$OUT/$dir"

@@ -1,6 +1,4 @@
 exec >$3
-redo-ifchange config.od
-. ./config.od
 echo libwvbase
 echo libwvutils
 echo libwvstreams

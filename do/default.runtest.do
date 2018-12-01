@@ -1,6 +1,5 @@
 exec >&2
-redo-ifchange $OUT/wvtestmain config.od
-. ./config.od
+redo-ifchange $OUT/wvtestmain
 
 if [ -n "$_WIN32" ]; then
     RUN=wine64

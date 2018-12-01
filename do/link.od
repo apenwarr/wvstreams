@@ -1,6 +1,5 @@
 exec >&2
-redo-ifchange config.od sources.list
-. ./config.od
+redo-ifchange $OUT/sources.list
 
 if [ -z "$objs" ]; then
     echo 'link.od: must set $objs first.'

@@ -1,7 +1,6 @@
-redo-ifchange config.od $OUT/libs.list \
+redo-ifchange $OUT/libs.list \
 	$OUT/uni $OUT/uniconf/tests/uni.8 \
 	$OUT/uniconfd $OUT/uniconf/daemon/uniconfd.8
-. ./config.od
 [ -n "$DESTDIR" ] || die "set DESTDIR before installing."
 
 $INSTALL -d \

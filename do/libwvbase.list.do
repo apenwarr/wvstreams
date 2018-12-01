@@ -1,6 +1,3 @@
-redo-ifchange config.od
-. ./config.od
-
 objs=$(cat <<-EOF
 	streams/wvconstream.o
 	streams/wvfdstream.o
@@ -63,7 +60,7 @@ EOF
 
 {
     echo "$objs"
-    [ -z "$_WIN32" ] || dirs=win32 . ./objlist.od
+    [ -z "$_WIN32" ] || dirs=win32 . do/objlist.od
 } |
 sort |
 {

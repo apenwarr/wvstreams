@@ -1,5 +1,4 @@
-redo-ifchange sources.list config.od $OUT/libwvbase.list
-. ./config.od
+redo-ifchange $OUT/sources.list $OUT/libwvbase.list
 
 dirs="
   streams configfile ipstreams urlget
@@ -8,6 +7,6 @@ dirs="
 [ -z "$_LINUX" ] || dirs="$dirs linuxstreams"
 [ "$with_openssl" = "no" ] || dirs="$dirs crypto"
 
-. ./objlist.od |
+. do/objlist.od |
 comm -2 -3 - $OUT/libwvbase.list >$3
 redo-stamp <$3

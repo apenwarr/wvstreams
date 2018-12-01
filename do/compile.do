@@ -1,5 +1,4 @@
-redo-ifchange config.od $OUT/include/wvautoconf.h
-. ./config.od
+redo-ifchange $OUT/include/wvautoconf.h
 
 cat >$3 <<EOF
 

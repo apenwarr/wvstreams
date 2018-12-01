@@ -1,5 +1,4 @@
-redo-ifchange config.od $OUT/libs.list
-. ./config.od
+redo-ifchange $OUT/libs.list
 [ -n "$DESTDIR" ] || die "set DESTDIR before installing."
 
 $INSTALL -d "$DESTDIR$libdir"
