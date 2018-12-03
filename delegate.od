@@ -11,7 +11,7 @@
 redo-find-dofile() {
     redo-whichdo "$1" | {
         ifcreate=
-        while read dopath; do
+        while read -r dopath; do
             if [ ! -e "$dopath" ]; then
                 ifcreate="$ifcreate $dopath"
             else
@@ -35,7 +35,7 @@ redo-basename() {
     # for example.  We have to strip the extension from $1 ourselves.
     dofile=${dofile##*/}
     ext=${dofile##*default}
-    if [ "$ext" != "$dofile"]; then
+    if [ "$ext" != "$dofile" ]; then
       ext=${ext%.do}
       echo "${x1%ext}"
     else
@@ -48,7 +48,7 @@ redo-basename() {
 #   redo output/file.y
 # had invoked it to build output/file.y from src/path/srcname.x
 redo-run() {
-    dofile=$1; shift
+    dopath=$1; shift
     x1=$1; x2=$2; x3=$3
     # This is slightly faster than forking $(dirname) and $(basename),
     # plus doesn't try to do any magic like using '.' for an empty
@@ -58,7 +58,7 @@ redo-run() {
 
     # .do files always expect to be run with $PWD set to their own
     # directory.
-    cd "$dodir"
+    cd "$dodir" || exit 1
 
     # Calculate the $1 path relative to the new $dodir.
     # Note: if $dodir is nonempty, it will have a trailing slash,
@@ -74,7 +74,7 @@ redo-run() {
 }
 
 OUT=$PWD
-cd "$SRCDIR"
+cd "$SRCDIR" || exit 1
 dofile=$(redo-use "$1")
 basename=$(redo-basename "$1" "$dofile")
 redo-run "$dofile" "$1" "$basename" "$OUT/$3"
