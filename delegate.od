@@ -3,7 +3,12 @@
 #
 # Our job is then to delegate the work the right .do file inside $SRCDIR,
 # if any.
-redo-use-whichdo(){
+
+
+# redo-find-dofile src/path/outfile.x -> e.g. src/default.x.do
+# redo-find-dofile: wrapper for redo-whichdo that only prints which .do,
+#                   and establishes dependencies on the source path up to it
+redo-find-dofile() {
     redo-whichdo "$1" | {
         ifcreate=
         while read dopath; do
@@ -17,7 +22,32 @@ redo-use-whichdo(){
         done
     }
 }
-redo-run(){
+
+# redo-basename src/path/outfile.x.y default.y.do -> src/path/outfile.x
+# redo-basename: synthesize $2 as would have been passed to dofile in
+#   redo src/path/outfile.x.y
+# by stripping the correct set of extensions
+redo-basename() {
+    x1=$1; dofile=$2
+    # Calculate the $2 relative path.
+    # We can't start with $2 here, because we were called from
+    # default.do and redo-whichdo might have afound a default.o.do,
+    # for example.  We have to strip the extension from $1 ourselves.
+    dofile=${dofile##*/}
+    ext=${dofile##*default}
+    if [ "$ext" != "$dofile"]; then
+      ext=${ext%.do}
+      echo "${x1%ext}"
+    else
+      echo "$x1"
+    fi
+}
+
+# redo-run dofile.do src/path/srcname.x srcname output/file.y
+# redo-run: synthetically run a .do script, as if
+#   redo output/file.y
+# had invoked it to build output/file.y from src/path/srcname.x
+redo-run() {
     dofile=$1; shift
     x1=$1; x2=$2; x3=$3
     # This is slightly faster than forking $(dirname) and $(basename),
@@ -43,23 +73,8 @@ redo-run(){
     . "./$dofile"
 }
 
-redo-basename(){
-    x1=$1; dofile=$2
-    # Calculate the $2 relative path.
-    # We can't start with $2 here, because we were called from
-    # default.do and redo-whichdo might have afound a default.o.do,
-    # for example.  We have to strip the extension from $1 ourselves.
-    dofile=${dofile##*/}
-    ext=${dofile##*default}
-    if [ "$ext" != "$dofile"]; then
-      ext=${ext%.do}
-      echo "${x1%ext}"
-    else
-      echo "$x1"
-    fi
-}
-
 OUT=$PWD
 cd "$SRCDIR"
-whichdo=$(redo-use-whichdo "$1")
-redo-run "$whichdo" "$1" "$(redo-basename "$1" "$whichdo")" "$OUT/$3"
+dofile=$(redo-use "$1")
+basename=$(redo-basename "$1" "$dofile")
+redo-run "$dofile" "$1" "$basename" "$OUT/$3"
