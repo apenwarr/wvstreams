@@ -1,5 +1,5 @@
 #!/bin/sh
-if ! redo-ifchange 2>/dev/null; then
+if ! type redo >/dev/null 2>&1; then
     echo "Fatal: this package requires the redo build system." >&2
     echo "For example: https://github.com/apenwarr/redo" >&2
     exit 99
