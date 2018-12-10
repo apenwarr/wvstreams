@@ -37,7 +37,8 @@ void WvOCSPReq::encode(WvBuf &buf)
     BUF_MEM *bm;
 
     // there is no reason why the following should fail, except for OOM
-    assert(wv_i2d_OCSP_REQUEST_bio(bufbio, req) > 0);
+    int rv = wv_i2d_OCSP_REQUEST_bio(bufbio, req);
+    assert(rv > 0);
 
     BIO_get_mem_ptr(bufbio, &bm);
     buf.put(bm->data, bm->length);

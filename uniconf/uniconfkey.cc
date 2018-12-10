@@ -324,7 +324,7 @@ bool UniConfKey::suborsame(const UniConfKey &key, UniConfKey &subkey) const
 UniConfKey UniConfKey::subkey(const UniConfKey &key) const
 {
     UniConfKey answer;
-    wvassert(suborsame(key, answer),
-	     "this = '%s'\nkey = '%s'", printable(), key);
+    bool rv = suborsame(key, answer);
+    wvassert(rv, "this = '%s'\nkey = '%s'", printable(), key);
     return answer;
 }

@@ -46,7 +46,8 @@ WvCRL::WvCRL()
 WvCRL::WvCRL(const WvX509Mgr &ca)
     : debug("X509 CRL", WvLog::Debug5)
 {
-    assert(crl = X509_CRL_new());
+    crl = X509_CRL_new();
+    assert(crl);
 
     // Use Version 2 CRLs - Of COURSE that means
     // to set it to 1 here... grumble..

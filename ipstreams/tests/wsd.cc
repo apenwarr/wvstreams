@@ -60,7 +60,8 @@ class WvReadLineStream : public WvStream
     static int readline_getc(FILE *)
     {
         char ch;
-        assert(me->base->read(&ch, 1) == 1);
+        int rv = me->base->read(&ch, 1);
+        assert(rv == 1);
         return ch;
     }
 
